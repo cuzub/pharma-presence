@@ -45,7 +45,7 @@ def enregistrer_commandes(app):
     @app.cli.command('demo')
     def demo():
         """Développement uniquement : crée des données FICTIVES (admin/admin-demo-1234)."""
-        if not app.debug:
+        if app.config.get('ENV_NAME') != 'development':
             raise click.ClickException('Commande réservée au développement (FLASK_ENV=development).')
         if Utilisateur.query.first():
             raise click.ClickException('La base contient déjà des comptes.')

@@ -1,0 +1,295 @@
+<template>
+  <div>
+    <div class="page-titre">
+      <h1 class="h4 mb-0">Tableau du mois</h1>
+      <MoisNavigateur v-model="mois" />
+    </div>
+
+    <div v-if="erreur" class="alert alert-danger">{{ erreur }}</div>
+
+    <div class="carte p-0 overflow-hidden">
+      <div class="table-responsive tableau-conteneur">
+        <table class="table table-sm table-bordered mb-0 tableau-mois">
+          <thead>
+            <tr>
+              <th class="col-employe">Employé</th>
+              <th
+                v-for="jour in jours"
+                :key="jour.iso"
+                :class="['col-jour', jour.classes]"
+                :title="jour.titre"
+              >
+                <div class="small text-muted">{{ jour.initiale }}</div>
+                <div>{{ jour.numero }}</div>
+              </th>
+              <th class="col-total" title="Total des heures en plus du mois">H+</th>
+              <th class="col-total" title="Kilomètres de déplacements validés">Km</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-if="chargement">
+              <td :colspan="jours.length + 3" class="text-center text-muted py-4">Chargement…</td>
+            </tr>
+            <tr v-else-if="!donnees.employes.length">
+              <td :colspan="jours.length + 3" class="text-center text-muted py-4">
+                Aucun employé sous contrat ce mois-ci. <RouterLink to="/employes">Ajouter un employé</RouterLink>
+              </td>
+            </tr>
+            <tr v-for="employe in donnees.employes" :key="employe.id">
+              <th class="col-employe" scope="row">
+                <div class="fw-semibold text-nowrap">{{ employe.nom }} {{ employe.prenom }}</div>
+                <div class="small text-muted text-nowrap">{{ texteContrat(employe) }}</div>
+                <div v-for="m in employe.mouvements" :key="m" class="small text-primary text-nowrap">{{ m }}</div>
+              </th>
+              <td
+                v-for="jour in jours"
+                :key="jour.iso"
+                :class="['case', jour.classes, { 'hors-contrat': horsContrat(employe, jour.iso) }]"
+                :style="styleCase(employe, jour.iso)"
+                :title="titreCase(employe, jour)"
+                role="button"
+                tabindex="0"
+                :data-employe="employe.id"
+                :data-jour="jour.iso"
+                @click="saisie.ouvrirJour(employe.id, jour.iso)"
+                @keydown.enter="saisie.ouvrirJour(employe.id, jour.iso)"
+              >
+                <span v-if="absence(employe, jour.iso)" class="code-absence">{{ absence(employe, jour.iso).motif_code }}</span>
+                <span v-else-if="employe.heures[jour.iso]" class="heures">+{{ formatNombre(employe.heures[jour.iso]) }}</span>
+              </td>
+              <td class="col-total fw-semibold">{{ employe.total_heures ? formatNombre(employe.total_heures) : '' }}</td>
+              <td class="col-total">
+                {{ employe.total_km_valides ? formatNombre(employe.total_km_valides) : '' }}
+                <RouterLink v-if="employe.deplacements_en_attente" to="/deplacements" class="badge text-bg-warning" title="Déplacements à valider">
+                  {{ employe.deplacements_en_attente }} ⏳
+                </RouterLink>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="d-flex flex-wrap gap-3 mt-3 small align-items-center">
+      <span class="text-muted">Légende :</span>
+      <span v-for="m in referentiel.motifsActifs" :key="m.id">
+        <span class="pastille-motif" :style="{ background: m.couleur }">{{ m.code }}</span> {{ m.libelle }}
+      </span>
+      <span><span class="legende dimanche"></span> Dimanche</span>
+      <span><span class="legende ferie"></span> Férié</span>
+      <span><span class="legende fermeture"></span> Fermeture</span>
+      <span><span class="legende hors-contrat"></span> Hors contrat</span>
+      <span class="text-muted">Cliquez sur une case pour saisir des heures en plus ou une absence.</span>
+    </div>
+
+    <JourModal
+      :ouvert="saisie.etat.jourOuvert"
+      :employe="saisie.employeDuJour.value"
+      :jour="saisie.etat.jour"
+      @fermer="saisie.etat.jourOuvert = false"
+      @modifie="saisie.apresModification"
+      @nouvelle-absence="(jour) => saisie.nouvelleAbsence(saisie.etat.employeId, jour)"
+      @modifier-absence="saisie.modifierAbsence"
+    />
+    <AbsenceModal
+      :ouvert="saisie.etat.absenceOuverte"
+      :absence="saisie.etat.absence"
+      :employe-fixe="saisie.etat.absenceEmployeId"
+      :date-debut="saisie.etat.absenceDebut"
+      @fermer="saisie.etat.absenceOuverte = false"
+      @enregistre="saisie.apresModification"
+    />
+  </div>
+</template>
+
+<script setup>
+import { computed, ref, watch } from 'vue'
+import AbsenceModal from '../../components/AbsenceModal.vue'
+import JourModal from '../../components/JourModal.vue'
+import MoisNavigateur from '../../components/MoisNavigateur.vue'
+import { useMoisUrl } from '../../composables/useMoisUrl'
+import { useSaisieJour } from '../../composables/useSaisieJour'
+import api, { messageErreur } from '../../services/api'
+import { useReferentielStore } from '../../stores/referentiel'
+import { JOURS_COURTS, absenceDuJour, aujourdhuiIso, ferie, formatFr, formatNombre, jourSemaine, joursDuMois } from '../../utils/dates'
+
+const referentiel = useReferentielStore()
+const mois = useMoisUrl()
+const donnees = ref({ employes: [], jours_fermeture: [] })
+const chargement = ref(true)
+const erreur = ref('')
+
+const charger = async () => {
+  erreur.value = ''
+  try {
+    donnees.value = (await api.get(`/mois/${mois.value}`)).data
+  } catch (error) {
+    erreur.value = await messageErreur(error)
+  } finally {
+    chargement.value = false
+  }
+}
+
+const employes = computed(() => donnees.value.employes)
+const saisie = useSaisieJour({ employes, recharger: charger })
+
+watch(mois, () => {
+  chargement.value = true
+  charger()
+}, { immediate: true })
+referentiel.chargerMotifs()
+
+const jours = computed(() => {
+  const aujourdhui = aujourdhuiIso()
+  const fermetures = new Map(donnees.value.jours_fermeture.map((j) => [j.date, j.libelle || 'Fermeture']))
+  return joursDuMois(mois.value).map((iso) => {
+    const libelleFerie = ferie(iso)
+    const fermeture = fermetures.get(iso)
+    return {
+      iso,
+      numero: Number(iso.slice(8)),
+      initiale: JOURS_COURTS[jourSemaine(iso)].slice(0, 2),
+      titre: [formatFr(iso), libelleFerie, fermeture].filter(Boolean).join(' — '),
+      classes: {
+        dimanche: jourSemaine(iso) === 6,
+        ferie: !!libelleFerie,
+        fermeture: !!fermeture,
+        aujourdhui: iso === aujourdhui
+      }
+    }
+  })
+})
+
+const absence = (employe, iso) => absenceDuJour(employe.absences, iso)
+
+const horsContrat = (employe, iso) =>
+  !employe.contrats.some((c) => c.date_debut <= iso && (!c.date_fin || c.date_fin >= iso))
+
+const styleCase = (employe, iso) => {
+  const a = absence(employe, iso)
+  return a ? { background: a.motif_couleur, color: '#fff' } : null
+}
+
+const titreCase = (employe, jour) => {
+  const a = absence(employe, jour.iso)
+  const morceaux = [`${employe.prenom} ${employe.nom}`, jour.titre]
+  if (a) morceaux.push(`${a.motif_libelle}${a.date_reprise ? ` (reprise le ${formatFr(a.date_reprise)})` : ' (en cours)'}`)
+  if (employe.heures[jour.iso]) morceaux.push(`+${formatNombre(employe.heures[jour.iso])} h`)
+  return morceaux.join(' — ')
+}
+
+const texteContrat = (employe) =>
+  employe.contrats.map((c) => `${formatNombre(c.heures_mensuelles)} h/mois`).join(' → ') || 'Sans contrat ce mois-ci'
+</script>
+
+<style scoped>
+.tableau-conteneur {
+  max-height: calc(100vh - 220px);
+}
+
+.tableau-mois {
+  font-size: 0.8rem;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.tableau-mois thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: #fff;
+  text-align: center;
+}
+
+.col-employe {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background: #fff;
+  min-width: 170px;
+}
+
+thead .col-employe {
+  z-index: 3;
+}
+
+.col-jour,
+.case {
+  min-width: 34px;
+  text-align: center;
+  padding: 2px !important;
+}
+
+.case {
+  cursor: pointer;
+  height: 46px;
+}
+
+.case:hover,
+.case:focus {
+  outline: 2px solid var(--pharma-vert);
+  outline-offset: -2px;
+}
+
+.dimanche {
+  background: var(--case-dimanche);
+}
+
+.ferie {
+  background: var(--case-ferie);
+}
+
+.fermeture {
+  background: var(--case-fermeture);
+}
+
+.case.hors-contrat {
+  background: var(--case-hors-contrat);
+}
+
+thead .aujourdhui {
+  color: var(--pharma-vert);
+  font-weight: 700;
+  border-bottom: 3px solid var(--pharma-vert);
+}
+
+.code-absence {
+  font-weight: 700;
+  font-size: 0.7rem;
+}
+
+.heures {
+  color: #198754;
+  font-weight: 700;
+}
+
+.col-total {
+  text-align: center;
+  min-width: 52px;
+  white-space: nowrap;
+}
+
+.legende {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  vertical-align: middle;
+  border: 1px solid #ccc;
+}
+
+.legende.dimanche {
+  background: var(--case-dimanche);
+}
+
+.legende.ferie {
+  background: var(--case-ferie);
+}
+
+.legende.fermeture {
+  background: var(--case-fermeture);
+}
+
+.legende.hors-contrat {
+  background: var(--case-hors-contrat);
+}
+</style>

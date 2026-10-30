@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 
 from werkzeug.security import check_password_hash, generate_password_hash
 
@@ -91,6 +91,13 @@ class Employe(Horodatage, db.Model):
         return next((c for c in reversed(self.contrats) if c.date_fin is None), None)
 
     @property
+    def contrat_actuel(self):
+        """Contrat en vigueur aujourd'hui, sinon le plus récent."""
+        aujourdhui = date.today()
+        en_vigueur = next((c for c in self.contrats if c.chevauche(aujourdhui, aujourdhui)), None)
+        return en_vigueur or (self.contrats[-1] if self.contrats else None)
+
+    @property
     def date_entree(self):
         """Début de la période d'emploi actuelle (ou de la dernière)."""
         if not self.contrats:
@@ -118,7 +125,7 @@ class Employe(Horodatage, db.Model):
             'actif': bool(self.utilisateur and self.utilisateur.actif),
             'date_entree': _iso(self.date_entree),
             'date_sortie': _iso(self.date_sortie),
-            'heures_mensuelles': self.contrats[-1].heures if self.contrats else None,
+            'heures_mensuelles': self.contrat_actuel.heures if self.contrats else None,
         }
         if avec_contrats:
             data['contrats'] = [c.to_dict() for c in self.contrats]

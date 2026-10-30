@@ -28,7 +28,7 @@ def _database_uri(default):
 
 
 INSECURE_SECRET = 'dev-secret-change-me'
-INSECURE_JWT_SECRET = 'dev-jwt-secret-change-me'
+INSECURE_JWT_SECRET = 'dev-jwt-secret-change-me-in-production-please'
 
 
 class Config:
@@ -56,15 +56,18 @@ class Config:
 
 
 class DevelopmentConfig(Config):
+    ENV_NAME = 'development'
     DEBUG = True
     JWT_COOKIE_SECURE = _env_bool('JWT_COOKIE_SECURE', False)
 
 
 class ProductionConfig(Config):
+    ENV_NAME = 'production'
     DEBUG = False
 
 
 class TestingConfig(Config):
+    ENV_NAME = 'testing'
     TESTING = True
     SQLALCHEMY_DATABASE_URI = os.environ.get(
         'TEST_DATABASE_URL', 'postgresql://presence:presence@localhost:5433/presence_test'
