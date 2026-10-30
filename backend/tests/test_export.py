@@ -1,0 +1,111 @@
+"""Export mensuel pour le comptable, sur un mois de février type."""
+
+import io
+
+import pytest
+from openpyxl import load_workbook
+
+MOIS = '2025-02'
+
+
+@pytest.fixture
+def fevrier(admin, creer_employe, motifs):
+    # Absence à cheval sur janvier et février (l'erreur « 6CP » du fichier Excel d'origine).
+    laudren, _ = creer_employe('camille', nom='Laudren', prenom='Camille', heures=151.67, connecter=False)
+    admin.post('/api/absences', {'employe_id': laudren['id'], 'motif_id': motifs['CP'], 'date_debut': '2025-01-28', 'date_reprise': '2025-02-03'})
+    admin.put('/api/heures', {'employe_id': laudren['id'], 'jour': '2025-02-04', 'heures': 1.5})
+    admin.put('/api/heures', {'employe_id': laudren['id'], 'jour': '2025-02-11', 'heures': 2})
+
+    # Congé maternité en cours.
+    gilet, _ = creer_employe('tiffany', nom='Gilet', prenom='Tiffany', connecter=False)
+    admin.post('/api/absences', {'employe_id': gilet['id'], 'motif_id': motifs['MAT'], 'date_debut': '2025-02-01'})
+
+    # Entrée en cours de mois, avec un déplacement déclaré par l'employée.
+    besnard, session_besnard = creer_employe('orlane', nom='Besnard', prenom='Orlane', date_entree='2025-02-10', heures=121.33)
+    deplacement = session_besnard.post('/api/deplacements', {
+        'date': '2025-02-12', 'depart': 'Pharmacie', 'arrivee': 'Grossiste', 'motif': 'Commande urgente', 'km': 22,
+    }).get_json()
+
+    # Partie fin janvier : ne doit pas apparaître en février.
+    parti, _ = creer_employe('lucie', nom='Balbuena', prenom='Lucie', heures=121.33, connecter=False)
+    admin.post(f"/api/employes/{parti['id']}/depart", {'date_sortie': '2025-01-31'})
+
+    return {'laudren': laudren, 'gilet': gilet, 'besnard': besnard, 'deplacement_id': deplacement['id']}
+
+
+def test_deplacement_en_attente_bloque_l_export(admin, fevrier):
+    controles = admin.get(f'/api/exports/{MOIS}/controles').get_json()
+    assert controles['bloquants'] == ['Orlane Besnard : 1 déplacement(s) en attente de validation']
+    assert any('Tiffany Gilet : absence en cours' in info for info in controles['infos'])
+    assert 'Orlane Besnard : Entrée le 10/02/2025' in controles['infos']
+
+    reponse = admin.get(f'/api/exports/{MOIS}/etat-preparatoire.xlsx')
+    assert reponse.status_code == 409
+    assert reponse.get_json()['code'] == 'controles_bloquants'
+
+
+def test_avertissement_heures_pendant_absence(admin, fevrier):
+    admin.put('/api/heures', {'employe_id': fevrier['laudren']['id'], 'jour': '2025-01-30', 'heures': 1})
+    controles = admin.get('/api/exports/2025-01/controles').get_json()
+    assert any('le 30/01/2025' in a and 'Congés payés' in a for a in controles['avertissements'])
+
+
+def test_export_excel(admin, fevrier):
+    admin.post(f"/api/deplacements/{fevrier['deplacement_id']}/valider")
+    reponse = admin.get(f'/api/exports/{MOIS}/etat-preparatoire.xlsx')
+    assert reponse.status_code == 200
+    assert 'etat-preparatoire-2025-02.xlsx' in reponse.headers['Content-Disposition']
+
+    wb = load_workbook(io.BytesIO(reponse.data))
+    assert wb.sheetnames == ['Récapitulatif', 'Absences', 'Heures en plus', 'Déplacements']
+
+    recap = wb['Récapitulatif']
+    assert recap['A1'].value == 'État préparatoire — février 2025'
+    lignes = [list(r) for r in recap.iter_rows(min_row=5, values_only=True)]
+    par_nom = {ligne[0]: ligne for ligne in lignes}
+    assert set(par_nom) == {'BESNARD', 'GILET', 'LAUDREN'}
+
+    assert par_nom['LAUDREN'][2] == 151.67
+    assert par_nom['LAUDREN'][3] == 3.5
+    assert par_nom['LAUDREN'][4] == '28/01/2025 → reprise 03/02/2025 : Congés payés'
+    assert par_nom['GILET'][4] == '01/02/2025 → en cours : Congé maternité'
+    assert par_nom['BESNARD'][2] == 121.33
+    assert par_nom['BESNARD'][5] == 22
+    assert par_nom['BESNARD'][6] == 'Entrée le 10/02/2025'
+
+    heures = wb['Heures en plus']
+    entete = [c.value for c in heures[4]]
+    assert entete[:3] == ['Nom', 'Prénom', 1] and entete[-1] == 'Total' and len(entete) == 2 + 28 + 1
+    ligne_laudren = next(r for r in heures.iter_rows(min_row=5, values_only=True) if r[0] == 'LAUDREN')
+    assert ligne_laudren[2 + 3] == 1.5 and ligne_laudren[2 + 10] == 2 and ligne_laudren[-1] == 3.5
+
+    deplacements = list(wb['Déplacements'].iter_rows(min_row=5, values_only=True))
+    assert len(deplacements) == 1 and deplacements[0][-1] == 22
+
+
+def test_export_csv(admin, fevrier):
+    admin.post(f"/api/deplacements/{fevrier['deplacement_id']}/valider")
+    recap = admin.get(f'/api/exports/{MOIS}/recap.csv')
+    assert recap.status_code == 200
+    contenu = recap.data.decode('utf-8')
+    assert contenu.startswith('\ufeffNom;Prénom;Contrat (h/mois);Heures en plus;')
+    assert 'LAUDREN;Camille;151,67;3,5;28/01/2025 → reprise 03/02/2025 : Congés payés;;' in contenu
+
+    heures = admin.get(f'/api/exports/{MOIS}/heures.csv').data.decode('utf-8')
+    assert heures.splitlines()[1:] == ['LAUDREN;Camille;04/02/2025;1,5', 'LAUDREN;Camille;11/02/2025;2']
+
+
+def test_changement_de_contrat_dans_le_mois(admin, fevrier):
+    admin.post(f"/api/deplacements/{fevrier['deplacement_id']}/valider")
+    admin.post(f"/api/employes/{fevrier['laudren']['id']}/contrats", {'heures_mensuelles': 121.33, 'date_debut': '2025-02-15'})
+    controles = admin.get(f'/api/exports/{MOIS}/controles').get_json()
+    assert any('changement de contrat' in info for info in controles['infos'])
+    assert not any('Laudren : Entrée' in info or 'Laudren : Sortie' in info for info in controles['infos'])
+
+    contenu = admin.get(f'/api/exports/{MOIS}/recap.csv').data.decode('utf-8')
+    assert 'LAUDREN;Camille;151,67 (au 14/02/2025) puis 121,33 (du 15/02/2025);' in contenu
+
+
+def test_mois_invalide(admin):
+    assert admin.get('/api/mois/2025-13').status_code == 400
+    assert admin.get('/api/exports/abc/controles').status_code == 400

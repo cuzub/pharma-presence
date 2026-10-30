@@ -1,0 +1,23 @@
+# Développement : uniquement PostgreSQL (le backend et le frontend tournent en local).
+# Usage : docker compose -f deploy/compose/docker-compose.dev.yml up -d
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: pharma-presence-db-dev
+    environment:
+      - POSTGRES_DB=presence
+      - POSTGRES_USER=presence
+      - POSTGRES_PASSWORD=presence
+    ports:
+      - "127.0.0.1:5433:5432"
+    volumes:
+      - pharma-presence-dev-data:/var/lib/postgresql/data
+      - ./initdb:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U presence -d presence"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  pharma-presence-dev-data:

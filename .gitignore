@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Env / secrets
+.env
+.env.*
+!.env.example
+
+# Data
+postgres-data/
+data/
+*.dump
+*.dump.gpg
+
+# Frontend
+node_modules/
+dist/
+coverage/
+test-results/
+playwright-report/
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
