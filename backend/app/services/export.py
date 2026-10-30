@@ -15,6 +15,8 @@ _ENTETE_FONT = Font(bold=True, color='FFFFFF')
 _ENTETE_FILL = PatternFill('solid', fgColor='2E7D32')
 _WEEKEND_FILL = PatternFill('solid', fgColor='EEEEEE')
 _FORMAT_NOMBRE = '0.00'
+# Caractères qui font interpréter une cellule comme une formule par Excel / LibreOffice.
+_DEBUTS_FORMULE = ('=', '+', '-', '@', '\t', '\r')
 
 
 def _jours(debut, fin):
@@ -36,6 +38,15 @@ def _feuille(wb, titre, sous_titre, entetes, premiere=False):
         cellule.alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
     ws.freeze_panes = 'C5'
     return ws
+
+
+def _neutraliser_formules(wb):
+    """Les textes saisis (ex. motif d'un déplacement) ne doivent jamais devenir des formules."""
+    for ws in wb.worksheets:
+        for ligne in ws.iter_rows():
+            for cellule in ligne:
+                if isinstance(cellule.value, str) and cellule.value.startswith('='):
+                    cellule.data_type = 's'
 
 
 def _largeurs(ws, largeurs):
@@ -105,6 +116,7 @@ def generer_excel(debut, fin, lignes):
             ws.cell(row=ws.max_row, column=3).number_format = 'DD/MM/YYYY'
     _largeurs(ws, [18, 14, 12, 24, 24, 40, 8])
 
+    _neutraliser_formules(wb)
     flux = io.BytesIO()
     wb.save(flux)
     return flux.getvalue()
@@ -124,6 +136,8 @@ def _cellule_csv(valeur):
         return ''
     if isinstance(valeur, float):
         return format_nombre_fr(valeur)
+    if isinstance(valeur, str) and valeur.startswith(_DEBUTS_FORMULE):
+        return "'" + valeur
     return valeur
 
 
@@ -135,5 +149,8 @@ def generer_csv_heures(debut, fin, lignes):
     resultat = []
     for ligne in lignes:
         for jour, valeur in sorted(ligne['heures'].items()):
-            resultat.append([ligne['employe'].nom.upper(), ligne['employe'].prenom, format_date_fr(jour), format_nombre_fr(valeur)])
+            resultat.append([
+                _cellule_csv(ligne['employe'].nom.upper()), _cellule_csv(ligne['employe'].prenom),
+                format_date_fr(jour), format_nombre_fr(valeur),
+            ])
     return _csv(['Nom', 'Prénom', 'Date', 'Heures en plus'], resultat)

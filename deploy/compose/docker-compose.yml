@@ -1,0 +1,130 @@
+# Production (Raspberry Pi). Usage depuis la racine du dépôt :
+#   docker compose -f deploy/compose/docker-compose.yml --env-file .env up -d --build
+# Voir docs/deploiement.md.
+name: pharma-presence
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB:-presence}
+      - POSTGRES_USER=${POSTGRES_USER:-presence}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:?POSTGRES_PASSWORD est obligatoire}
+      - POSTGRES_INITDB_ARGS=--auth-host=scram-sha-256
+    volumes:
+      - ../../data/postgres:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  backend:
+    build: ../../backend
+    environment:
+      - FLASK_ENV=production
+      - POSTGRES_HOST=db
+      - POSTGRES_DB=${POSTGRES_DB:-presence}
+      - POSTGRES_USER=${POSTGRES_USER:-presence}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:?POSTGRES_PASSWORD est obligatoire}
+      - SECRET_KEY=${SECRET_KEY:?SECRET_KEY est obligatoire}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY:?JWT_SECRET_KEY est obligatoire}
+      - SESSION_HOURS=${SESSION_HOURS:-8}
+      - GUNICORN_WORKERS=${GUNICORN_WORKERS:-2}
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5000/api/health', timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  frontend:
+    build: ../../frontend
+    restart: unless-stopped
+
+  nginx:
+    build: ../../nginx
+    environment:
+      - DOMAINE=${DOMAINE:?DOMAINE est obligatoire}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ../../nginx/acces.conf:/etc/nginx/acces.conf:ro
+      - ../../data/certbot/conf:/etc/letsencrypt:ro
+      - ../../data/certbot/www:/var/www/certbot:ro
+    # Recharge la configuration toutes les 6 h pour prendre en compte les certificats renouvelés.
+    command: /bin/sh -c 'while :; do sleep 6h; nginx -s reload; done & exec /docker-entrypoint.sh nginx -g "daemon off;"'
+    depends_on:
+      - backend
+      - frontend
+    restart: unless-stopped
+
+  certbot:
+    image: certbot/certbot
+    volumes:
+      - ../../data/certbot/conf:/etc/letsencrypt
+      - ../../data/certbot/www:/var/www/certbot
+    entrypoint: /bin/sh -c 'trap exit TERM; while :; do certbot renew --webroot -w /var/www/certbot --quiet; sleep 12h & wait $${!}; done'
+    restart: unless-stopped
+
+  # Sauvegarde quotidienne chiffrée (GPG AES-256), conservée BACKUP_RETENTION_DAYS jours.
+  db-backup:
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB:-presence}
+      - POSTGRES_USER=${POSTGRES_USER:-presence}
+      - PGPASSWORD=${POSTGRES_PASSWORD:?POSTGRES_PASSWORD est obligatoire}
+      - BACKUP_ENCRYPTION_PASSPHRASE=${BACKUP_ENCRYPTION_PASSPHRASE:?BACKUP_ENCRYPTION_PASSPHRASE est obligatoire}
+      - BACKUP_INTERVAL_SECONDS=${BACKUP_INTERVAL_SECONDS:-86400}
+      - BACKUP_RETENTION_DAYS=${BACKUP_RETENTION_DAYS:-30}
+    volumes:
+      - ../../data/backups:/backups
+    command: >
+      sh -c '
+        apk add --no-cache gnupg >/dev/null &&
+        while true; do
+          fichier="/backups/presence_$$(date +%Y%m%d_%H%M%S).dump.gpg";
+          echo "Sauvegarde chiffrée : $${fichier}";
+          pg_dump -h db -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}" -Fc |
+            gpg --batch --yes --pinentry-mode loopback --symmetric --cipher-algo AES256 --passphrase "$${BACKUP_ENCRYPTION_PASSPHRASE}" --output "$${fichier}" &&
+          chmod 600 "$${fichier}" &&
+          find /backups -name "presence_*.dump.gpg" -type f -mtime +"$${BACKUP_RETENTION_DAYS}" -delete;
+          sleep "$${BACKUP_INTERVAL_SECONDS}";
+        done
+      '
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # Copie hors site des sauvegardes (déjà chiffrées) via rclone, activée avec le profil « horssite ».
+  # Configurez d'abord un « remote » rclone dans data/rclone/rclone.conf (voir docs/deploiement.md).
+  backup-horssite:
+    image: rclone/rclone
+    profiles: ["horssite"]
+    environment:
+      - RCLONE_DESTINATION=${RCLONE_DESTINATION:-}
+      - BACKUP_INTERVAL_SECONDS=${BACKUP_INTERVAL_SECONDS:-86400}
+    volumes:
+      - ../../data/backups:/backups:ro
+      - ../../data/rclone:/config/rclone
+    entrypoint: >
+      sh -c '
+        : "$${RCLONE_DESTINATION:?RCLONE_DESTINATION est obligatoire (ex : stockage:pharma-presence)}";
+        while true; do
+          sleep 600;
+          echo "Copie hors site vers $${RCLONE_DESTINATION}";
+          rclone copy /backups "$${RCLONE_DESTINATION}" --include "presence_*.dump.gpg";
+          sleep "$${BACKUP_INTERVAL_SECONDS}";
+        done
+      '
+    depends_on:
+      - db-backup
+    restart: unless-stopped

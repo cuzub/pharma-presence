@@ -109,3 +109,19 @@ def test_changement_de_contrat_dans_le_mois(admin, fevrier):
 def test_mois_invalide(admin):
     assert admin.get('/api/mois/2025-13').status_code == 400
     assert admin.get('/api/exports/abc/controles').status_code == 400
+
+
+def test_textes_saisis_jamais_interpretes_comme_formules(admin, creer_employe):
+    fiche, session = creer_employe('mallory', nom='=HYPERLINK("http://x")', prenom='Eve')
+    deplacement = session.post('/api/deplacements', {
+        'date': '2025-02-12', 'depart': '=1+1', 'arrivee': '@SUM(A1)', 'motif': '=cmd|calc', 'km': 5,
+    }).get_json()
+    admin.post(f"/api/deplacements/{deplacement['id']}/valider")
+
+    wb = load_workbook(io.BytesIO(admin.get(f'/api/exports/{MOIS}/etat-preparatoire.xlsx').data))
+    ligne = next(wb['Déplacements'].iter_rows(min_row=5))
+    assert [ligne[i].data_type for i in (0, 1, 3, 4, 5)] == ['s'] * 5
+    assert ligne[3].value == '=1+1'
+
+    contenu = admin.get(f'/api/exports/{MOIS}/recap.csv').data.decode('utf-8')
+    assert '"\'=HYPERLINK(""HTTP://X"")";Eve;' in contenu
