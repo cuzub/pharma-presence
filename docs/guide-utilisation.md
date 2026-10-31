@@ -108,10 +108,8 @@ Menu **Employés** :
 ### En fin de mois : l'export pour le comptable
 
 Menu **Export** :
-1. Lisez les **contrôles** : les points orange sont des incohérences à vérifier (ex. heures en plus
-   pendant une absence).
-2. Vérifiez l'aperçu, ou le *Tableau* d'un coup d'œil.
-3. Téléchargez l'**État préparatoire Excel** (ou les CSV) et envoyez-le au comptable.
+1. Vérifiez l'aperçu, ou le *Tableau* d'un coup d'œil.
+2. Téléchargez l'**État préparatoire Excel** et envoyez-le au comptable.
 
 Le fichier Excel contient 3 onglets : *Récapitulatif* (une ligne par employé : contrat, périodes
 d'absence, km), *Absences* et *Déplacements* (justificatif des kilomètres). Le CSV récapitulatif

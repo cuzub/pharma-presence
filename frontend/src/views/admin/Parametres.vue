@@ -7,10 +7,11 @@
       <div class="col-lg-7">
         <div class="carte">
           <h2 class="h6">Motifs d'absence</h2>
-          <p class="form-text">Un motif désactivé n'est plus proposé, mais reste visible sur les absences déjà saisies.</p>
+          <p class="form-text mb-1">Un motif désactivé n'est plus proposé, mais reste visible sur les absences déjà saisies.</p>
+          <p class="form-text">Si « Bloque » est coché, un jour couvert par une absence de ce motif ne peut recevoir ni heures ni déplacements.</p>
           <table class="table table-sm">
             <thead>
-              <tr><th>Code</th><th>Libellé</th><th>Couleur</th><th>Bloque heures et déplacements</th><th>Actif</th><th></th></tr>
+              <tr><th>Code</th><th>Libellé</th><th>Couleur</th><th class="text-center" title="Bloque heures et déplacements">Bloque</th><th>Actif</th><th></th></tr>
             </thead>
             <tbody>
               <tr v-for="m in motifs" :key="m.id">
@@ -39,9 +40,9 @@
               <input id="m-couleur" v-model="nouveauMotif.couleur" type="color" class="form-control form-control-sm form-control-color" />
             </div>
             <div class="col-2 pb-1">
-              <div class="form-check">
+              <div class="form-check text-nowrap" title="Bloque heures et déplacements">
                 <input id="m-bloque" v-model="nouveauMotif.bloque_saisie" type="checkbox" class="form-check-input" />
-                <label for="m-bloque" class="form-check-label small">Bloque heures et déplacements</label>
+                <label for="m-bloque" class="form-check-label small">Bloque</label>
               </div>
             </div>
             <div class="col-2">
@@ -52,36 +53,7 @@
       </div>
 
       <div class="col-lg-5">
-        <div class="carte">
-          <h2 class="h6">Jours de fermeture de la pharmacie</h2>
-          <p class="form-text">Jours fériés et dimanches sont déjà grisés automatiquement. Ajoutez ici les autres fermetures (ponts, inventaire…).</p>
-          <form class="row g-2 align-items-end mb-3" @submit.prevent="ajouterFermeture">
-            <div class="col-5">
-              <label for="f-date" class="form-label small mb-1">Date</label>
-              <input id="f-date" v-model="nouvelleFermeture.date" type="date" class="form-control form-control-sm" required />
-            </div>
-            <div class="col-5">
-              <label for="f-libelle" class="form-label small mb-1">Libellé</label>
-              <input id="f-libelle" v-model.trim="nouvelleFermeture.libelle" class="form-control form-control-sm" maxlength="120" placeholder="ex : Pont" />
-            </div>
-            <div class="col-2">
-              <button type="submit" class="btn btn-sm btn-primary w-100">Ajouter</button>
-            </div>
-          </form>
-          <ul class="list-group list-group-flush">
-            <li v-for="f in fermeturesAVenir" :key="f.id" class="list-group-item d-flex justify-content-between align-items-center px-0">
-              <span>{{ formatFr(f.date) }} <span class="text-muted small">{{ f.libelle }}</span></span>
-              <button type="button" class="btn btn-sm btn-outline-danger" title="Supprimer" @click="supprimerFermeture(f)">
-                <i class="bi bi-trash"></i>
-              </button>
-            </li>
-            <li v-if="!fermeturesAVenir.length" class="list-group-item text-muted small px-0">Aucune fermeture à venir.</li>
-          </ul>
-        </div>
-      </div>
-
-      <div class="col-lg-7">
-        <div class="carte">
+        <div class="carte mb-3">
           <h2 class="h6">Motifs de déplacement</h2>
           <p class="form-text">
             Destinations habituelles avec leur distance : lors de la saisie d'un déplacement, les km sont remplis automatiquement.
@@ -118,6 +90,33 @@
               <button type="submit" class="btn btn-sm btn-primary w-100">Ajouter</button>
             </div>
           </form>
+        </div>
+
+        <div class="carte">
+          <h2 class="h6">Jours de fermeture de la pharmacie</h2>
+          <p class="form-text">Jours fériés et dimanches sont déjà grisés automatiquement. Ajoutez ici les autres fermetures (ponts, inventaire…).</p>
+          <form class="row g-2 align-items-end mb-3" @submit.prevent="ajouterFermeture">
+            <div class="col-5">
+              <label for="f-date" class="form-label small mb-1">Date</label>
+              <input id="f-date" v-model="nouvelleFermeture.date" type="date" class="form-control form-control-sm" required />
+            </div>
+            <div class="col-5">
+              <label for="f-libelle" class="form-label small mb-1">Libellé</label>
+              <input id="f-libelle" v-model.trim="nouvelleFermeture.libelle" class="form-control form-control-sm" maxlength="120" placeholder="ex : Pont" />
+            </div>
+            <div class="col-2">
+              <button type="submit" class="btn btn-sm btn-primary w-100">Ajouter</button>
+            </div>
+          </form>
+          <ul class="list-group list-group-flush">
+            <li v-for="f in fermeturesAVenir" :key="f.id" class="list-group-item d-flex justify-content-between align-items-center px-0">
+              <span>{{ formatFr(f.date) }} <span class="text-muted small">{{ f.libelle }}</span></span>
+              <button type="button" class="btn btn-sm btn-outline-danger" title="Supprimer" @click="supprimerFermeture(f)">
+                <i class="bi bi-trash"></i>
+              </button>
+            </li>
+            <li v-if="!fermeturesAVenir.length" class="list-group-item text-muted small px-0">Aucune fermeture à venir.</li>
+          </ul>
         </div>
       </div>
     </div>

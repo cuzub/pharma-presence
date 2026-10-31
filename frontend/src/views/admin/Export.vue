@@ -9,38 +9,12 @@
 
     <div class="row g-3">
       <div class="col-lg-5">
-        <div class="carte mb-3">
-          <h2 class="h6">1. Contrôles avant export</h2>
-          <p v-if="chargement" class="text-muted mb-0">Vérification…</p>
-          <template v-else-if="controles">
-            <div v-if="!controles.bloquants.length && !controles.avertissements.length" class="alert alert-success py-2 mb-2">
-              <i class="bi bi-check-circle"></i> Aucun problème détecté.
-            </div>
-            <div v-for="b in controles.bloquants" :key="b" class="alert alert-danger py-2 mb-2">
-              <i class="bi bi-x-octagon"></i> {{ b }}
-              <RouterLink to="/" class="alert-link ms-1">Corriger au tableau</RouterLink>
-            </div>
-            <div v-for="a in controles.avertissements" :key="a" class="alert alert-warning py-2 mb-2">
-              <i class="bi bi-exclamation-triangle"></i> {{ a }}
-            </div>
-            <div v-for="i in controles.infos" :key="i" class="alert alert-info py-2 mb-2 small">
-              <i class="bi bi-info-circle"></i> {{ i }}
-            </div>
-          </template>
-          <RouterLink :to="{ path: '/', query: { mois } }" class="small">
-            <i class="bi bi-grid-3x3"></i> Vérifier le tableau du mois
-          </RouterLink>
-        </div>
-
         <div class="carte">
-          <h2 class="h6">2. Télécharger</h2>
+          <h2 class="h6">Télécharger</h2>
           <p v-if="controles?.bloquants.length" class="small text-danger">Corrigez les points bloquants pour pouvoir exporter.</p>
-          <div class="d-grid gap-2">
+          <div class="d-grid">
             <button type="button" class="btn btn-primary" :disabled="!exportPossible" @click="exporter('etat-preparatoire.xlsx', `etat-preparatoire-${mois}.xlsx`)">
               <i class="bi bi-file-earmark-excel"></i> État préparatoire Excel (3 onglets)
-            </button>
-            <button type="button" class="btn btn-outline-primary" :disabled="!exportPossible" @click="exporter('recap.csv', `recap-${mois}.csv`)">
-              <i class="bi bi-filetype-csv"></i> Récapitulatif CSV
             </button>
           </div>
         </div>
@@ -51,13 +25,20 @@
           <h2 class="h6 p-3 mb-0">Aperçu du récapitulatif</h2>
           <div class="table-responsive">
             <table class="table table-sm mb-0 apercu">
+              <colgroup>
+                <col style="width: 16%" />
+                <col style="width: 14%" />
+                <col style="width: 12%" />
+                <col style="width: 8%" />
+                <col />
+              </colgroup>
               <thead>
                 <tr>
                   <th>Nom</th>
                   <th>Prénom</th>
                   <th class="text-end">Contrat</th>
-                  <th>Périodes d'absence</th>
                   <th class="text-end">Km</th>
+                  <th>Périodes d'absence</th>
                 </tr>
               </thead>
               <tbody>
@@ -68,10 +49,10 @@
                   <td class="fw-semibold">{{ e.nom.toUpperCase() }}</td>
                   <td>{{ e.prenom }}</td>
                   <td class="text-end text-nowrap">{{ e.contrat }}</td>
+                  <td class="text-end">{{ e.km }}</td>
                   <td class="small">
                     <div v-for="a in e.absences" :key="a">{{ a }}</div>
                   </td>
-                  <td class="text-end">{{ e.km }}</td>
                 </tr>
               </tbody>
             </table>
@@ -137,5 +118,7 @@ watch(mois, charger, { immediate: true })
 <style scoped>
 .apercu {
   font-size: 0.85rem;
+  table-layout: fixed;
+  width: 100%;
 }
 </style>

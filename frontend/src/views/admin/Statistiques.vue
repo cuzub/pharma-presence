@@ -160,8 +160,8 @@ const options = {
       onClick: cliqueLegende
     },
     tooltip: {
-      mode: 'index',
-      intersect: false,
+      mode: 'nearest',
+      intersect: true,
       // Une seule ligne par employé et par mois, sans employé à zéro.
       filter: (item) => minutesDuMois(item.dataset, item.dataIndex) !== 0,
       callbacks: {
