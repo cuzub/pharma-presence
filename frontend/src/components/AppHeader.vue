@@ -11,7 +11,7 @@
           </RouterLink>
         </li>
       </ul>
-      <div class="d-flex align-items-center gap-2 text-white">
+      <div class="d-flex align-items-center gap-2 text-white ms-3">
         <RouterLink to="/mot-de-passe" class="nav-link text-white-50 small" title="Changer mon mot de passe">
           <i class="bi bi-person-circle"></i> {{ auth.nomAffiche }}
         </RouterLink>
