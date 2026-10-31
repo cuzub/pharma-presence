@@ -5,7 +5,7 @@ from app.extensions import db
 from app.models import Deplacement, Employe, MotifDeplacement
 from app.securite import admin_requis, connexion_requise, employe_courant_id
 from app.services.absences import verifier_jour_saisissable
-from app.services.fenetre import verifier_fenetre_employe
+from app.services.fenetre import verifier_fenetre_employe, verifier_jour_ouvert_employe
 from app.services.journal import instantane_deplacement, journaliser
 from app.utils import ApiError, bornes_mois, donnees_json, parse_date, parse_decimal, texte
 
@@ -14,6 +14,7 @@ deplacements_bp = Blueprint('deplacements', __name__, url_prefix='/api/deplaceme
 
 def _verifier_fenetre(jour):
     verifier_fenetre_employe(jour, 'Les déplacements ne peuvent être saisis ou corrigés')
+    verifier_jour_ouvert_employe(jour)
 
 
 def _get(deplacement_id):

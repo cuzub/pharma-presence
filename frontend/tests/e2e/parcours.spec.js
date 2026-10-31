@@ -100,10 +100,10 @@ test('arrivée d’un employé, heures +/-, déplacements déclaratifs, historiq
   await expect(page).toHaveURL(/\/mon-mois/)
 
   // L'employé saisit ses heures +/- depuis le calendrier (clic sur la date).
-  await page.locator(`[data-jour="${mois}-04"]`).click()
+  await page.locator(`[data-jour="${mois}-07"]`).click()
   await page.fill('#jour-minutes', '45')
   await page.locator('.modal-body form button[type=submit]').click()
-  await expect(page.locator(`[data-jour="${mois}-04"] .badge`)).toHaveText('+45min')
+  await expect(page.locator(`[data-jour="${mois}-07"] .badge`)).toHaveText('+45min')
 
   // Clic sur la date → motif du déplacement dans le même formulaire : les km sont remplis automatiquement.
   await page.locator(`[data-jour="${mois}-03"]`).click()

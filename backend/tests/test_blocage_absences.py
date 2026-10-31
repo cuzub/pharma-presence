@@ -70,7 +70,7 @@ def test_deplacements_refuses_pour_admin_et_employe(admin, alice, motifs):
     fiche, session = alice
     _absence(admin, fiche['id'], motifs['CP'], '2025-01-10', '2025-01-15')
 
-    par_employe = session.post('/api/deplacements', {'date': '2025-01-12', 'motif': 'Visite', 'km': 4})
+    par_employe = session.post('/api/deplacements', {'date': '2025-01-13', 'motif': 'Visite', 'km': 4})
     assert par_employe.status_code == 409
     assert par_employe.get_json()['code'] == 'jour_absent'
     assert _deplacement_autre(admin, '2025-01-12', fiche['id']).status_code == 409
@@ -82,7 +82,7 @@ def test_modifier_un_deplacement_vers_un_jour_absent_refuse(admin, alice, motifs
     cree = _deplacement_autre(session, '2025-01-16').get_json()
     _absence(admin, fiche['id'], motifs['CP'], '2025-01-10', '2025-01-15')
 
-    reponse = session.put(f"/api/deplacements/{cree['id']}", {'date': '2025-01-12', 'motif': 'Visite', 'km': 4})
+    reponse = session.put(f"/api/deplacements/{cree['id']}", {'date': '2025-01-13', 'motif': 'Visite', 'km': 4})
     assert reponse.status_code == 409
     assert reponse.get_json()['code'] == 'jour_absent'
 
@@ -91,7 +91,7 @@ def test_suppression_de_deplacement_toujours_permise(admin, alice, motifs):
     fiche, session = alice
     # Déplacement saisi pendant une formation (non bloquante), puis la formation devient bloquante.
     _absence(admin, fiche['id'], motifs['FORM'], '2025-01-10', '2025-01-15')
-    cree = _deplacement_autre(session, '2025-01-12').get_json()
+    cree = _deplacement_autre(session, '2025-01-13').get_json()
     admin.put(f"/api/motifs/{motifs['FORM']}", {'libelle': 'Formation', 'couleur': '#0dcaf0', 'bloque_saisie': True})
 
     assert _deplacement_autre(session, '2025-01-11').status_code == 409

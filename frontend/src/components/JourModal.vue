@@ -13,6 +13,9 @@
     <p v-else-if="verrouilleEmploye" class="alert alert-secondary py-2 small mb-2" data-jour-bloque>
       Ce mois est clôturé pour la saisie. Pour un oubli, adressez-vous à la pharmacienne.
     </p>
+    <p v-else-if="blocageEmploye" class="alert alert-secondary py-2 small mb-2" data-jour-bloque>
+      {{ MOTIFS_BLOCAGE[blocageEmploye] }}
+    </p>
     <form :class="{ 'mb-4': !vueEmploye || regularisations.length }" data-saisie-jour @submit.prevent="enregistrer">
       <h6 v-if="vueEmploye" class="small fw-semibold mb-2">Heures +/-</h6>
       <div class="d-flex flex-wrap align-items-end gap-2">
@@ -144,7 +147,7 @@
 import { computed, nextTick, ref, watch } from 'vue'
 import api, { messageErreur } from '../services/api'
 import { useReferentielStore } from '../stores/referentiel'
-import { absenceBloquanteDuJour, absenceDuJour, ferie, formatFr, formatMinutes, formatNombre, saisieModifiableParEmploye } from '../utils/dates'
+import { absenceBloquanteDuJour, absenceDuJour, blocageJourEmploye, ferie, formatFr, formatMinutes, formatNombre, saisieModifiableParEmploye } from '../utils/dates'
 import Modal from './Modal.vue'
 
 const props = defineProps({
@@ -153,6 +156,7 @@ const props = defineProps({
   jour: { type: String, default: '' },
   // Vue de l'employé : pas de gestion des absences, saisie d'heures limitée à la fenêtre de clôture.
   vueEmploye: { type: Boolean, default: false },
+  joursFermeture: { type: Array, default: () => [] },
   deplacementModifiable: { type: Function, default: () => true }
 })
 const emit = defineEmits(['fermer', 'modifie', 'nouvelle-absence', 'modifier-absence', 'nouveau-deplacement', 'modifier-deplacement'])
@@ -172,9 +176,16 @@ const apercu = computed(() => (Number.isInteger(Number(minutes.value)) ? formatM
 const absence = computed(() => (props.employe ? absenceDuJour(props.employe.absences, props.jour) : null))
 const absenceBloquante = computed(() => (props.employe ? absenceBloquanteDuJour(props.employe.absences, props.jour) : null))
 const verrouilleEmploye = computed(() => props.vueEmploye && !!props.jour && !saisieModifiableParEmploye(props.jour))
+const blocageEmploye = computed(() => (props.vueEmploye && props.jour ? blocageJourEmploye(props.jour, props.joursFermeture) : null))
+const MOTIFS_BLOCAGE = {
+  future: 'Date future : saisie impossible.',
+  dimanche: 'Dimanche : saisie impossible.',
+  ferie: 'Jour férié : saisie impossible.',
+  fermeture: 'Jour de fermeture de la pharmacie : saisie impossible.'
+}
 const horsContrat = computed(() => !!props.employe && !!props.jour
   && !(props.employe.contrats || []).some((c) => c.date_debut <= props.jour && (!c.date_fin || c.date_fin >= props.jour)))
-const bloque = computed(() => !!absenceBloquante.value || verrouilleEmploye.value || horsContrat.value)
+const bloque = computed(() => !!absenceBloquante.value || verrouilleEmploye.value || horsContrat.value || !!blocageEmploye.value)
 const deplacements = computed(() => (props.employe?.deplacements || []).filter((d) => d.date === props.jour))
 const regularisations = computed(() => (props.employe?.regularisations || []).filter((r) => r.jour === props.jour))
 const ferieDuJour = computed(() => (props.jour ? ferie(props.jour) : null))

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
-  absenceBloquanteDuJour, absenceCouvre, ajouterJours, decalerMois, estMoisValide, ferie, formatFr, formatMinutes, jourSemaine, saisieModifiableParEmploye,
+  absenceBloquanteDuJour, absenceCouvre, ajouterJours, decalerMois, estMoisValide, ferie, formatFr, formatMinutes, jourSemaine, saisieModifiableParEmploye, blocageJourEmploye,
   joursDuMois, libelleMois, minutesRegularisation, paques, titreRegularisation
 } from '../../src/utils/dates'
 
@@ -143,5 +143,22 @@ describe('régularisations', () => {
   it('titre avec et sans commentaire', () => {
     expect(titreRegularisation({ minutes: -1200, commentaire: 'Heures payées' })).toBe('Régularisation -20h — Heures payées')
     expect(titreRegularisation({ minutes: 90, commentaire: null })).toBe('Régularisation +1h30')
+  })
+})
+
+describe('blocageJourEmploye', () => {
+  const reference = '2025-05-12'
+  it.each([
+    ['2025-05-13', 'future'],
+    ['2025-05-10', null],
+    ['2025-05-04', 'dimanche'],
+    ['2025-05-08', 'ferie'],
+    ['2025-05-06', null]
+  ])('%s → %s', (jour, attendu) => {
+    expect(blocageJourEmploye(jour, [], reference)).toBe(attendu)
+  })
+
+  it('bloque les jours de fermeture de la pharmacie', () => {
+    expect(blocageJourEmploye('2025-05-06', [{ date: '2025-05-06' }], reference)).toBe('fermeture')
   })
 })

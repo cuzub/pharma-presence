@@ -7,7 +7,7 @@ from app.extensions import db
 from app.models import Employe, HeuresEnPlus, JourFermeture, MotifAbsence
 from app.securite import admin_requis, connexion_requise, employe_courant_id
 from app.services.absences import verifier_jour_saisissable
-from app.services.fenetre import verifier_fenetre_employe
+from app.services.fenetre import verifier_fenetre_employe, verifier_jour_ouvert_employe
 from app.services.journal import instantane_heures, journaliser
 from app.utils import ApiError, donnees_json, parse_date, texte
 
@@ -35,6 +35,7 @@ def enregistrer_heures():
     jour = parse_date(data.get('jour'), 'jour')
     if not current_user.est_admin:
         verifier_fenetre_employe(jour, 'Les heures +/- ne peuvent être saisies ou corrigées')
+        verifier_jour_ouvert_employe(jour)
     existant = HeuresEnPlus.query.filter_by(employe_id=employe_id, jour=jour).first()
     avant = instantane_heures(existant) if existant else None
 

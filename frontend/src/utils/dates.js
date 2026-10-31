@@ -161,3 +161,12 @@ export const saisieModifiableParEmploye = (jour, reference = aujourdhuiIso()) =>
   if (jour.slice(0, 7) === moisReference) return true
   return Number(reference.slice(8)) <= JOUR_LIMITE_MOIS_PRECEDENT && jour.slice(0, 7) === decalerMois(moisReference, -1)
 }
+
+// Jours où l'employé ne saisit rien (même règle que le serveur) : motif du blocage, ou null.
+export const blocageJourEmploye = (jour, joursFermeture = [], reference = aujourdhuiIso()) => {
+  if (jour > reference) return 'future'
+  if (jourSemaine(jour) === 6) return 'dimanche'
+  if (ferie(jour)) return 'ferie'
+  if (joursFermeture.some((j) => j.date === jour)) return 'fermeture'
+  return null
+}

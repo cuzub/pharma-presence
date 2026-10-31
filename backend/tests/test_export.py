@@ -13,7 +13,8 @@ MOIS = '2025-02'
 
 
 @pytest.fixture
-def fevrier(admin, creer_employe, motifs):
+def fevrier(admin, creer_employe, motifs, aujourdhui):
+    aujourdhui['date'] = date(2025, 2, 28)
     # Absence à cheval sur janvier et février (l'erreur « 6CP » du fichier Excel d'origine).
     laudren, _ = creer_employe('camille', nom='Laudren', prenom='Camille', heures=151.67, connecter=False)
     admin.post('/api/absences', {'employe_id': laudren['id'], 'motif_id': motifs['CP'], 'date_debut': '2025-01-28', 'date_reprise': '2025-02-03'})
@@ -105,7 +106,8 @@ def test_mois_invalide(admin):
     assert admin.get('/api/exports/abc/controles').status_code == 400
 
 
-def test_textes_saisis_jamais_interpretes_comme_formules(admin, creer_employe):
+def test_textes_saisis_jamais_interpretes_comme_formules(admin, creer_employe, aujourdhui):
+    aujourdhui['date'] = date(2025, 2, 28)
     fiche, session = creer_employe('mallory', nom='=HYPERLINK("http://x")', prenom='Eve')
     deplacement = session.post('/api/deplacements', {
         'date': '2025-02-12', 'motif': '=cmd|calc', 'km': 5,
