@@ -12,7 +12,11 @@ indemnités kilométriques). Voir [docs/intent/suivi-presence-pharmacie.md](docs
 **Pharmacienne (administratrice)**
 - Tableau du mois : une ligne par employé, une colonne par jour ; clic sur une case pour saisir
   des heures en plus / en moins (en minutes, par 5 : `15`, `-30`), une absence ou un déplacement.
-- Tableau du mois : colonnes Employé, H +/- et Km figées, km du jour sous les minutes.
+- Tableau du mois : colonnes Employé, H +/- et Km figées, km du jour sous les minutes. H +/- = solde
+  cumulé à la fin du mois affiché (tout l'historique, régularisations comprises).
+- Régularisations d'heures +/- (Employés → Gérer) : crédit ou débit daté avec commentaire facultatif
+  (heures payées, récupération, solde de départ, correction), affiché en violet dans le tableau et le
+  calendrier de l'employé, compté dans le solde et les statistiques, absent de l'export.
 - Absences par période (premier jour d'absence → jour de reprise, ou « en cours ») avec motif ;
   les chevauchements sont refusés. Un motif bloquant interdit les heures et déplacements les jours
   d'absence ; la suppression des saisies en conflit exige une confirmation.
@@ -24,7 +28,7 @@ indemnités kilométriques). Voir [docs/intent/suivi-presence-pharmacie.md](docs
 - Export comptable mensuel : contrôles avant export, fichier Excel (Récapitulatif, Absences,
   Déplacements) et CSV (format Excel FR). Sans heures +/- ni entrées / sorties.
 - Historique : journal immuable des créations / modifications / suppressions (déplacements, heures,
-  absences) avec auteur et avant → après, filtrable par employé, mois, auteur et type.
+  régularisations, absences) avec auteur et avant → après, filtrable par employé, mois, auteur et type.
 - Statistiques : heures en plus / en moins par année, en net, avec un graphique empilé par employé
   et mois, un tableau du net mensuel, les totaux annuels et d'équipe ; employés partis inclus.
   Clic sur un employé (légende ou tableau) pour l'isoler.
@@ -32,7 +36,8 @@ indemnités kilométriques). Voir [docs/intent/suivi-presence-pharmacie.md](docs
   déplacement (destination + km), jours de fermeture.
 
 **Employé**
-- « Mon mois » : calendrier (absences en lecture seule) et résumé ; clic sur une date pour saisir
+- « Mon mois » : calendrier (absences et régularisations en lecture seule) et résumé (net du mois,
+  solde cumulé) ; clic sur une date pour saisir
   ses heures +/- ou déclarer un déplacement, crayon pour le modifier ou le supprimer (mois en cours,
   et mois précédent jusqu'au 5 inclus).
 

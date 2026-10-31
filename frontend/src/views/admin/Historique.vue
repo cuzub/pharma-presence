@@ -4,7 +4,7 @@
       <h1 class="h4 mb-0">Historique des modifications</h1>
     </div>
     <p class="text-muted small">
-      Qui a créé, modifié ou supprimé un déplacement, des heures en plus / en moins ou une absence, et quand.
+      Qui a créé, modifié ou supprimé un déplacement, des heures en plus / en moins, une régularisation ou une absence, et quand.
       Cet historique ne peut être ni modifié ni effacé.
     </p>
 
@@ -111,7 +111,8 @@ const PAR_PAGE = 50
 const TYPES = {
   deplacement: { libelle: 'Déplacement', icone: 'bi-car-front' },
   heures: { libelle: 'Heures +/-', icone: 'bi-clock' },
-  absence: { libelle: 'Absence', icone: 'bi-calendar-x' }
+  absence: { libelle: 'Absence', icone: 'bi-calendar-x' },
+  regularisation: { libelle: 'Régularisation', icone: 'bi-arrow-left-right' }
 }
 
 const ACTIONS = {
@@ -138,6 +139,9 @@ const resume = (type, donnees) => {
   if (!donnees) return ''
   if (type === 'deplacement') return `${formatFr(donnees.date)} : ${donnees.motif} — ${formatNombre(donnees.km)} km`
   if (type === 'heures') return `${formatFr(donnees.jour)} : ${formatMinutes(donnees.minutes)}`
+  if (type === 'regularisation') {
+    return `${formatFr(donnees.jour)} : ${formatMinutes(donnees.minutes)}${donnees.commentaire ? ` (${donnees.commentaire})` : ''}`
+  }
   const reprise = donnees.date_reprise ? `reprise le ${formatFr(donnees.date_reprise)}` : 'en cours'
   return `${donnees.motif} du ${formatFr(donnees.date_debut)}, ${reprise}${donnees.commentaire ? ` (${donnees.commentaire})` : ''}`
 }

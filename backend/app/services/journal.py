@@ -1,4 +1,4 @@
-"""Journal des modifications : qui a créé / modifié / supprimé un déplacement, des heures ou une absence."""
+"""Journal des modifications : qui a créé / modifié / supprimé un déplacement, des heures, une régularisation ou une absence."""
 
 from flask_jwt_extended import current_user
 
@@ -12,6 +12,14 @@ def instantane_deplacement(deplacement):
 
 def instantane_heures(heures):
     return {'jour': heures.jour.isoformat(), 'minutes': heures.minutes}
+
+
+def instantane_regularisation(regularisation):
+    return {
+        'jour': regularisation.jour.isoformat(),
+        'minutes': regularisation.minutes,
+        'commentaire': regularisation.commentaire,
+    }
 
 
 def instantane_absence(absence):

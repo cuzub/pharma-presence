@@ -15,6 +15,7 @@
             :absences="employe.absences"
             :heures="employe.heures"
             :deplacements="employe.deplacements"
+            :regularisations="employe.regularisations"
             :deplacement-modifiable="(d) => saisieModifiableParEmploye(d.date)"
             :jours-fermeture="joursFermeture"
             :contrats="employe.contrats"

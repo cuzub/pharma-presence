@@ -49,6 +49,22 @@ test('arrivée d’un employé, heures +/-, déplacements déclaratifs, historiq
   await expect(ligne.locator(`td[data-jour="${mois}-05"]`)).toHaveText('-30min')
   await expect(ligne.locator('td.col-total').first()).toHaveText('+1h')
 
+  // Régularisation depuis Employés → Gérer : débit de 2 h (heures payées), visible dans le tableau et compté dans le solde.
+  await page.goto('/employes')
+  await page.locator('tr', { hasText: nom }).getByRole('button', { name: 'Gérer' }).click()
+  await page.selectOption('#reg-sens', 'debit')
+  await page.fill('#reg-heures', '2')
+  await page.fill('#reg-jour', `${mois}-06`)
+  await page.fill('#reg-commentaire', 'Heures payées e2e')
+  await page.locator('[data-regularisations] button[type=submit]').click()
+  await expect(page.locator('[data-regularisations] [data-regularisation]')).toContainText('-2h')
+  await expect(page.locator('[data-solde-fiche]')).toBeVisible()
+  await page.keyboard.press('Escape')
+  await page.goto(`/?mois=${mois}`)
+  await expect(ligne.locator(`td[data-jour="${mois}-06"] [data-regularisation]`)).toHaveText('-2h')
+  await expect(ligne.locator(`td[data-jour="${mois}-06"]`)).toHaveAttribute('title', /Heures payées e2e/)
+  await expect(ligne.locator('td[data-solde]')).toHaveText('-1h')
+
   // La pharmacienne crée un motif de déplacement avec sa distance.
   const destination = `Dest${suffixe}`
   await page.goto('/parametres')
@@ -67,6 +83,9 @@ test('arrivée d’un employé, heures +/-, déplacements déclaratifs, historiq
   await page.click('button[type=submit]')
   await expect(page).toHaveURL(/\/mon-mois/)
   await expect(page.locator(`[data-jour="${mois}-02"] .badge`)).toHaveText('+1h30')
+  // La régularisation apparaît dans le calendrier de l'employé (lecture seule), avec le solde cumulé.
+  await expect(page.locator(`[data-jour="${mois}-06"] [data-regularisation]`)).toContainText('-2h')
+  await expect(page.locator('[data-solde]')).toHaveText('-1h')
 
   await page.goto('/employes')
   await expect(page).toHaveURL(/\/mon-mois/)
@@ -120,10 +139,10 @@ test('arrivée d’un employé, heures +/-, déplacements déclaratifs, historiq
   await expect(journal).toHaveCount(2)
   await expect(journal.first()).toContainText('-30min')
 
-  // Statistiques : cumul mensuel net de l'employé (+90, -30 et +45 ce mois-ci = +1h45), puis année précédente.
+  // Statistiques : net mensuel de l'employé (+90, -30, +45 et la régularisation de -2h = -15min), puis année précédente.
   await page.goto('/statistiques')
   await expect(page.getByRole('heading', { name: 'Statistiques — heures en plus / en moins' })).toBeVisible()
-  await expect(page.locator('tr', { hasText: nom }).locator('td.col-total')).toHaveText('+1h45')
+  await expect(page.locator('tr', { hasText: nom }).locator('td.col-total')).toHaveText('-15min')
   await page.getByRole('button', { name: 'Année précédente' }).click()
   await expect(page).toHaveURL(new RegExp(`annee=${new Date().getFullYear() - 1}`))
 

@@ -49,6 +49,8 @@
       </table>
       <p class="form-text mb-4">Corrigez ici une erreur de saisie. Pour un changement de contrat, utilisez « Avenant » ci-dessous.</p>
 
+      <RegularisationsEmploye :employe-id="employeId" @modifie="emit('modifie')" />
+
       <div v-if="enPoste" class="row g-3">
         <div class="col-md-4">
           <form class="border rounded p-3 h-100" @submit.prevent="avenant">
@@ -106,6 +108,7 @@ import api, { messageErreur } from '../services/api'
 import { aujourdhuiIso } from '../utils/dates'
 import { genererMotDePasse } from '../utils/motDePasse'
 import Modal from './Modal.vue'
+import RegularisationsEmploye from './RegularisationsEmploye.vue'
 
 const props = defineProps({ employeId: { type: Number, default: null } })
 const emit = defineEmits(['fermer', 'modifie'])

@@ -22,7 +22,7 @@
                 <div class="small text-muted">{{ jour.initiale }}</div>
                 <div>{{ jour.numero }}</div>
               </th>
-              <th class="col-total col-hpm" title="Total net des heures en plus / en moins du mois">H +/-</th>
+              <th class="col-total col-hpm" title="Solde cumulé des heures en plus / en moins à la fin du mois (tout l'historique, régularisations comprises)">H +/-</th>
               <th class="col-total col-km" title="Kilomètres de déplacements">Km</th>
             </tr>
           </thead>
@@ -59,8 +59,17 @@
                   <span v-else-if="employe.heures[jour.iso]" :class="['heures', employe.heures[jour.iso] < 0 ? 'minutes-moins' : 'minutes-plus']">{{ formatMinutes(employe.heures[jour.iso]) }}</span>
                 </div>
                 <div v-if="kmDuJour(employe, jour.iso)" class="km-jour">{{ formatNombre(kmDuJour(employe, jour.iso)) }} km</div>
+                <div v-if="regularisationsDuJour(employe, jour.iso).length" class="badge regularisation regul-jour" data-regularisation>
+                  {{ formatMinutes(totalRegularisationsDuJour(employe, jour.iso)) }}
+                </div>
               </td>
-              <td :class="['col-total', 'col-hpm', 'fw-semibold', employe.total_minutes < 0 ? 'minutes-moins' : 'minutes-plus']">{{ formatMinutes(employe.total_minutes) }}</td>
+              <td
+                :class="['col-total', 'col-hpm', 'fw-semibold', employe.solde_minutes < 0 ? 'minutes-moins' : 'minutes-plus']"
+                :title="titreSolde(employe)"
+                data-solde
+              >
+                {{ formatMinutes(employe.solde_minutes) || '0' }}
+              </td>
               <td class="col-total col-km">
                 {{ employe.total_km ? formatNombre(employe.total_km) : '' }}
               </td>
@@ -79,6 +88,8 @@
       <span><span class="legende ferie"></span> Férié</span>
       <span><span class="legende fermeture"></span> Fermeture</span>
       <span><span class="legende hors-contrat"></span> Hors contrat</span>
+      <span><span class="badge regularisation">±h</span> Régularisation (Employés → Gérer)</span>
+      <span class="text-muted">H +/- : solde cumulé à la fin du mois.</span>
       <span class="text-muted">Cliquez sur une case pour saisir des heures en plus / en moins, une absence ou un déplacement.</span>
     </div>
 
@@ -122,7 +133,7 @@ import { useMoisUrl } from '../../composables/useMoisUrl'
 import { useSaisieJour } from '../../composables/useSaisieJour'
 import api, { messageErreur } from '../../services/api'
 import { useReferentielStore } from '../../stores/referentiel'
-import { JOURS_COURTS, absenceDuJour, aujourdhuiIso, ferie, formatFr, formatMinutes, formatNombre, jourSemaine, joursDuMois } from '../../utils/dates'
+import { JOURS_COURTS, absenceDuJour, aujourdhuiIso, ferie, formatFr, formatMinutes, formatNombre, jourSemaine, joursDuMois, titreRegularisation } from '../../utils/dates'
 
 const referentiel = useReferentielStore()
 const mois = useMoisUrl()
@@ -176,6 +187,17 @@ const absence = (employe, iso) => absenceDuJour(employe.absences, iso)
 const deplacementsDuJour = (employe, iso) => employe.deplacements.filter((d) => d.date === iso)
 const kmDuJour = (employe, iso) => deplacementsDuJour(employe, iso).reduce((somme, d) => somme + d.km, 0)
 
+const regularisationsDuJour = (employe, iso) => (employe.regularisations || []).filter((r) => r.jour === iso)
+const totalRegularisationsDuJour = (employe, iso) =>
+  regularisationsDuJour(employe, iso).reduce((somme, r) => somme + r.minutes, 0)
+
+const titreSolde = (employe) => {
+  const regularisations = (employe.regularisations || []).reduce((somme, r) => somme + r.minutes, 0)
+  const morceaux = [`Solde cumulé fin de mois : ${formatMinutes(employe.solde_minutes) || '0'}`, `Net du mois : ${formatMinutes(employe.total_minutes) || '0'}`]
+  if (regularisations) morceaux.push(`dont régularisations : ${formatMinutes(regularisations)}`)
+  return morceaux.join(' — ')
+}
+
 const horsContrat = (employe, iso) =>
   !employe.contrats.some((c) => c.date_debut <= iso && (!c.date_fin || c.date_fin >= iso))
 
@@ -191,6 +213,7 @@ const titreCase = (employe, jour) => {
   if (employe.heures[jour.iso]) morceaux.push(formatMinutes(employe.heures[jour.iso]))
   const deplacements = deplacementsDuJour(employe, jour.iso)
   if (deplacements.length) morceaux.push(`Déplacements : ${deplacements.map((d) => `${d.motif} ${formatNombre(d.km)} km`).join(', ')}`)
+  morceaux.push(...regularisationsDuJour(employe, jour.iso).map(titreRegularisation))
   return morceaux.join(' — ')
 }
 
@@ -300,6 +323,11 @@ thead .aujourdhui {
   font-size: 0.65rem;
   color: #6c757d;
   white-space: nowrap;
+}
+
+.regul-jour {
+  font-size: 0.6rem;
+  padding: 1px 3px;
 }
 
 .col-total {

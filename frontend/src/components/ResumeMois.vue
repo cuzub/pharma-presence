@@ -14,12 +14,25 @@
         <span v-else class="text-muted">Aucun contrat ce mois-ci</span>
       </dd>
 
-      <dt>Heures en plus / en moins</dt>
+      <dt>Heures en plus / en moins du mois</dt>
       <dd>
-        <span v-if="Object.keys(employe.heures || {}).length" :class="employe.total_minutes < 0 ? 'minutes-moins' : 'minutes-plus'">
+        <span
+          v-if="Object.keys(employe.heures || {}).length || employe.regularisations?.length"
+          :class="employe.total_minutes < 0 ? 'minutes-moins' : 'minutes-plus'"
+        >
           {{ employe.total_minutes ? formatMinutes(employe.total_minutes) : '0' }}
         </span>
         <span v-else>Aucune</span>
+        <div v-if="employe.regularisations?.length" class="small regularisation">
+          dont régularisations : {{ formatMinutes(totalRegularisations) || '0' }}
+        </div>
+      </dd>
+
+      <dt>Solde cumulé à fin de mois</dt>
+      <dd data-solde>
+        <span :class="['fw-semibold', employe.solde_minutes < 0 ? 'minutes-moins' : 'minutes-plus']">
+          {{ employe.solde_minutes ? formatMinutes(employe.solde_minutes) : '0' }}
+        </span>
       </dd>
 
       <dt>Absences</dt>
@@ -51,6 +64,7 @@ const props = defineProps({
 const jours = computed(() => (props.mois ? joursDuMois(props.mois) : []))
 const debutMois = computed(() => jours.value[0] || '0000-00-00')
 const finMois = computed(() => jours.value[jours.value.length - 1] || '9999-12-31')
+const totalRegularisations = computed(() => (props.employe.regularisations || []).reduce((s, r) => s + r.minutes, 0))
 </script>
 
 <style scoped>

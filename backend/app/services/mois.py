@@ -5,7 +5,8 @@ from datetime import timedelta
 
 from sqlalchemy import or_
 
-from app.models import Absence, Deplacement, Employe, HeuresEnPlus, JourFermeture
+from app.models import Absence, Deplacement, Employe, HeuresEnPlus, JourFermeture, RegularisationHeures
+from app.services.solde import soldes_jusqua
 from app.utils import format_date_fr
 
 MOIS_FR = [
@@ -67,17 +68,22 @@ def _mouvements(employe, debut, fin):
     return mouvements
 
 
-def donnees_mois(debut, fin, employe_id=None):
-    """Retourne la liste des employés concernés par le mois avec toutes leurs saisies."""
+def donnees_mois(debut, fin, employe_id=None, pour_export=False):
+    """Retourne la liste des employés concernés par le mois avec toutes leurs saisies.
+
+    Pour l'export, les régularisations seules (sans contrat ni autre saisie) ne font pas apparaître un employé.
+    """
     absences_q = Absence.query.filter(
         Absence.date_debut <= fin, or_(Absence.date_reprise.is_(None), Absence.date_reprise > debut)
     )
     heures_q = HeuresEnPlus.query.filter(HeuresEnPlus.jour.between(debut, fin))
+    regularisations_q = RegularisationHeures.query.filter(RegularisationHeures.jour.between(debut, fin))
     deplacements_q = Deplacement.query.filter(Deplacement.date.between(debut, fin))
     employes_q = Employe.query
     if employe_id is not None:
         absences_q = absences_q.filter(Absence.employe_id == employe_id)
         heures_q = heures_q.filter(HeuresEnPlus.employe_id == employe_id)
+        regularisations_q = regularisations_q.filter(RegularisationHeures.employe_id == employe_id)
         deplacements_q = deplacements_q.filter(Deplacement.employe_id == employe_id)
         employes_q = employes_q.filter(Employe.id == employe_id)
 
@@ -87,14 +93,21 @@ def donnees_mois(debut, fin, employe_id=None):
     heures = defaultdict(dict)
     for ligne in heures_q.all():
         heures[ligne.employe_id][ligne.jour] = ligne.minutes
+    regularisations = defaultdict(list)
+    for regularisation in regularisations_q.order_by(RegularisationHeures.jour, RegularisationHeures.id).all():
+        regularisations[regularisation.employe_id].append(regularisation)
     deplacements = defaultdict(list)
     for deplacement in deplacements_q.order_by(Deplacement.date).all():
         deplacements[deplacement.employe_id].append(deplacement)
+    soldes = soldes_jusqua(fin, None if employe_id is None else [employe_id])
 
     resultat = []
     for employe in employes_q.order_by(Employe.nom, Employe.prenom).all():
         contrats = employe.contrats_sur_periode(debut, fin)
-        a_des_saisies = employe.id in absences or employe.id in heures or employe.id in deplacements
+        a_des_saisies = (
+            employe.id in absences or employe.id in heures or employe.id in deplacements
+            or (employe.id in regularisations and not pour_export)
+        )
         if not contrats and not a_des_saisies and employe_id is None:
             continue
         resultat.append({
@@ -102,8 +115,12 @@ def donnees_mois(debut, fin, employe_id=None):
             'contrats': contrats,
             'absences': absences[employe.id],
             'heures': heures[employe.id],
+            'regularisations': regularisations[employe.id],
             'deplacements': deplacements[employe.id],
-            'total_minutes': sum(heures[employe.id].values()),
+            # Net du mois : heures du jour et régularisations.
+            'total_minutes': sum(heures[employe.id].values()) + sum(r.minutes for r in regularisations[employe.id]),
+            # Solde cumulé sur tout l'historique jusqu'au dernier jour du mois.
+            'solde_minutes': soldes[employe.id],
             'total_km': sum(float(d.km) for d in deplacements[employe.id]),
             'mouvements': _mouvements(employe, debut, fin),
         })
@@ -122,7 +139,9 @@ def serialiser_mois(debut, fin, lignes):
             'contrats': [c.to_dict() for c in ligne['contrats']],
             'absences': [a.to_dict() for a in ligne['absences']],
             'heures': {jour.isoformat(): valeur for jour, valeur in sorted(ligne['heures'].items())},
+            'regularisations': [r.to_dict() for r in ligne['regularisations']],
             'total_minutes': ligne['total_minutes'],
+            'solde_minutes': ligne['solde_minutes'],
             'total_km': ligne['total_km'],
             'mouvements': ligne['mouvements'],
             'deplacements': [d.to_dict() for d in ligne['deplacements']],

@@ -25,12 +25,12 @@ def mois_detail(mois):
 @admin_requis
 def export_controles(mois):
     debut, fin = bornes_mois(mois)
-    return jsonify(controles(debut, fin, donnees_mois(debut, fin))), 200
+    return jsonify(controles(debut, fin, donnees_mois(debut, fin, pour_export=True))), 200
 
 
 def _lignes_exportables(mois):
     debut, fin = bornes_mois(mois)
-    lignes = donnees_mois(debut, fin)
+    lignes = donnees_mois(debut, fin, pour_export=True)
     resultat = controles(debut, fin, lignes)
     if resultat['bloquants']:
         raise ApiError(

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   absenceBloquanteDuJour, absenceCouvre, ajouterJours, decalerMois, estMoisValide, ferie, formatFr, formatMinutes, jourSemaine, saisieModifiableParEmploye,
-  joursDuMois, libelleMois, paques
+  joursDuMois, libelleMois, minutesRegularisation, paques, titreRegularisation
 } from '../../src/utils/dates'
 
 describe('paques', () => {
@@ -124,5 +124,24 @@ describe('saisieModifiableParEmploye', () => {
     ['2025-01-03', '2024-12-15', true]
   ])('le %s, déplacement du %s → %s', (reference, jour, attendu) => {
     expect(saisieModifiableParEmploye(jour, reference)).toBe(attendu)
+  })
+})
+
+describe('régularisations', () => {
+  it.each([
+    ['credit', 2, 30, 150],
+    ['debit', 20, 0, -1200],
+    ['debit', '', 45, -45],
+    ['credit', 0, 0, null],
+    ['credit', 1, 60, null],
+    ['credit', -1, 0, null],
+    ['credit', 1.5, 0, null]
+  ])('%s de %sh%s → %s', (sens, heures, minutes, attendu) => {
+    expect(minutesRegularisation(sens, heures, minutes)).toBe(attendu)
+  })
+
+  it('titre avec et sans commentaire', () => {
+    expect(titreRegularisation({ minutes: -1200, commentaire: 'Heures payées' })).toBe('Régularisation -20h — Heures payées')
+    expect(titreRegularisation({ minutes: 90, commentaire: null })).toBe('Régularisation +1h30')
   })
 })

@@ -5,6 +5,8 @@
   --case-ferie: #fff3e0;
   --case-fermeture: #f3e5f5;
   --case-hors-contrat: repeating-linear-gradient(45deg, #f5f5f5, #f5f5f5 4px, #e0e0e0 4px, #e0e0e0 8px);
+  --regularisation: #6f42c1;
+  --regularisation-fond: #f3edfb;
 }
 
 body {
@@ -88,4 +90,14 @@ body {
 .badge.minutes-moins {
   background: #f59e0b;
   color: #212529;
+}
+
+/* Régularisations (crédit / débit saisis par la pharmacienne) : violet, distinct des heures du jour. */
+.regularisation {
+  color: var(--regularisation);
+}
+
+.badge.regularisation {
+  background: var(--regularisation);
+  color: #fff;
 }

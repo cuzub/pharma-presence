@@ -5,7 +5,7 @@ from datetime import date
 from sqlalchemy import case, extract, func, or_
 
 from app.extensions import db
-from app.models import Contrat, Employe, HeuresEnPlus
+from app.models import Contrat, Employe, HeuresEnPlus, RegularisationHeures
 
 MOIS = range(12)
 
@@ -17,21 +17,22 @@ def _vide():
 def statistiques_annee(annee):
     debut, fin = date(annee, 1, 1), date(annee, 12, 31)
 
-    mois = extract('month', HeuresEnPlus.jour)
-    plus = func.sum(case((HeuresEnPlus.minutes > 0, HeuresEnPlus.minutes), else_=0))
-    moins = func.sum(case((HeuresEnPlus.minutes < 0, HeuresEnPlus.minutes), else_=0))
-    lignes = (
-        db.session.query(HeuresEnPlus.employe_id, mois, plus, moins)
-        .filter(HeuresEnPlus.jour >= debut, HeuresEnPlus.jour <= fin)
-        .group_by(HeuresEnPlus.employe_id, mois)
-        .all()
-    )
-
+    # Heures du jour et régularisations (crédits / débits) comptent toutes deux.
     par_employe = {}
-    for employe_id, numero, total_plus, total_moins in lignes:
-        donnees = par_employe.setdefault(employe_id, {'plus': _vide(), 'moins': _vide()})
-        donnees['plus'][int(numero) - 1] = int(total_plus or 0)
-        donnees['moins'][int(numero) - 1] = int(total_moins or 0)
+    for modele in (HeuresEnPlus, RegularisationHeures):
+        mois = extract('month', modele.jour)
+        plus = func.sum(case((modele.minutes > 0, modele.minutes), else_=0))
+        moins = func.sum(case((modele.minutes < 0, modele.minutes), else_=0))
+        lignes = (
+            db.session.query(modele.employe_id, mois, plus, moins)
+            .filter(modele.jour >= debut, modele.jour <= fin)
+            .group_by(modele.employe_id, mois)
+            .all()
+        )
+        for employe_id, numero, total_plus, total_moins in lignes:
+            donnees = par_employe.setdefault(employe_id, {'plus': _vide(), 'moins': _vide()})
+            donnees['plus'][int(numero) - 1] += int(total_plus or 0)
+            donnees['moins'][int(numero) - 1] += int(total_moins or 0)
 
     ids_contrats = [
         employe_id

@@ -249,6 +249,35 @@ class HeuresEnPlus(Horodatage, db.Model):
         return {'id': self.id, 'employe_id': self.employe_id, 'jour': _iso(self.jour), 'minutes': self.minutes}
 
 
+class RegularisationHeures(Horodatage, db.Model):
+    """Crédit ou débit d'heures +/- saisi par la pharmacienne (heures payées, récupération, solde de départ...)."""
+
+    __tablename__ = 'regularisations_heures'
+
+    MINUTES_MAX = 30000
+
+    id = db.Column(db.Integer, primary_key=True)
+    employe_id = db.Column(db.Integer, db.ForeignKey('employes.id', ondelete='CASCADE'), nullable=False, index=True)
+    jour = db.Column(db.Date, nullable=False)
+    # Crédit (> 0) ou débit (< 0), par tranche de 5 minutes.
+    minutes = db.Column(db.Integer, nullable=False)
+    commentaire = db.Column(db.String(200), nullable=True)
+
+    __table_args__ = (
+        db.CheckConstraint('minutes <> 0 AND minutes BETWEEN -30000 AND 30000', name='ck_regularisation_minutes_bornes'),
+        db.CheckConstraint('minutes % 5 = 0', name='ck_regularisation_minutes_pas'),
+    )
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'employe_id': self.employe_id,
+            'jour': _iso(self.jour),
+            'minutes': self.minutes,
+            'commentaire': self.commentaire,
+        }
+
+
 class MotifDeplacement(Horodatage, db.Model):
     """Destination habituelle avec sa distance (ex : Domitis, 2 km)."""
 
@@ -316,7 +345,7 @@ class JournalModification(db.Model):
 
     __tablename__ = 'journal_modifications'
 
-    TYPES = ('deplacement', 'heures', 'absence')
+    TYPES = ('deplacement', 'heures', 'absence', 'regularisation')
     ACTIONS = ('creation', 'modification', 'suppression')
 
     id = db.Column(db.Integer, primary_key=True)
@@ -326,7 +355,7 @@ class JournalModification(db.Model):
     auteur_identifiant = db.Column(db.String(80), nullable=False)
     auteur_role = db.Column(db.String(10), nullable=False)
     employe_id = db.Column(db.Integer, db.ForeignKey('employes.id', ondelete='SET NULL'), nullable=True, index=True)
-    type = db.Column(db.String(12), nullable=False)
+    type = db.Column(db.String(20), nullable=False)
     action = db.Column(db.String(12), nullable=False)
     objet_id = db.Column(db.Integer, nullable=True)
     avant = db.Column(db.JSON, nullable=True)
@@ -335,7 +364,7 @@ class JournalModification(db.Model):
     employe = db.relationship('Employe')
 
     __table_args__ = (
-        db.CheckConstraint("type IN ('deplacement', 'heures', 'absence')", name='ck_journal_type'),
+        db.CheckConstraint("type IN ('deplacement', 'heures', 'absence', 'regularisation')", name='ck_journal_type'),
         db.CheckConstraint("action IN ('creation', 'modification', 'suppression')", name='ck_journal_action'),
         db.CheckConstraint("auteur_role IN ('admin', 'employe')", name='ck_journal_auteur_role'),
     )

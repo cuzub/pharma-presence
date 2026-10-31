@@ -136,6 +136,21 @@ export const formatMinutes = (minutes) => {
   return reste ? `${signe}${heures}h${String(reste).padStart(2, '0')}` : `${signe}${heures}h`
 }
 
+// --- Régularisations (crédit / débit d'heures +/-) ---------------------------
+
+// Crédit de 2 h 30 → 150 ; débit de 20 h → -1200. Renvoie null si la durée est nulle ou invalide.
+export const minutesRegularisation = (sens, heures, minutes) => {
+  const h = Number(heures || 0)
+  const m = Number(minutes || 0)
+  if (!Number.isInteger(h) || !Number.isInteger(m) || h < 0 || m < 0 || m > 59) return null
+  const total = h * 60 + m
+  if (!total) return null
+  return sens === 'debit' ? -total : total
+}
+
+export const titreRegularisation = (r) =>
+  `Régularisation ${formatMinutes(r.minutes)}${r.commentaire ? ` — ${r.commentaire}` : ''}`
+
 // --- Saisies de l'employé (heures +/- et déplacements) ----------------------
 
 // Même règle que le serveur : mois en cours, ou mois précédent jusqu'au 5 inclus.

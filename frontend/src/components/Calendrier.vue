@@ -24,6 +24,17 @@
         <div v-if="jour.ferie" class="libelle-special">{{ jour.ferie }}</div>
         <div v-else-if="jour.fermeture" class="libelle-special"><i class="bi bi-shop"></i> {{ jour.fermeture }}</div>
         <div
+          v-for="r in jour.regularisations"
+          :key="`r-${r.id}`"
+          class="ligne-regularisation"
+          :title="titreRegularisation(r)"
+          data-regularisation
+        >
+          <i class="bi bi-arrow-left-right"></i>
+          <span class="text-truncate flex-grow-1">{{ r.commentaire || 'Régularisation' }}</span>
+          <span class="text-nowrap fw-semibold">{{ formatMinutes(r.minutes) }}</span>
+        </div>
+        <div
           v-for="d in jour.deplacements"
           :key="d.id"
           class="ligne-deplacement"
@@ -54,7 +65,7 @@
 
 <script setup>
 import { computed } from 'vue'
-import { JOURS_COURTS, absenceDuJour, aujourdhuiIso, ferie, formatFr, formatMinutes, formatNombre, jourSemaine, joursDuMois } from '../utils/dates'
+import { JOURS_COURTS, absenceDuJour, aujourdhuiIso, ferie, formatFr, formatMinutes, formatNombre, jourSemaine, joursDuMois, titreRegularisation } from '../utils/dates'
 
 const props = defineProps({
   mois: { type: String, required: true },
@@ -62,6 +73,8 @@ const props = defineProps({
   // Minutes en plus (> 0) / en moins (< 0) par jour.
   heures: { type: Object, default: () => ({}) },
   deplacements: { type: Array, default: () => [] },
+  // Crédits / débits saisis par la pharmacienne (lecture seule dans le calendrier).
+  regularisations: { type: Array, default: () => [] },
   // Affiche le crayon de modification sur un déplacement.
   deplacementModifiable: { type: Function, default: () => true },
   joursFermeture: { type: Array, default: () => [] },
@@ -88,12 +101,18 @@ const jours = computed(() => {
   const fermetures = new Map(props.joursFermeture.map((j) => [j.date, j.libelle || 'Fermeture']))
   const deplacementsParJour = new Map()
   for (const d of props.deplacements) deplacementsParJour.set(d.date, [...(deplacementsParJour.get(d.date) || []), d])
+  const regularisationsParJour = new Map()
+  for (const r of props.regularisations) regularisationsParJour.set(r.jour, [...(regularisationsParJour.get(r.jour) || []), r])
   return joursDuMois(props.mois).map((iso) => {
     const absence = absenceDuJour(props.absences, iso)
     const libelleFerie = ferie(iso)
     const fermeture = fermetures.get(iso) || null
     const minutes = props.heures[iso] || 0
-    const titre = [formatFr(iso), libelleFerie, fermeture, absence?.motif_libelle, formatMinutes(minutes) || null]
+    const regularisations = regularisationsParJour.get(iso) || []
+    const titre = [
+      formatFr(iso), libelleFerie, fermeture, absence?.motif_libelle, formatMinutes(minutes) || null,
+      ...regularisations.map(titreRegularisation)
+    ]
       .filter(Boolean)
       .join(' — ')
     return {
@@ -101,6 +120,7 @@ const jours = computed(() => {
       numero: Number(iso.slice(8)),
       absence,
       minutes,
+      regularisations,
       deplacements: deplacementsParJour.get(iso) || [],
       ferie: libelleFerie,
       fermeture,
@@ -201,6 +221,18 @@ const jours = computed(() => {
   font-size: 0.72rem;
   background: #f1f8e9;
   border-color: var(--pharma-vert);
+}
+
+.ligne-regularisation {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  padding: 1px 4px;
+  border-radius: 4px;
+  border-left: 3px solid var(--regularisation);
+  font-size: 0.72rem;
+  background: var(--regularisation-fond);
+  color: var(--regularisation);
 }
 
 .crayon {

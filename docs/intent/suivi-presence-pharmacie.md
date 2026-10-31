@@ -22,6 +22,7 @@ L'outil **enregistre les faits, le comptable interprète**. Aucun calcul de paie
 - **Présence :** implicite. Un employé est présent par défaut ; on ne saisit que les exceptions.
 - **Absence :** saisie par période (premier jour d'absence, jour de reprise) avec un motif (CP, maladie, récupération, congé maternité, ...). La date de fin peut rester ouverte, et une période peut couvrir plusieurs mois. L'outil remplit les jours du calendrier, mais **ne compte pas** les jours.
 - **Heures en plus / en moins :** un nombre de minutes signé par employé et par jour (par 5, ±12 h max ; ex. `15`, `-30`), saisi par la pharmacienne ou par l'employé pour lui-même (fenêtre de saisie identique aux déplacements), sans classement compl/suppl. Affichage « +1h30 » / « -30min » ; export en minutes, total net.
+- **Régularisation d'heures +/- :** crédit ou débit daté, saisi par la pharmacienne, avec commentaire facultatif. Voir « Version 1.5.0 ».
 - **Déplacement :** date, motif, km. Purement déclaratif (pas de validation). Voir « Motifs de déplacement » et « Version 1.2.0 » ci-dessous.
 
 ## Motifs de déplacement (validé le 2026-10-31)
@@ -63,6 +64,15 @@ L'outil **enregistre les faits, le comptable interprète**. Aucun calcul de paie
 - **Saisie des heures par l'employé :** dans *Mon mois*, un clic sur une date ouvre la même fenêtre que la pharmacienne (heures +/- et déplacements). Mêmes règles que pour les déplacements : mois en cours, et mois précédent jusqu'au 5 inclus ; une absence bloquante ce jour-là refuse la saisie. Les absences restent saisies par la pharmacienne.
 - **Renommage :** « Présences » devient « Suivi » dans l'interface et la documentation (le menu et les pages couvrent aussi les km, les heures +/- et les absences).
 - **Hors périmètre :** calcul de paie.
+
+## Version 1.5.0 — Solde cumulé et régularisations (validée le 2026-10-31)
+- **Résultat :** un compteur d'heures +/- par employé, cumulé sur tout son historique, que la pharmacienne peut régulariser.
+- **Régularisation :** depuis *Employés → Gérer*, créditer ou débiter des heures à une date (aujourd'hui par défaut), avec un commentaire facultatif. Usages : heures payées, récupération, solde de départ, correction. Modifiable, supprimable, journalisée (type « régularisation »). Plusieurs par jour possibles ; ±500 h maximum, par tranche de 5 minutes. Pas soumise aux absences bloquantes ni à la clôture. Migration 0005.
+- **Affichage :** dans le Tableau du mois et le calendrier de l'employé, sur sa date, en violet (distinct des heures du jour), commentaire en info-bulle. L'employé la voit en lecture seule.
+- **Colonne H +/- :** solde cumulé à la fin du mois affiché (tout l'historique, régularisations comprises), sans remise à zéro. Le net du mois est en info-bulle, et dans le résumé de l'employé.
+- **Statistiques :** régularisations incluses (crédit dans « en plus », débit dans « en moins »).
+- **Récupération :** pas de lien automatique avec l'absence « récupération » ; le débit se saisit à part.
+- **Hors périmètre :** export comptable (inchangé, toujours sans heures +/- ; un employé n'ayant qu'une régularisation dans le mois n'y apparaît pas), débit automatique selon le contrat, saisie de régularisations par l'employé, remise à zéro annuelle.
 
 ## Export mensuel (CSV + Excel)
 - **Onglet Récapitulatif :** une ligne par employé avec nom, prénom, contrat (h/mois), périodes d'absence (jour d'absence, jour de reprise, motif) et total des km.

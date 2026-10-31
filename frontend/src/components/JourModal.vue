@@ -39,6 +39,19 @@
       Ex. : 15 = 15 min en plus, -30 = 30 min en moins, 90 = 1h30 en plus.
     </p>
 
+    <div v-if="regularisations.length" class="mb-4" data-regularisations-jour>
+      <h6 class="regularisation"><i class="bi bi-arrow-left-right"></i> Régularisations du jour</h6>
+      <ul class="list-group list-group-flush mb-1">
+        <li v-for="r in regularisations" :key="r.id" class="list-group-item d-flex gap-2 px-0 py-1">
+          <span class="badge regularisation align-self-center">{{ formatMinutes(r.minutes) }}</span>
+          <span class="small">{{ r.commentaire || 'Sans commentaire' }}</span>
+        </li>
+      </ul>
+      <p class="form-text mb-0">
+        {{ vueEmploye ? 'Saisies par la pharmacienne.' : 'À modifier depuis Employés → Gérer.' }}
+      </p>
+    </div>
+
     <template v-if="!vueEmploye">
     <h6>Absence</h6>
     <div v-if="absence" class="d-flex flex-wrap align-items-center gap-2">
@@ -104,6 +117,7 @@ const absenceBloquante = computed(() => (props.employe ? absenceBloquanteDuJour(
 const verrouilleEmploye = computed(() => props.vueEmploye && !!props.jour && !saisieModifiableParEmploye(props.jour))
 const bloque = computed(() => !!absenceBloquante.value || verrouilleEmploye.value)
 const deplacements = computed(() => (props.employe?.deplacements || []).filter((d) => d.date === props.jour))
+const regularisations = computed(() => (props.employe?.regularisations || []).filter((r) => r.jour === props.jour))
 const ferieDuJour = computed(() => (props.jour ? ferie(props.jour) : null))
 const titre = computed(() => props.employe ? `${props.employe.prenom} ${props.employe.nom} — ${formatFr(props.jour)}` : '')
 
