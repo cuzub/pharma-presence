@@ -1,11 +1,11 @@
 <template>
-  <div>
+  <div class="parametres-page">
     <h1 class="h4 mb-3">Paramètres</h1>
     <div v-if="erreur && !ouvert" class="alert alert-danger">{{ erreur }}</div>
 
-    <div class="row g-3">
-      <div class="col-md-6">
-        <div class="carte h-100">
+    <div class="row g-3 align-items-start">
+      <div class="col-lg-6">
+        <div class="carte">
           <div class="d-flex justify-content-between align-items-center mb-2">
             <h2 class="h6 mb-0">Motifs d'absence</h2>
             <button type="button" class="btn btn-sm btn-outline-primary" @click="ouvrir('absences')">
@@ -14,20 +14,17 @@
           </div>
           <ul class="list-unstyled small mb-0">
             <li v-for="m in motifs" :key="m.id" class="d-flex align-items-center gap-2 py-1">
-              <span class="pastille-motif" :style="{ background: m.couleur }">{{ m.code }}</span>
+              <span class="motif-code"><span class="pastille-motif" :style="{ background: m.couleur }">{{ m.code }}</span></span>
               <span :class="{ 'text-muted': !m.actif }">{{ m.libelle }}</span>
-              <span class="ms-auto d-flex gap-1">
-                <span v-if="m.bloque_saisie" class="badge text-bg-light border">Bloque</span>
-                <span v-if="!m.actif" class="badge text-bg-secondary">Désactivé</span>
-              </span>
+              <span v-if="!m.actif" class="ms-auto badge text-bg-secondary">Désactivé</span>
             </li>
             <li v-if="!motifs.length" class="text-muted">Aucun motif.</li>
           </ul>
         </div>
       </div>
 
-      <div class="col-md-6">
-        <div class="carte h-100">
+      <div class="col-lg-6">
+        <div class="carte">
           <div class="d-flex justify-content-between align-items-center mb-2">
             <h2 class="h6 mb-0">Motifs de déplacement</h2>
             <button type="button" class="btn btn-sm btn-outline-primary" @click="ouvrir('deplacements')">
@@ -47,8 +44,8 @@
         </div>
       </div>
 
-      <div class="col-md-6">
-        <div class="carte h-100">
+      <div class="col-lg-6">
+        <div class="carte">
           <div class="d-flex justify-content-between align-items-center mb-2">
             <h2 class="h6 mb-0">Jours de fermeture de la pharmacie</h2>
             <button type="button" class="btn btn-sm btn-outline-primary" @click="ouvrir('fermetures')">
@@ -68,8 +65,8 @@
         </div>
       </div>
 
-      <div class="col-md-6">
-        <div class="carte h-100">
+      <div class="col-lg-6">
+        <div class="carte">
           <div class="d-flex justify-content-between align-items-center mb-2">
             <h2 class="h6 mb-0">Envoi de l'export par mail</h2>
             <button type="button" class="btn btn-sm btn-outline-primary" @click="ouvrir('mail')">
@@ -333,6 +330,17 @@ onMounted(() => {
 </script>
 
 <style scoped>
+.parametres-page {
+  max-width: 1200px;
+}
+
+.motif-code {
+  display: inline-block;
+  width: 4.5rem;
+  flex-shrink: 0;
+  text-align: center;
+}
+
 .col-km {
   width: 7rem;
 }
