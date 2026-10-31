@@ -244,6 +244,25 @@ class HeuresEnPlus(Horodatage, db.Model):
         return {'id': self.id, 'employe_id': self.employe_id, 'jour': _iso(self.jour), 'heures': float(self.heures)}
 
 
+class MotifDeplacement(Horodatage, db.Model):
+    """Destination habituelle avec sa distance (ex : Domitis, 2 km)."""
+
+    __tablename__ = 'motifs_deplacement'
+
+    id = db.Column(db.Integer, primary_key=True)
+    libelle = db.Column(db.String(80), nullable=False, unique=True)
+    km = db.Column(db.Numeric(7, 1), nullable=False)
+    actif = db.Column(db.Boolean, nullable=False, default=True)
+    ordre = db.Column(db.Integer, nullable=False, default=0)
+
+    __table_args__ = (
+        db.CheckConstraint('km > 0', name='ck_motifs_deplacement_km'),
+    )
+
+    def to_dict(self):
+        return {'id': self.id, 'libelle': self.libelle, 'km': float(self.km), 'actif': self.actif, 'ordre': self.ordre}
+
+
 class Deplacement(Horodatage, db.Model):
     __tablename__ = 'deplacements'
 
@@ -254,8 +273,8 @@ class Deplacement(Horodatage, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     employe_id = db.Column(db.Integer, db.ForeignKey('employes.id', ondelete='CASCADE'), nullable=False, index=True)
     date = db.Column(db.Date, nullable=False)
-    depart = db.Column(db.String(120), nullable=False)
-    arrivee = db.Column(db.String(120), nullable=False)
+    # Vide pour « Autre ». Le libellé et les km sont recopiés à la saisie : modifier le motif ne change pas l'historique.
+    motif_deplacement_id = db.Column(db.Integer, db.ForeignKey('motifs_deplacement.id'), nullable=True)
     motif = db.Column(db.String(255), nullable=False)
     km = db.Column(db.Numeric(7, 1), nullable=False)
     statut = db.Column(db.String(12), nullable=False, default=EN_ATTENTE)
@@ -264,6 +283,7 @@ class Deplacement(Horodatage, db.Model):
     valide_le = db.Column(db.DateTime(timezone=True), nullable=True)
 
     employe = db.relationship('Employe')
+    motif_deplacement = db.relationship('MotifDeplacement')
 
     __table_args__ = (
         db.CheckConstraint('km > 0', name='ck_deplacements_km'),
@@ -277,8 +297,7 @@ class Deplacement(Horodatage, db.Model):
             'employe_nom': self.employe.nom if self.employe else None,
             'employe_prenom': self.employe.prenom if self.employe else None,
             'date': _iso(self.date),
-            'depart': self.depart,
-            'arrivee': self.arrivee,
+            'motif_deplacement_id': self.motif_deplacement_id,
             'motif': self.motif,
             'km': float(self.km),
             'statut': self.statut,

@@ -23,7 +23,7 @@ def fevrier(admin, creer_employe, motifs):
     # Entrée en cours de mois, avec un déplacement déclaré par l'employée.
     besnard, session_besnard = creer_employe('orlane', nom='Besnard', prenom='Orlane', date_entree='2025-02-10', heures=121.33)
     deplacement = session_besnard.post('/api/deplacements', {
-        'date': '2025-02-12', 'depart': 'Pharmacie', 'arrivee': 'Grossiste', 'motif': 'Commande urgente', 'km': 22,
+        'date': '2025-02-12', 'motif': 'Commande urgente', 'km': 22,
     }).get_json()
 
     # Partie fin janvier : ne doit pas apparaître en février.
@@ -79,8 +79,9 @@ def test_export_excel(admin, fevrier):
     ligne_laudren = next(r for r in heures.iter_rows(min_row=5, values_only=True) if r[0] == 'LAUDREN')
     assert ligne_laudren[2 + 3] == 1.5 and ligne_laudren[2 + 10] == 2 and ligne_laudren[-1] == 3.5
 
+    assert [c.value for c in wb['Déplacements'][4]] == ['Nom', 'Prénom', 'Date', 'Motif', 'Km']
     deplacements = list(wb['Déplacements'].iter_rows(min_row=5, values_only=True))
-    assert len(deplacements) == 1 and deplacements[0][-1] == 22
+    assert len(deplacements) == 1 and deplacements[0][3] == 'Commande urgente' and deplacements[0][-1] == 22
 
 
 def test_export_csv(admin, fevrier):
@@ -114,14 +115,14 @@ def test_mois_invalide(admin):
 def test_textes_saisis_jamais_interpretes_comme_formules(admin, creer_employe):
     fiche, session = creer_employe('mallory', nom='=HYPERLINK("http://x")', prenom='Eve')
     deplacement = session.post('/api/deplacements', {
-        'date': '2025-02-12', 'depart': '=1+1', 'arrivee': '@SUM(A1)', 'motif': '=cmd|calc', 'km': 5,
+        'date': '2025-02-12', 'motif': '=cmd|calc', 'km': 5,
     }).get_json()
     admin.post(f"/api/deplacements/{deplacement['id']}/valider")
 
     wb = load_workbook(io.BytesIO(admin.get(f'/api/exports/{MOIS}/etat-preparatoire.xlsx').data))
     ligne = next(wb['Déplacements'].iter_rows(min_row=5))
-    assert [ligne[i].data_type for i in (0, 1, 3, 4, 5)] == ['s'] * 5
-    assert ligne[3].value == '=1+1'
+    assert [ligne[i].data_type for i in (0, 1, 3)] == ['s'] * 3
+    assert ligne[3].value == '=cmd|calc'
 
     contenu = admin.get(f'/api/exports/{MOIS}/recap.csv').data.decode('utf-8')
     assert '"\'=HYPERLINK(""HTTP://X"")";Eve;' in contenu

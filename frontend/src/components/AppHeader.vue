@@ -46,8 +46,7 @@ const liens = computed(() => auth.estAdmin
       { to: '/parametres', libelle: 'Paramètres', icone: 'bi-gear' }
     ]
   : [
-      { to: '/mon-mois', libelle: 'Mon mois', icone: 'bi-calendar3' },
-      { to: '/mes-deplacements', libelle: 'Mes déplacements', icone: 'bi-car-front' }
+      { to: '/mon-mois', libelle: 'Mon mois', icone: 'bi-calendar3' }
     ])
 
 // Recompté à chaque changement de page (un employé a pu déclarer un déplacement entre-temps).

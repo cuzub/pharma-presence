@@ -10,7 +10,7 @@ ADMIN_MDP = 'admin-mot-de-passe-test'
 EMPLOYE_MDP_PROVISOIRE = 'provisoire-12345'
 EMPLOYE_MDP = 'employe-mot-de-passe-test'
 
-_TABLES = ['heures_en_plus', 'deplacements', 'absences', 'contrats', 'employes', 'jours_fermeture']
+_TABLES = ['heures_en_plus', 'deplacements', 'motifs_deplacement', 'absences', 'contrats', 'employes', 'jours_fermeture']
 
 
 @pytest.fixture(scope='session')

@@ -6,7 +6,7 @@ from datetime import date, timedelta
 import click
 
 from app.extensions import db
-from app.models import Absence, Contrat, Deplacement, Employe, HeuresEnPlus, MotifAbsence, Utilisateur
+from app.models import Absence, Contrat, Deplacement, Employe, HeuresEnPlus, MotifAbsence, MotifDeplacement, Utilisateur
 
 
 def _mot_de_passe_aleatoire():
@@ -54,6 +54,9 @@ def enregistrer_commandes(app):
         admin.definir_mot_de_passe('admin-demo-1234', provisoire=False)
         db.session.add(admin)
         motifs = {m.code: m for m in MotifAbsence.query.all()}
+        destinations = [MotifDeplacement(libelle=libelle, km=km, ordre=ordre) for ordre, (libelle, km) in enumerate(
+            [('Domitis', 2), ('Orgères', 5), ('LCL', 30)], start=1)]
+        db.session.add_all(destinations)
         aujourdhui = date.today()
         debut_mois = aujourdhui.replace(day=1)
         fictifs = [
@@ -71,7 +74,8 @@ def enregistrer_commandes(app):
             if index == 1:
                 db.session.add(HeuresEnPlus(employe_id=employe.id, jour=debut_mois + timedelta(days=2), heures=1.5))
                 db.session.add(HeuresEnPlus(employe_id=employe.id, jour=debut_mois + timedelta(days=5), heures=2))
-                db.session.add(Deplacement(employe_id=employe.id, date=debut_mois + timedelta(days=3), depart='Pharmacie', arrivee='Grossiste', motif='Récupération de commande', km=24))
+                db.session.add(Deplacement(employe_id=employe.id, date=debut_mois + timedelta(days=3), motif_deplacement=destinations[2], motif='LCL', km=30))
+                db.session.add(Deplacement(employe_id=employe.id, date=debut_mois + timedelta(days=8), motif='Grossiste (récupération de commande)', km=24))
             if index == 2:
                 db.session.add(Absence(employe_id=employe.id, motif=motifs['MAL'], date_debut=debut_mois + timedelta(days=4), date_reprise=debut_mois + timedelta(days=7)))
         db.session.commit()

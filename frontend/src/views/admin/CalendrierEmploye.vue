@@ -22,9 +22,11 @@
             :mois="mois"
             :absences="employe.absences"
             :heures="employe.heures"
+            :deplacements="employe.deplacements"
             :jours-fermeture="joursFermeture"
             :contrats="employe.contrats"
             @choisir-jour="(jour) => saisie.ouvrirJour(employe.id, jour)"
+            @modifier-deplacement="saisie.modifierDeplacement"
           />
         </div>
       </div>
@@ -42,6 +44,8 @@
       @modifie="saisie.apresModification"
       @nouvelle-absence="(jour) => saisie.nouvelleAbsence(employe.id, jour)"
       @modifier-absence="saisie.modifierAbsence"
+      @nouveau-deplacement="(jour) => saisie.nouveauDeplacement(employe.id, jour)"
+      @modifier-deplacement="saisie.modifierDeplacement"
     />
     <AbsenceModal
       :ouvert="saisie.etat.absenceOuverte"
@@ -49,6 +53,14 @@
       :employe-fixe="saisie.etat.absenceEmployeId"
       :date-debut="saisie.etat.absenceDebut"
       @fermer="saisie.etat.absenceOuverte = false"
+      @enregistre="saisie.apresModification"
+    />
+    <DeplacementModal
+      :ouvert="saisie.etat.deplacementOuvert"
+      :deplacement="saisie.etat.deplacement"
+      :employe-id="saisie.etat.deplacementEmployeId"
+      :date="saisie.etat.deplacementDate"
+      @fermer="saisie.etat.deplacementOuvert = false"
       @enregistre="saisie.apresModification"
     />
   </div>
@@ -59,6 +71,7 @@ import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import AbsenceModal from '../../components/AbsenceModal.vue'
 import Calendrier from '../../components/Calendrier.vue'
+import DeplacementModal from '../../components/DeplacementModal.vue'
 import JourModal from '../../components/JourModal.vue'
 import MoisNavigateur from '../../components/MoisNavigateur.vue'
 import ResumeMois from '../../components/ResumeMois.vue'
@@ -85,7 +98,7 @@ const employe = computed(() => {
   const trouve = donnees.value.employes.find((e) => e.id === employeId.value)
   if (trouve) return trouve
   const fiche = referentiel.employes.find((e) => e.id === employeId.value)
-  return fiche ? { ...fiche, contrats: [], absences: [], heures: {}, total_heures: 0, total_km_valides: 0, mouvements: [] } : null
+  return fiche ? { ...fiche, contrats: [], absences: [], heures: {}, deplacements: [], total_heures: 0, total_km_valides: 0, mouvements: [] } : null
 })
 
 const charger = async () => {

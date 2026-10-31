@@ -101,20 +101,18 @@ def generer_excel(debut, fin, lignes):
         ws.cell(row=ws.max_row, column=len(jours) + 3).font = Font(bold=True)
     _largeurs(ws, [18, 14] + [5] * len(jours) + [8])
 
-    ws = _feuille(wb, 'Déplacements', titre, ['Nom', 'Prénom', 'Date', 'Départ', 'Arrivée', 'Motif', 'Km'])
+    ws = _feuille(wb, 'Déplacements', titre, ['Nom', 'Prénom', 'Date', 'Motif', 'Km'])
     for ligne in lignes:
         for deplacement in ligne['deplacements_valides']:
             ws.append([
                 ligne['employe'].nom.upper(),
                 ligne['employe'].prenom,
                 deplacement.date,
-                deplacement.depart,
-                deplacement.arrivee,
                 deplacement.motif,
                 float(deplacement.km),
             ])
             ws.cell(row=ws.max_row, column=3).number_format = 'DD/MM/YYYY'
-    _largeurs(ws, [18, 14, 12, 24, 24, 40, 8])
+    _largeurs(ws, [18, 14, 12, 40, 8])
 
     _neutraliser_formules(wb)
     flux = io.BytesIO()

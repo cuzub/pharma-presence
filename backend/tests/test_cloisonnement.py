@@ -43,7 +43,7 @@ def test_employe_n_accede_pas_aux_routes_admin(deux_employes, motifs):
 
 def test_deplacements_cloisonnes(deux_employes):
     alice, session_alice, bruno, session_bruno = deux_employes
-    trajet = {'date': '2025-01-15', 'depart': 'Pharmacie', 'arrivee': 'Grossiste', 'motif': 'Commande', 'km': 12}
+    trajet = {'date': '2025-01-15', 'motif': 'Commande', 'km': 12}
 
     # employe_id fourni par le client : ignoré, le déplacement est rattaché à l'employé connecté.
     cree = session_alice.post('/api/deplacements', {**trajet, 'employe_id': bruno['id']})
@@ -60,7 +60,7 @@ def test_deplacements_cloisonnes(deux_employes):
 
 def test_deplacement_valide_non_modifiable_par_employe(admin, deux_employes):
     _, session_alice, _, _ = deux_employes
-    trajet = {'date': '2025-01-15', 'depart': 'Pharmacie', 'arrivee': 'Grossiste', 'motif': 'Commande', 'km': 12}
+    trajet = {'date': '2025-01-15', 'motif': 'Commande', 'km': 12}
     deplacement_id = session_alice.post('/api/deplacements', trajet).get_json()['id']
 
     modifie = session_alice.put(f'/api/deplacements/{deplacement_id}', {**trajet, 'km': 15})
@@ -74,7 +74,7 @@ def test_deplacement_valide_non_modifiable_par_employe(admin, deux_employes):
 
 def test_deplacement_refuse_puis_corrige_repasse_en_attente(admin, deux_employes):
     _, session_alice, _, _ = deux_employes
-    trajet = {'date': '2025-01-15', 'depart': 'Pharmacie', 'arrivee': 'Grossiste', 'motif': 'Commande', 'km': 120}
+    trajet = {'date': '2025-01-15', 'motif': 'Commande', 'km': 120}
     deplacement_id = session_alice.post('/api/deplacements', trajet).get_json()['id']
 
     refuse = admin.post(f'/api/deplacements/{deplacement_id}/refuser', {'motif_refus': 'Distance erronée'})

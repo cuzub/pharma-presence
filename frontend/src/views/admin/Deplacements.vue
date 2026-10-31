@@ -2,10 +2,10 @@
   <div>
     <div class="page-titre">
       <h1 class="h4 mb-0">Déplacements professionnels</h1>
-      <button type="button" class="btn btn-primary" @click="ouvrir(null)">
-        <i class="bi bi-plus-lg"></i> Saisir un déplacement
-      </button>
     </div>
+    <p class="text-muted small">
+      Pour ajouter un déplacement, cliquez sur la date dans le <RouterLink to="/calendrier">calendrier</RouterLink> de l'employé.
+    </p>
 
     <ul class="nav nav-tabs mb-3">
       <li class="nav-item">
@@ -30,7 +30,6 @@
           <tr>
             <th>Employé</th>
             <th>Date</th>
-            <th>Trajet</th>
             <th>Motif</th>
             <th class="text-end">Km</th>
             <th>Statut</th>
@@ -39,15 +38,14 @@
         </thead>
         <tbody>
           <tr v-if="!deplacements.length">
-            <td colspan="7" class="text-center text-muted py-4">
+            <td colspan="6" class="text-center text-muted py-4">
               {{ onglet === 'en_attente' ? 'Aucun déplacement en attente de validation.' : 'Aucun déplacement ce mois-ci.' }}
             </td>
           </tr>
           <tr v-for="d in deplacements" :key="d.id">
             <td>{{ d.employe_nom }} {{ d.employe_prenom }}</td>
             <td>{{ formatFr(d.date) }}</td>
-            <td>{{ d.depart }} → {{ d.arrivee }}</td>
-            <td class="small">{{ d.motif }}</td>
+            <td>{{ d.motif }}</td>
             <td class="text-end">{{ formatNombre(d.km) }}</td>
             <td>
               <span :class="['badge', STATUTS_DEPLACEMENT[d.statut].classe]">{{ STATUTS_DEPLACEMENT[d.statut].libelle }}</span>
@@ -71,7 +69,7 @@
         </tbody>
         <tfoot v-if="onglet === 'mois' && totalValide">
           <tr>
-            <th colspan="4" class="text-end">Total validé</th>
+            <th colspan="3" class="text-end">Total validé</th>
             <th class="text-end">{{ formatNombre(totalValide) }}</th>
             <th colspan="2"></th>
           </tr>
@@ -79,7 +77,7 @@
       </table>
     </div>
 
-    <DeplacementModal :ouvert="modalOuvert" :deplacement="deplacementEdite" choisir-employe @fermer="modalOuvert = false" @enregistre="apresEnregistrement" />
+    <DeplacementModal :ouvert="modalOuvert" :deplacement="deplacementEdite" @fermer="modalOuvert = false" @enregistre="apresEnregistrement" />
 
     <Modal :ouvert="!!refus" titre="Refuser le déplacement" @fermer="refus = null">
       <form id="form-refus" @submit.prevent="refuser">

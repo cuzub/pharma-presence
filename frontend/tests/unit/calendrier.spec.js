@@ -44,9 +44,34 @@ describe('Calendrier', () => {
     expect(editable.emitted('choisir-jour')).toEqual([['2025-02-12']])
 
     const lecture = monter({ lectureSeule: true })
-    expect(lecture.find('button[data-jour]').exists()).toBe(false)
+    expect(lecture.find('[data-jour][role=button]').exists()).toBe(false)
     await lecture.find('[data-jour="2025-02-12"]').trigger('click')
     expect(lecture.emitted('choisir-jour')).toBeUndefined()
+  })
+
+  it('affiche les déplacements du jour avec un crayon de modification', async () => {
+    const deplacements = [
+      { id: 1, date: '2025-02-12', motif: 'Domitis', km: 2, statut: 'valide' },
+      { id: 2, date: '2025-02-12', motif: 'Pharmacie de Chartres', km: 12.5, statut: 'en_attente' }
+    ]
+    const wrapper = monter({ deplacements, deplacementModifiable: (d) => d.statut !== 'valide' })
+    const jour = wrapper.find('[data-jour="2025-02-12"]')
+    expect(jour.findAll('[data-deplacement]')).toHaveLength(2)
+    expect(jour.text()).toContain('Domitis')
+    expect(jour.text()).toContain('12,5 km')
+
+    const crayons = jour.findAll('button.crayon')
+    expect(crayons).toHaveLength(1)
+    await crayons[0].trigger('click')
+    expect(wrapper.emitted('modifier-deplacement')).toEqual([[deplacements[1]]])
+    // Le clic sur le crayon n'ouvre pas en plus la saisie d'un nouveau déplacement.
+    expect(wrapper.emitted('choisir-jour')).toBeUndefined()
+  })
+
+  it('ouvre la saisie au clavier', async () => {
+    const wrapper = monter()
+    await wrapper.find('[data-jour="2025-02-12"]').trigger('keydown', { key: 'Enter' })
+    expect(wrapper.emitted('choisir-jour')).toEqual([['2025-02-12']])
   })
 
   it('signale les jours fériés mobiles', () => {

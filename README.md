@@ -14,16 +14,18 @@ indemnités kilométriques). Voir [docs/intent/suivi-presence-pharmacie.md](docs
   des heures en plus (au quart d'heure) ou une absence.
 - Absences par période (premier jour d'absence → jour de reprise, ou « en cours ») avec motif ;
   les chevauchements sont refusés.
-- Validation des déplacements professionnels déclarés par les employés.
+- Déplacements professionnels : saisis depuis le calendrier (clic sur la date, crayon pour
+  modifier), avec des motifs prédéfinis dont les km se remplissent automatiquement (ou « Autre »,
+  distance libre) ; validation des déplacements déclarés par les employés.
 - Employés : arrivée (création du compte avec mot de passe provisoire), avenant, départ (compte
   désactivé, données conservées), retour, nouveau mot de passe provisoire.
 - Export comptable mensuel : contrôles avant export (bloquant si des déplacements sont en attente),
   fichier Excel (Récapitulatif, Absences, Heures en plus, Déplacements) et CSV (format Excel FR).
-- Paramètres : motifs d'absence, jours de fermeture de la pharmacie.
+- Paramètres : motifs d'absence, motifs de déplacement (destination + km), jours de fermeture.
 
 **Employé**
-- « Mon mois » : calendrier en lecture seule (absences, heures en plus) et résumé.
-- « Mes déplacements » : déclaration, modification tant que ce n'est pas validé.
+- « Mon mois » : calendrier (absences et heures en plus en lecture seule) et résumé ; clic sur une
+  date pour déclarer un déplacement, crayon pour le modifier tant qu'il n'est pas validé.
 
 ## Architecture
 

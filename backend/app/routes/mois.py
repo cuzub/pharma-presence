@@ -18,7 +18,7 @@ def mois_detail(mois):
     debut, fin = bornes_mois(mois)
     employe_id = None if current_user.est_admin else employe_courant_id()
     lignes = donnees_mois(debut, fin, employe_id)
-    return jsonify(serialiser_mois(debut, fin, lignes, inclure_deplacements=employe_id is not None)), 200
+    return jsonify(serialiser_mois(debut, fin, lignes)), 200
 
 
 @mois_bp.route('/exports/<mois>/controles', methods=['GET'])

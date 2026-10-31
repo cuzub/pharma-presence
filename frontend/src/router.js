@@ -14,7 +14,8 @@ const routes = [
   { path: '/parametres', name: 'parametres', component: () => import('./views/admin/Parametres.vue'), meta: { role: 'admin' } },
 
   { path: '/mon-mois', name: 'mon-mois', component: () => import('./views/employe/MonMois.vue'), meta: { role: 'employe' } },
-  { path: '/mes-deplacements', name: 'mes-deplacements', component: () => import('./views/employe/MesDeplacements.vue'), meta: { role: 'employe' } },
+  // Ancienne page : les déplacements se saisissent désormais dans le calendrier.
+  { path: '/mes-deplacements', redirect: '/mon-mois' },
 
   { path: '/:pathMatch(.*)*', redirect: '/' }
 ]

@@ -103,7 +103,7 @@ def donnees_mois(debut, fin, employe_id=None):
     return resultat
 
 
-def serialiser_mois(debut, fin, lignes, inclure_deplacements=True):
+def serialiser_mois(debut, fin, lignes):
     fermetures = JourFermeture.query.filter(JourFermeture.date.between(debut, fin)).order_by(JourFermeture.date).all()
     employes = []
     for ligne in lignes:
@@ -119,9 +119,8 @@ def serialiser_mois(debut, fin, lignes, inclure_deplacements=True):
             'total_km_valides': ligne['total_km'],
             'deplacements_en_attente': sum(1 for d in ligne['deplacements'] if d.statut == Deplacement.EN_ATTENTE),
             'mouvements': ligne['mouvements'],
+            'deplacements': [d.to_dict() for d in ligne['deplacements']],
         }
-        if inclure_deplacements:
-            data['deplacements'] = [d.to_dict() for d in ligne['deplacements']]
         employes.append(data)
     return {
         'mois': debut.strftime('%Y-%m'),

@@ -13,6 +13,19 @@ Par défaut, chaque employé est **présent**. Vous ne saisissez que les excepti
   vide s'il n'est pas connu (congé maternité, arrêt maladie sans date de fin) : l'absence reste
   « en cours » jusqu'à ce que vous le renseigniez.
 - **Déplacements** : le badge orange du menu *Déplacements* indique les déclarations à valider.
+  Pour en saisir un vous-même : *Calendrier* (ou *Tableau du mois*) → clic sur le jour →
+  *Ajouter un déplacement*. Il est validé directement. Pour le corriger : le crayon.
+
+### Motifs de déplacement
+
+Menu **Paramètres** → *Motifs de déplacement* : créez vos destinations habituelles avec leur
+distance (ex. Domitis 2 km, Orgères 5 km, LCL 30 km). Lors de la saisie d'un déplacement, il suffit
+de choisir le motif : les kilomètres sont remplis automatiquement. « Autre » est toujours proposé
+pour une destination ponctuelle (distance et précision libres).
+
+Changer la distance d'un motif ne modifie **pas** les déplacements déjà saisis (ils gardent la
+distance du moment). Un motif qui ne sert plus se **désactive** (case *Actif*) : il n'est plus
+proposé, mais reste visible sur les anciens déplacements.
 
 ### Arrivée, changement de contrat, départ
 
@@ -42,7 +55,11 @@ Le fichier Excel contient 4 onglets : *Récapitulatif* (une ligne par employé),
 
 - **Mon mois** : vos absences et heures en plus, saisies par la pharmacienne. Une erreur ?
   Signalez-la-lui.
-- **Mes déplacements** : déclarez chaque déplacement professionnel avec votre véhicule (date,
-  trajet, motif, kilomètres). Vous pouvez le modifier ou le supprimer tant qu'il n'est pas validé.
-  S'il est refusé, le motif s'affiche : corrigez-le, il repassera en attente de validation.
+- **Déplacements** : dans *Mon mois*, cliquez sur la date du déplacement → choisissez le motif
+  (les kilomètres se remplissent tout seuls) → *Enregistrer*. Si la destination n'est pas dans la
+  liste, choisissez « Autre » et saisissez la précision et les kilomètres. Plusieurs déplacements
+  par jour sont possibles.
+  Pour corriger ou supprimer un déplacement, cliquez sur le **crayon** (possible tant qu'il n'est
+  pas validé). Couleurs : orange = en attente, vert = validé, rouge = refusé (le motif du refus
+  s'affiche au survol et dans la fenêtre : corrigez-le, il repassera en attente de validation).
 - Pour changer votre mot de passe : cliquez sur votre nom en haut à droite.

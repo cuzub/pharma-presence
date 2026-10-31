@@ -90,6 +90,8 @@
       @modifie="saisie.apresModification"
       @nouvelle-absence="(jour) => saisie.nouvelleAbsence(saisie.etat.employeId, jour)"
       @modifier-absence="saisie.modifierAbsence"
+      @nouveau-deplacement="(jour) => saisie.nouveauDeplacement(saisie.etat.employeId, jour)"
+      @modifier-deplacement="saisie.modifierDeplacement"
     />
     <AbsenceModal
       :ouvert="saisie.etat.absenceOuverte"
@@ -99,12 +101,21 @@
       @fermer="saisie.etat.absenceOuverte = false"
       @enregistre="saisie.apresModification"
     />
+    <DeplacementModal
+      :ouvert="saisie.etat.deplacementOuvert"
+      :deplacement="saisie.etat.deplacement"
+      :employe-id="saisie.etat.deplacementEmployeId"
+      :date="saisie.etat.deplacementDate"
+      @fermer="saisie.etat.deplacementOuvert = false"
+      @enregistre="saisie.apresModification"
+    />
   </div>
 </template>
 
 <script setup>
 import { computed, ref, watch } from 'vue'
 import AbsenceModal from '../../components/AbsenceModal.vue'
+import DeplacementModal from '../../components/DeplacementModal.vue'
 import JourModal from '../../components/JourModal.vue'
 import MoisNavigateur from '../../components/MoisNavigateur.vue'
 import { useMoisUrl } from '../../composables/useMoisUrl'

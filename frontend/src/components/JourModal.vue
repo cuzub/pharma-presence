@@ -35,13 +35,30 @@
         <i class="bi bi-calendar-plus"></i> Déclarer une absence à partir de ce jour
       </button>
     </div>
+
+    <h6 class="mt-4">Déplacements du jour</h6>
+    <ul v-if="deplacements.length" class="list-group list-group-flush mb-2">
+      <li v-for="d in deplacements" :key="d.id" class="list-group-item d-flex align-items-center gap-2 px-0">
+        <i class="bi bi-car-front"></i>
+        <span class="flex-grow-1">{{ d.motif }} <span class="text-muted">— {{ formatNombre(d.km) }} km</span></span>
+        <span :class="['badge', STATUTS_DEPLACEMENT[d.statut].classe]">{{ STATUTS_DEPLACEMENT[d.statut].libelle }}</span>
+        <button type="button" class="btn btn-sm btn-outline-secondary" title="Modifier" :aria-label="`Modifier le déplacement ${d.motif}`" @click="$emit('modifier-deplacement', d)">
+          <i class="bi bi-pencil"></i>
+        </button>
+      </li>
+    </ul>
+    <p v-else class="text-muted small mb-2">Aucun déplacement.</p>
+    <button type="button" class="btn btn-sm btn-outline-primary" @click="$emit('nouveau-deplacement', jour)">
+      <i class="bi bi-plus-lg"></i> Ajouter un déplacement
+    </button>
   </Modal>
 </template>
 
 <script setup>
 import { computed, nextTick, ref, watch } from 'vue'
 import api, { messageErreur } from '../services/api'
-import { absenceDuJour, ferie, formatFr } from '../utils/dates'
+import { absenceDuJour, ferie, formatFr, formatNombre } from '../utils/dates'
+import { STATUTS_DEPLACEMENT } from '../utils/statuts'
 import Modal from './Modal.vue'
 
 const props = defineProps({
@@ -49,7 +66,7 @@ const props = defineProps({
   employe: { type: Object, default: null },
   jour: { type: String, default: '' }
 })
-const emit = defineEmits(['fermer', 'modifie', 'nouvelle-absence', 'modifier-absence'])
+const emit = defineEmits(['fermer', 'modifie', 'nouvelle-absence', 'modifier-absence', 'nouveau-deplacement', 'modifier-deplacement'])
 
 const heures = ref('')
 const erreur = ref('')
@@ -58,6 +75,7 @@ const champHeures = ref(null)
 
 const heuresInitiales = computed(() => props.employe?.heures?.[props.jour] || 0)
 const absence = computed(() => (props.employe ? absenceDuJour(props.employe.absences, props.jour) : null))
+const deplacements = computed(() => (props.employe?.deplacements || []).filter((d) => d.date === props.jour))
 const ferieDuJour = computed(() => (props.jour ? ferie(props.jour) : null))
 const titre = computed(() => props.employe ? `${props.employe.prenom} ${props.employe.nom} — ${formatFr(props.jour)}` : '')
 

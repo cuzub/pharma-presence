@@ -22,7 +22,19 @@ L'outil **enregistre les faits, le comptable interprète**. Aucun calcul de paie
 - **Présence :** implicite. Un employé est présent par défaut ; on ne saisit que les exceptions.
 - **Absence :** saisie par période (premier jour d'absence, jour de reprise) avec un motif (CP, maladie, récupération, congé maternité, ...). La date de fin peut rester ouverte, et une période peut couvrir plusieurs mois. L'outil remplit les jours du calendrier, mais **ne compte pas** les jours.
 - **Heures en plus :** un seul chiffre par employé et par jour, saisi par la pharmacienne, sans classement compl/suppl.
-- **Déplacement :** date, trajet, motif, km. Déclaré par l'employé puis validé par la pharmacienne (la pharmacienne peut aussi en saisir ou en modifier).
+- **Déplacement :** date, motif, km. Déclaré par l'employé puis validé par la pharmacienne (la pharmacienne peut aussi en saisir ou en modifier). Voir « Motifs de déplacement » ci-dessous.
+
+## Motifs de déplacement (validé le 2026-10-31)
+- **Résultat :** saisir un déplacement en 2 clics : clic sur la date du calendrier → choix du motif → km remplis automatiquement → enregistrer.
+- **Motifs (admin) :** dans *Paramètres*, la pharmacienne crée / modifie / désactive des motifs « nom + km » (ex. Domitis 2 km, Orgères 5 km, LCL 30 km). Le km saisi est celui qui est compté. Un motif désactivé n'est plus proposé ; l'historique est conservé.
+- **« Autre » :** toujours proposé ; km libres + précision obligatoire (ex. « Pharmacie de Chartres »).
+- **Calendrier unique :** les déplacements apparaissent dans le calendrier du mois, avec un crayon pour les modifier (comme Pedalog).
+  - Employé : clic sur une date = saisie d'un déplacement (plusieurs par jour possibles) ; il modifie / supprime les siens tant qu'ils ne sont pas validés.
+  - Admin : clic sur une date = fenêtre heures / absence + section « Déplacements du jour » (ajouter, modifier, supprimer).
+- **Historique figé :** chaque déplacement garde les km et le libellé du moment de sa saisie ; changer la distance d'un motif ne touche que les nouveaux déplacements.
+- **Supprimé :** champs Départ / Arrivée et page séparée « Mes déplacements ».
+- **Hors périmètre :** barème kilométrique, calcul d'itinéraire, carte. L'export garde sa structure (colonnes Départ / Arrivée remplacées par le motif).
+- **Reprise :** les déplacements existants deviennent des « Autre » (motif + trajet conservés dans la précision).
 
 ## Export mensuel (CSV + Excel)
 - **Onglet Récapitulatif :** une ligne par employé avec nom, prénom, contrat (h/mois), total des heures en plus, périodes d'absence (jour d'absence, jour de reprise, motif) et total des km validés.

@@ -72,6 +72,47 @@
           </ul>
         </div>
       </div>
+
+      <div class="col-lg-7">
+        <div class="carte">
+          <h2 class="h6">Motifs de déplacement</h2>
+          <p class="form-text">
+            Destinations habituelles avec leur distance : lors de la saisie d'un déplacement, les km sont remplis automatiquement.
+            « Autre » est toujours proposé pour saisir une distance libre. Changer une distance ne modifie pas les déplacements déjà saisis.
+          </p>
+          <table class="table table-sm">
+            <thead>
+              <tr><th>Motif</th><th class="col-km">Km</th><th>Actif</th><th></th></tr>
+            </thead>
+            <tbody>
+              <tr v-for="m in motifsDeplacement" :key="m.id">
+                <td><input v-model.trim="m.libelle" class="form-control form-control-sm" maxlength="80" aria-label="Motif" /></td>
+                <td><input v-model.number="m.km" type="number" min="0.1" max="5000" step="0.1" class="form-control form-control-sm" aria-label="Km" /></td>
+                <td><input v-model="m.actif" type="checkbox" class="form-check-input" aria-label="Actif" /></td>
+                <td class="text-end">
+                  <button type="button" class="btn btn-sm btn-outline-primary" @click="enregistrerMotifDeplacement(m)">Enregistrer</button>
+                </td>
+              </tr>
+              <tr v-if="!motifsDeplacement.length">
+                <td colspan="4" class="text-muted small">Aucun motif pour l'instant (ex : Domitis 2 km, Orgères 5 km, LCL 30 km).</td>
+              </tr>
+            </tbody>
+          </table>
+          <form class="row g-2 align-items-end" @submit.prevent="ajouterMotifDeplacement">
+            <div class="col-6">
+              <label for="md-libelle" class="form-label small mb-1">Motif</label>
+              <input id="md-libelle" v-model.trim="nouveauMotifDeplacement.libelle" class="form-control form-control-sm" maxlength="80" required placeholder="ex : Domitis" />
+            </div>
+            <div class="col-3">
+              <label for="md-km" class="form-label small mb-1">Km</label>
+              <input id="md-km" v-model.number="nouveauMotifDeplacement.km" type="number" min="0.1" max="5000" step="0.1" class="form-control form-control-sm" required />
+            </div>
+            <div class="col-3">
+              <button type="submit" class="btn btn-sm btn-primary w-100">Ajouter</button>
+            </div>
+          </form>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -84,9 +125,11 @@ import { ajouterJours, aujourdhuiIso, formatFr } from '../../utils/dates'
 
 const referentiel = useReferentielStore()
 const motifs = ref([])
+const motifsDeplacement = ref([])
 const fermetures = ref([])
 const erreur = ref('')
 const nouveauMotif = reactive({ code: '', libelle: '', couleur: '#6c757d' })
+const nouveauMotifDeplacement = reactive({ libelle: '', km: '' })
 const nouvelleFermeture = reactive({ date: '', libelle: '' })
 
 const fermeturesAVenir = computed(() => {
@@ -97,6 +140,7 @@ const fermeturesAVenir = computed(() => {
 const charger = async () => {
   try {
     motifs.value = (await referentiel.chargerMotifs(true)).map((m) => ({ ...m }))
+    motifsDeplacement.value = (await referentiel.chargerMotifsDeplacement(true)).map((m) => ({ ...m }))
     fermetures.value = (await api.get('/jours-fermeture')).data
   } catch (error) {
     erreur.value = await messageErreur(error)
@@ -121,6 +165,14 @@ const ajouterMotif = async () => {
   if (await action(() => api.post('/motifs', nouveauMotif))) Object.assign(nouveauMotif, { code: '', libelle: '', couleur: '#6c757d' })
 }
 
+const enregistrerMotifDeplacement = (m) => action(() => api.put(`/deplacements/motifs/${m.id}`, m))
+
+const ajouterMotifDeplacement = async () => {
+  if (await action(() => api.post('/deplacements/motifs', nouveauMotifDeplacement))) {
+    Object.assign(nouveauMotifDeplacement, { libelle: '', km: '' })
+  }
+}
+
 const ajouterFermeture = async () => {
   if (await action(() => api.post('/jours-fermeture', nouvelleFermeture))) Object.assign(nouvelleFermeture, { date: '', libelle: '' })
 }
@@ -129,3 +181,9 @@ const supprimerFermeture = (f) => action(() => api.delete(`/jours-fermeture/${f.
 
 onMounted(charger)
 </script>
+
+<style scoped>
+.col-km {
+  width: 7rem;
+}
+</style>
