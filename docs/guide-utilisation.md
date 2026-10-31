@@ -71,7 +71,8 @@ type. Cet historique ne peut être ni modifié ni effacé (il commence à la ver
 Menu **Statistiques** (réservé à la pharmacienne) : le cumul des heures en plus / en moins de
 l'année, par employé et par mois, régularisations comprises (un crédit compte « en plus », un débit
 « en moins »). Par défaut, c'est l'année en cours ; les flèches ‹ › passent à
-l'année précédente ou suivante, et « Cette année » revient à l'année en cours.
+l'année précédente ou suivante, et le bouton calendrier à leur gauche revient à l'année en cours
+(de même, dans le *Tableau* et l'*Export*, il revient au mois en cours).
 
 - **Le graphique** empile, pour chaque mois, les heures en plus (au-dessus de l'axe) et en moins
   (en dessous). Chaque employé a sa couleur. Survolez une barre pour voir le détail du mois

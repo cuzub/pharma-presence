@@ -13,6 +13,11 @@ body {
   background: #f6f8f6;
 }
 
+/* Place de la barre de défilement toujours réservée : la mise en page ne bouge pas d'une page à l'autre. */
+html {
+  scrollbar-gutter: stable;
+}
+
 .app-navbar {
   background: var(--pharma-vert);
 }
@@ -32,9 +37,18 @@ body {
   --bs-btn-disabled-border-color: var(--pharma-vert);
 }
 
-.mois-titre {
-  min-width: 10rem;
+/* Largeur fixe : les flèches du navigateur ne bougent pas quand le libellé change. */
+.navigateur-titre {
   text-align: center;
+  white-space: nowrap;
+}
+
+.mois-titre {
+  width: 11rem;
+}
+
+.annee-titre {
+  width: 4rem;
 }
 
 .graphique-statistiques {
