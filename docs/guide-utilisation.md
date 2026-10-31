@@ -38,6 +38,20 @@ plus / en moins ou d'une absence est enregistrée avec la date et l'heure, **qui
 l'employé), l'employé concerné et le détail **avant → après**. Filtrez par employé, mois, auteur ou
 type. Cet historique ne peut être ni modifié ni effacé (il commence à la version 1.2.0).
 
+### Statistiques
+
+Menu **Statistiques** (réservé à la pharmacienne) : le cumul des heures en plus / en moins de
+l'année, par employé et par mois. Par défaut, c'est l'année en cours ; les flèches ‹ › passent à
+l'année précédente ou suivante, et « Cette année » revient à l'année en cours.
+
+- **Le graphique** empile, pour chaque mois, les heures en plus (au-dessus de l'axe) et en moins
+  (en dessous). Chaque employé a sa couleur. Survolez une barre pour voir le détail du mois
+  (« en plus / en moins »). Cliquez sur un nom dans la légende pour masquer ou afficher cet employé.
+- **Le tableau** donne, pour chaque employé et chaque mois, le **net** (plus moins moins). Survolez
+  une case pour voir séparément le plus et le moins. La colonne **Total** donne le net de l'année,
+  et la ligne **Équipe** le total de tous les employés.
+- Les employés partis dans l'année restent affichés, avec la mention « parti ».
+
 ### Arrivée, changement de contrat, départ
 
 Menu **Employés** :

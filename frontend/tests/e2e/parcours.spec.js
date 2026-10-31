@@ -111,6 +111,13 @@ test('arrivée d’un employé, heures +/-, déplacements déclaratifs, historiq
   await expect(journal).toHaveCount(2)
   await expect(journal.first()).toContainText('-30min')
 
+  // Statistiques : cumul mensuel net de l'employé (+90 et -30 ce mois-ci = +1h), puis année précédente.
+  await page.goto('/statistiques')
+  await expect(page.getByRole('heading', { name: 'Statistiques — heures en plus / en moins' })).toBeVisible()
+  await expect(page.locator('tr', { hasText: nom }).locator('td.col-total')).toHaveText('+1h')
+  await page.getByRole('button', { name: 'Année précédente' }).click()
+  await expect(page).toHaveURL(new RegExp(`annee=${new Date().getFullYear() - 1}`))
+
   await page.goto(`/export?mois=${mois}`)
   const apercu = page.locator('tr', { hasText: nom })
   await expect(apercu).toContainText('19,5')

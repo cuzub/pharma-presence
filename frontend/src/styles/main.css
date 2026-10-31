@@ -35,6 +35,11 @@ body {
   text-align: center;
 }
 
+.graphique-statistiques {
+  position: relative;
+  height: 360px;
+}
+
 .page-titre {
   display: flex;
   flex-wrap: wrap;

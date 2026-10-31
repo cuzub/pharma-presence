@@ -23,6 +23,8 @@ indemnités kilométriques). Voir [docs/intent/suivi-presence-pharmacie.md](docs
   Heures +/- en minutes avec total net, Déplacements) et CSV (format Excel FR).
 - Historique : journal immuable des créations / modifications / suppressions (déplacements, heures,
   absences) avec auteur et avant → après, filtrable par employé, mois, auteur et type.
+- Statistiques : heures en plus / en moins par année, avec un graphique empilé par employé et
+  mois, un tableau du net mensuel, les totaux annuels et d'équipe ; employés partis inclus.
 - Paramètres : motifs d'absence, motifs de déplacement (destination + km), jours de fermeture.
 
 **Employé**

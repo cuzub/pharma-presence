@@ -37,6 +37,10 @@ export const moisCourant = () => aujourdhuiIso().slice(0, 7)
 
 export const estMoisValide = (mois) => /^\d{4}-(0[1-9]|1[0-2])$/.test(mois || '')
 
+// --- Années ------------------------------------------------------------------
+
+export const anneeCourante = () => new Date().getFullYear()
+
 export const decalerMois = (mois, delta) => {
   const [annee, numero] = mois.split('-').map(Number)
   const date = new Date(annee, numero - 1 + delta, 1)

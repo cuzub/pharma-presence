@@ -42,6 +42,7 @@ const liens = computed(() => auth.estAdmin
       { to: '/employes', libelle: 'Employés', icone: 'bi-people' },
       { to: '/export', libelle: 'Export', icone: 'bi-file-earmark-spreadsheet' },
       { to: '/historique', libelle: 'Historique', icone: 'bi-clock-history' },
+      { to: '/statistiques', libelle: 'Statistiques', icone: 'bi-bar-chart' },
       { to: '/parametres', libelle: 'Paramètres', icone: 'bi-gear' }
     ]
   : [

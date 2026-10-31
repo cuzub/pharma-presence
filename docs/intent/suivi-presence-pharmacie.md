@@ -44,6 +44,14 @@ L'outil **enregistre les faits, le comptable interprète**. Aucun calcul de paie
 - **Historique des modifications :** créations / modifications / suppressions de déplacements, heures +/- et absences, avec date et heure, auteur, employé concerné et avant → après. Filtres : employé, mois, auteur, type. Immuable, conservé indéfiniment, réservé à la pharmacienne ; démarre à la mise en ligne (pas de rétroactif).
 - **Hors périmètre :** historique des fiches employés, saisie des heures par les employés.
 
+## Version 1.3.0 — Statistiques (validée le 2026-10-31)
+- **Page « Statistiques » :** réservée à la pharmacienne (menu « Statistiques », après Historique).
+- **Année :** navigation ‹ › ; l'année en cours par défaut, les années passées sont consultables (lien « Cette année »). L'année est conservée dans l'URL (`?annee=AAAA`).
+- **Graphique :** barres empilées par mois, une couleur par employé ; heures en plus au-dessus de l'axe, en moins en dessous. Clic sur un nom de la légende : masque ou affiche l'employé.
+- **Tableau :** par employé et par mois, le net (plus moins moins), avec le détail plus / moins au survol ; colonne Total annuel et ligne Équipe.
+- **Employés inclus :** ceux qui ont une saisie ou un contrat sur l'année, y compris les employés partis (mention « parti »).
+- **Hors périmètre :** export des statistiques, statistiques des déplacements et des absences, vue employé, ratio par rapport au contrat.
+
 ## Export mensuel (CSV + Excel)
 - **Onglet Récapitulatif :** une ligne par employé avec nom, prénom, contrat (h/mois), total net des heures +/- (en minutes), périodes d'absence (jour d'absence, jour de reprise, motif) et total des km.
 - **Onglet Détail :** les heures +/- jour par jour (en minutes), pour chaque employé.
