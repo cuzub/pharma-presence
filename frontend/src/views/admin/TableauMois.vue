@@ -8,7 +8,7 @@
     <div v-if="erreur" class="alert alert-danger">{{ erreur }}</div>
 
     <div class="carte p-0 overflow-hidden">
-      <div class="table-responsive tableau-conteneur">
+      <div ref="conteneur" class="table-responsive tableau-conteneur">
         <table class="table table-sm mb-0 tableau-mois">
           <thead>
             <tr>
@@ -124,7 +124,7 @@
 </template>
 
 <script setup>
-import { computed, ref, watch } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 import AbsenceModal from '../../components/AbsenceModal.vue'
 import DeplacementModal from '../../components/DeplacementModal.vue'
 import JourModal from '../../components/JourModal.vue'
@@ -160,6 +160,27 @@ watch(mois, () => {
   charger()
 }, { immediate: true })
 referentiel.chargerMotifs()
+
+const conteneur = ref(null)
+
+// Fait défiler horizontalement pour rendre visible la colonne du jour (sans bouger la page verticalement).
+const defilerVersAujourdhui = () => {
+  const zone = conteneur.value
+  const colonne = zone?.querySelector('thead th.aujourdhui')
+  if (!zone || !colonne) return
+  const zoneRect = zone.getBoundingClientRect()
+  const colRect = colonne.getBoundingClientRect()
+  const employe = zone.querySelector('thead .col-employe')
+  const gaucheVisible = zoneRect.left + (employe ? employe.getBoundingClientRect().width : 0)
+  const droiteVisible = zoneRect.right
+  if (colRect.left >= gaucheVisible && colRect.right <= droiteVisible) return
+  const centre = (gaucheVisible + droiteVisible) / 2
+  zone.scrollLeft += colRect.left + colRect.width / 2 - centre
+}
+
+watch(chargement, (enCours) => {
+  if (!enCours) nextTick(defilerVersAujourdhui)
+})
 
 const jours = computed(() => {
   const aujourdhui = aujourdhuiIso()
