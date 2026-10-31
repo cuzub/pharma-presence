@@ -12,8 +12,10 @@ indemnités kilométriques). Voir [docs/intent/suivi-presence-pharmacie.md](docs
 **Pharmacienne (administratrice)**
 - Tableau du mois : une ligne par employé, une colonne par jour ; clic sur une case pour saisir
   des heures en plus / en moins (en minutes, par 5 : `15`, `-30`), une absence ou un déplacement.
+- Tableau du mois : colonnes Employé, H +/- et Km figées, km du jour sous les minutes.
 - Absences par période (premier jour d'absence → jour de reprise, ou « en cours ») avec motif ;
-  les chevauchements sont refusés.
+  les chevauchements sont refusés. Un motif bloquant interdit les heures et déplacements les jours
+  d'absence ; la suppression des saisies en conflit exige une confirmation.
 - Déplacements professionnels : saisis depuis le calendrier (clic sur la date, crayon pour
   modifier), avec des motifs prédéfinis dont les km se remplissent automatiquement (ou « Autre »,
   distance libre). Déclaratifs : pas de validation, la pharmacienne peut tout corriger.
@@ -23,9 +25,11 @@ indemnités kilométriques). Voir [docs/intent/suivi-presence-pharmacie.md](docs
   Heures +/- en minutes avec total net, Déplacements) et CSV (format Excel FR).
 - Historique : journal immuable des créations / modifications / suppressions (déplacements, heures,
   absences) avec auteur et avant → après, filtrable par employé, mois, auteur et type.
-- Statistiques : heures en plus / en moins par année, avec un graphique empilé par employé et
-  mois, un tableau du net mensuel, les totaux annuels et d'équipe ; employés partis inclus.
-- Paramètres : motifs d'absence, motifs de déplacement (destination + km), jours de fermeture.
+- Statistiques : heures en plus / en moins par année, en net, avec un graphique empilé par employé
+  et mois, un tableau du net mensuel, les totaux annuels et d'équipe ; employés partis inclus.
+  Clic sur un employé (légende ou tableau) pour l'isoler.
+- Paramètres : motifs d'absence (avec l'option « Bloque heures et déplacements »), motifs de
+  déplacement (destination + km), jours de fermeture.
 
 **Employé**
 - « Mon mois » : calendrier (absences et heures +/- en lecture seule) et résumé ; clic sur une

@@ -11,10 +11,20 @@ Par défaut, chaque employé est **présent**. Vous ne saisissez que les excepti
   en plus (12 h maximum par jour) → *Enregistrer*. Pour effacer, mettez `0` ou cliquez sur la gomme.
   À l'écran : « +1h30 » en vert, « -30min » en orange ; le total du mois est net (les minutes en
   moins compensent les minutes en plus).
+- **Tableau du mois** : sous les minutes de chaque case, le nombre de **km du jour** (somme des
+  déplacements). Le nom de l'employé reste visible à gauche, et les colonnes **H +/-** et **Km**
+  restent visibles à droite : faites défiler horizontalement pour lire les jours du mois.
 - **Absence** : clic sur le premier jour d'absence → *Déclarer une absence à partir de ce jour* →
   motif et **jour de reprise** (le premier jour où l'employé revient). Laissez le jour de reprise
   vide s'il n'est pas connu (congé maternité, arrêt maladie sans date de fin) : l'absence reste
   « en cours » jusqu'à ce que vous le renseigniez.
+- **Absence bloquante** : pour un motif qui bloque la saisie (par défaut : congés payés, maladie,
+  récupération, etc. ; réglable dans *Paramètres*, colonne « Bloque heures et déplacements »), les
+  jours de l'absence ne peuvent plus recevoir d'heures +/- ni de déplacement. Si des heures ou des
+  déplacements existent déjà sur la période, l'application affiche la liste (« 10/03 : +30min »,
+  « 12/03 : Domitis 2 km ») et vous propose de les **supprimer et d'enregistrer l'absence** ; rien
+  n'est supprimé sans votre confirmation, et les suppressions figurent dans l'*Historique*. Les
+  motifs *Formation* et *Autre* ne bloquent pas la saisie.
 - **Déplacements** : ils sont **déclaratifs** (pas de validation) et comptent tous. Le menu
   *Déplacements* les liste par mois, avec le crayon pour corriger et la poubelle pour supprimer.
   Pour en saisir un vous-même : *Calendrier* (ou *Tableau*) → clic sur le jour →
@@ -50,6 +60,10 @@ l'année précédente ou suivante, et « Cette année » revient à l'année en 
 - **Le tableau** donne, pour chaque employé et chaque mois, le **net** (plus moins moins). Survolez
   une case pour voir séparément le plus et le moins. La colonne **Total** donne le net de l'année,
   et la ligne **Équipe** le total de tous les employés.
+- **Isoler un employé** : cliquez sur son nom dans la légende ou sur sa ligne du tableau. Le
+  graphique et le tableau ne montrent alors que cet employé (ligne surlignée, ligne Équipe conservée).
+  Un bandeau « Vue : Prénom NOM ✕ » permet de revenir à toute l'équipe, et un nouveau clic sur la
+  même ligne a le même effet.
 - Les employés partis dans l'année restent affichés, avec la mention « parti ».
 
 ### Arrivée, changement de contrat, départ
