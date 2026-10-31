@@ -1,6 +1,20 @@
 <template>
-  <Modal :ouvert="ouvert" :titre="absence?.id ? 'Modifier l’absence' : 'Nouvelle absence'" @fermer="$emit('fermer')">
-    <form id="form-absence" @submit.prevent="enregistrer">
+  <Modal :ouvert="ouvert" :titre="titre" @fermer="$emit('fermer')">
+    <div v-if="!enEdition">
+      <p v-if="!absences.length" class="text-muted mb-0">Aucune absence enregistrée pour cet employé.</p>
+      <ul v-else class="list-unstyled mb-0">
+        <li v-for="a in absences" :key="a.id" class="d-flex align-items-center justify-content-between border-bottom py-2">
+          <div>
+            <span class="fw-semibold">{{ a.motif_libelle }}</span>
+            <span class="text-muted small ms-2">{{ formatFr(a.date_debut) }} → {{ a.date_reprise ? formatFr(a.date_reprise) : 'en cours' }}</span>
+          </div>
+          <button type="button" class="btn btn-sm btn-secondary" aria-label="Modifier l'absence" v-infobulle="'Modifier cette absence'" @click="ouvrirEdition(a)">
+            <i class="bi bi-pencil"></i>
+          </button>
+        </li>
+      </ul>
+    </div>
+    <form v-else id="form-absence" @submit.prevent="enregistrer">
       <div v-if="erreur" class="alert alert-danger py-2" role="alert">
         {{ erreur }}
         <ul v-if="conflits.length" class="small mb-2 mt-1">
@@ -11,13 +25,6 @@
         </button>
       </div>
 
-      <div class="mb-3">
-        <label for="absence-employe" class="form-label">Employé</label>
-        <select id="absence-employe" v-model="form.employe_id" class="form-select" :disabled="!!employeFixe" required>
-          <option :value="null" disabled>Choisir…</option>
-          <option v-for="e in referentiel.employes" :key="e.id" :value="e.id">{{ e.nom }} {{ e.prenom }}</option>
-        </select>
-      </div>
       <div class="mb-3">
         <label for="absence-motif" class="form-label">Motif</label>
         <select id="absence-motif" v-model="form.motif_id" class="form-select" required>
@@ -45,11 +52,19 @@
       </div>
     </form>
     <template #footer>
-      <button v-if="absence?.id" type="button" class="btn btn-outline-danger me-auto" :disabled="enCours" @click="supprimer">
-        <i class="bi bi-trash"></i> Supprimer
-      </button>
-      <button type="button" class="btn btn-outline-secondary" @click="$emit('fermer')">Annuler</button>
-      <button type="submit" form="form-absence" class="btn btn-primary" :disabled="enCours">Enregistrer</button>
+      <template v-if="!enEdition">
+        <button type="button" class="btn btn-outline-secondary" @click="$emit('fermer')">Fermer</button>
+        <button type="button" class="btn btn-primary" @click="ouvrirNouvelle">
+          <i class="bi bi-plus-lg"></i> Nouvelle absence
+        </button>
+      </template>
+      <template v-else>
+        <button v-if="absence?.id" type="button" class="btn btn-outline-danger me-auto" :disabled="enCours" @click="supprimer">
+          <i class="bi bi-trash"></i> Supprimer
+        </button>
+        <button type="button" class="btn btn-outline-secondary" @click="retourListe">Annuler</button>
+        <button type="submit" form="form-absence" class="btn btn-primary" :disabled="enCours">Enregistrer</button>
+      </template>
     </template>
   </Modal>
 </template>
@@ -58,40 +73,66 @@
 import { computed, reactive, ref, watch } from 'vue'
 import api, { messageErreur } from '../services/api'
 import { useReferentielStore } from '../stores/referentiel'
-import { ajouterJours } from '../utils/dates'
+import { ajouterJours, formatFr } from '../utils/dates'
 import Modal from './Modal.vue'
 
 const props = defineProps({
   ouvert: { type: Boolean, default: false },
-  absence: { type: Object, default: null },
-  employeFixe: { type: Number, default: null },
-  dateDebut: { type: String, default: '' }
+  employe: { type: Object, default: null }
 })
 const emit = defineEmits(['fermer', 'enregistre'])
 
 const referentiel = useReferentielStore()
 const form = reactive({ employe_id: null, motif_id: null, date_debut: '', date_reprise: '', commentaire: '' })
+const absences = ref([])
+const absence = ref(null)
+const enEdition = ref(false)
 const erreur = ref('')
 const conflits = ref([])
 const enCours = ref(false)
 
+const titre = computed(() => {
+  if (!enEdition.value) return `Absences — ${props.employe?.prenom ?? ''} ${props.employe?.nom ?? ''}`.trim()
+  return absence.value?.id ? 'Modifier l’absence' : 'Nouvelle absence'
+})
+
 const jourCourt = (iso) => `${iso.slice(8)}/${iso.slice(5, 7)}`
 
 const motifsProposes = computed(() =>
-  referentiel.motifs.filter((m) => m.actif || m.id === props.absence?.motif_id))
+  referentiel.motifs.filter((m) => m.actif || m.id === absence.value?.motif_id))
+
+const chargerAbsences = async () => {
+  if (!props.employe?.id) return
+  absences.value = (await api.get('/absences', { params: { employe_id: props.employe.id } })).data
+}
+
+const retourListe = () => {
+  enEdition.value = false
+  erreur.value = ''
+  conflits.value = []
+}
+
+const remplirFormulaire = (a) => {
+  absence.value = a
+  Object.assign(form, {
+    employe_id: props.employe?.id ?? null,
+    motif_id: a?.motif_id ?? null,
+    date_debut: a?.date_debut ?? '',
+    date_reprise: a?.date_reprise ?? '',
+    commentaire: a?.commentaire ?? ''
+  })
+  erreur.value = ''
+  conflits.value = []
+  enEdition.value = true
+}
+
+const ouvrirEdition = (a) => remplirFormulaire(a)
+const ouvrirNouvelle = () => remplirFormulaire(null)
 
 watch(() => props.ouvert, async (ouvert) => {
   if (!ouvert) return
-  erreur.value = ''
-  conflits.value = []
-  Object.assign(form, {
-    employe_id: props.absence?.employe_id ?? props.employeFixe,
-    motif_id: props.absence?.motif_id ?? null,
-    date_debut: props.absence?.date_debut ?? props.dateDebut,
-    date_reprise: props.absence?.date_reprise ?? '',
-    commentaire: props.absence?.commentaire ?? ''
-  })
-  await Promise.all([referentiel.chargerMotifs(), referentiel.employes.length ? null : referentiel.chargerEmployes()])
+  retourListe()
+  await Promise.all([referentiel.chargerMotifs(), chargerAbsences()])
 }, { immediate: true })
 
 const envoyer = async (confirmerSuppression) => {
@@ -100,12 +141,14 @@ const envoyer = async (confirmerSuppression) => {
   enCours.value = true
   const payload = { ...form, date_reprise: form.date_reprise || null, confirmer_suppression: confirmerSuppression }
   try {
-    if (props.absence?.id) {
-      await api.put(`/absences/${props.absence.id}`, payload)
+    if (absence.value?.id) {
+      await api.put(`/absences/${absence.value.id}`, payload)
     } else {
       await api.post('/absences', payload)
     }
     emit('enregistre')
+    await chargerAbsences()
+    retourListe()
   } catch (error) {
     const data = error?.response?.data
     if (data?.code === 'saisies_en_conflit') conflits.value = data.conflits || []
@@ -122,8 +165,10 @@ const supprimer = async () => {
   if (!confirm('Supprimer cette absence ?')) return
   enCours.value = true
   try {
-    await api.delete(`/absences/${props.absence.id}`)
+    await api.delete(`/absences/${absence.value.id}`)
     emit('enregistre')
+    await chargerAbsences()
+    retourListe()
   } catch (error) {
     erreur.value = await messageErreur(error)
   } finally {

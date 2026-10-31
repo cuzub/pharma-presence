@@ -90,7 +90,7 @@
       <span><span class="legende hors-contrat"></span> Hors contrat</span>
       <span><span class="badge regularisation">±h</span> Régularisation (Employés → Heures +/-)</span>
       <span class="text-muted">H +/- : solde cumulé à la fin du mois.</span>
-      <span class="text-muted">Cliquez sur une case pour saisir des heures en plus / en moins, une absence ou un déplacement.</span>
+      <span class="text-muted">Cliquez sur une case pour saisir des heures en plus / en moins ou un déplacement.</span>
     </div>
 
     <JourModal
@@ -99,34 +99,12 @@
       :jour="saisie.etat.jour"
       @fermer="saisie.etat.jourOuvert = false"
       @modifie="saisie.apresModification"
-      @nouvelle-absence="(jour) => saisie.nouvelleAbsence(saisie.etat.employeId, jour)"
-      @modifier-absence="saisie.modifierAbsence"
-      @nouveau-deplacement="(jour) => saisie.nouveauDeplacement(saisie.etat.employeId, jour)"
-      @modifier-deplacement="saisie.modifierDeplacement"
-    />
-    <AbsenceModal
-      :ouvert="saisie.etat.absenceOuverte"
-      :absence="saisie.etat.absence"
-      :employe-fixe="saisie.etat.absenceEmployeId"
-      :date-debut="saisie.etat.absenceDebut"
-      @fermer="saisie.etat.absenceOuverte = false"
-      @enregistre="saisie.apresModification"
-    />
-    <DeplacementModal
-      :ouvert="saisie.etat.deplacementOuvert"
-      :deplacement="saisie.etat.deplacement"
-      :employe-id="saisie.etat.deplacementEmployeId"
-      :date="saisie.etat.deplacementDate"
-      @fermer="saisie.etat.deplacementOuvert = false"
-      @enregistre="saisie.apresModification"
     />
   </div>
 </template>
 
 <script setup>
 import { computed, nextTick, ref, watch } from 'vue'
-import AbsenceModal from '../../components/AbsenceModal.vue'
-import DeplacementModal from '../../components/DeplacementModal.vue'
 import JourModal from '../../components/JourModal.vue'
 import MoisNavigateur from '../../components/MoisNavigateur.vue'
 import { useMoisUrl } from '../../composables/useMoisUrl'

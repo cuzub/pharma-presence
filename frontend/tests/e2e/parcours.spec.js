@@ -200,9 +200,12 @@ test('absence bloquante : conflit signalé, suppression confirmée, saisie refus
   await page.locator('.modal-body form button[type=submit]').click()
   await expect(ligne.locator(`td[data-jour="${mois}-10"]`)).toHaveText('+30min')
 
-  await ligne.locator(`td[data-jour="${mois}-08"]`).click()
-  await page.getByRole('button', { name: 'Déclarer une absence à partir de ce jour' }).click()
+  // L'absence se saisit depuis la vue Employés, via le bouton dédié.
+  await page.goto('/employes')
+  await page.locator('tr', { hasText: nom }).getByRole('button', { name: 'Absences', exact: true }).click()
+  await page.getByRole('dialog').getByRole('button', { name: 'Nouvelle absence' }).click()
   await page.selectOption('#absence-motif', { label: 'Congés payés' })
+  await page.fill('#absence-debut', `${mois}-08`)
   await page.fill('#absence-reprise', `${mois}-13`)
   await page.click('button[form=form-absence]')
 
@@ -210,15 +213,19 @@ test('absence bloquante : conflit signalé, suppression confirmée, saisie refus
   await expect(page.locator('.alert-danger').first()).toContainText(`10/${mm} : +30min`)
   await page.getByRole('button', { name: "Supprimer ces saisies et enregistrer l'absence" }).click()
   await expect(page.locator('#form-absence')).toHaveCount(0)
+  await expect(page.getByRole('dialog').getByText('Congés payés')).toBeVisible()
+  await page.keyboard.press('Escape')
 
+  await page.goto(`/?mois=${mois}`)
   await expect(ligne.locator(`td[data-jour="${mois}-10"]`)).not.toHaveText('+30min')
   await expect(ligne.locator(`td[data-jour="${mois}-09"] .code-absence`)).toHaveText('CP')
 
-  // Un jour d'absence bloquante ne peut plus recevoir d'heures ni de déplacement.
+  // Un jour d'absence bloquante ne peut recevoir ni heures ni déplacement.
   await ligne.locator(`td[data-jour="${mois}-09"]`).click()
   await expect(page.locator('[data-jour-bloque]')).toContainText('saisie impossible')
   await expect(page.locator('#jour-minutes')).toBeDisabled()
-  await expect(page.getByRole('button', { name: 'Ajouter un déplacement' })).toBeDisabled()
+  await expect(page.locator('#jour-motif')).toBeDisabled()
+  await expect(page.locator('.modal-body form button[type=submit]')).toBeDisabled()
   await page.keyboard.press('Escape')
   await expect(page.locator('.modal.d-block')).toHaveCount(0)
   await deconnecter(page)

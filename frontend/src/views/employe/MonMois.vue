@@ -40,7 +40,6 @@
       :jour="jourChoisi"
       vue-employe
       :jours-fermeture="joursFermeture"
-      :deplacement-modifiable="(d) => saisieModifiableParEmploye(d.date)"
       @fermer="jourOuvert = false"
       @modifie="apresModification"
     />

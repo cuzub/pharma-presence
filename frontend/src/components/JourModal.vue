@@ -16,7 +16,7 @@
     <p v-else-if="blocageEmploye" class="alert alert-secondary py-2 small mb-2" data-jour-bloque>
       {{ MOTIFS_BLOCAGE[blocageEmploye] }}
     </p>
-    <form :class="{ 'mb-4': !vueEmploye || regularisations.length }" data-saisie-jour @submit.prevent="enregistrer">
+    <form data-saisie-jour @submit.prevent="enregistrer">
       <h6 v-if="vueEmploye" class="small fw-semibold mb-2">Heures +/-</h6>
       <div class="d-flex flex-wrap align-items-end gap-2">
         <div :class="{ 'champ-heures': vueEmploye }">
@@ -40,7 +40,6 @@
             <span class="input-group-text">min</span>
           </div>
         </div>
-        <button v-if="!vueEmploye" type="submit" class="btn btn-primary" :disabled="enCours || bloque">Enregistrer</button>
         <button v-if="minutesInitiales && !vueEmploye" type="button" class="btn btn-outline-danger" :disabled="enCours || bloque" title="Effacer" @click="effacerHeures">
           <i class="bi bi-eraser"></i>
         </button>
@@ -50,45 +49,43 @@
         Ex. : 15 = 15 min en plus, -30 = 30 min en moins, 90 = 1h30 en plus.
       </p>
 
-      <template v-if="vueEmploye">
-        <h6 class="small fw-semibold mt-3 mb-2">Déplacement professionnel</h6>
-        <div class="d-flex flex-wrap align-items-end gap-2">
-          <div class="champ-motif">
-            <label for="jour-motif" class="form-label small text-muted mb-1">Motif</label>
-            <select id="jour-motif" v-model="motifChoix" class="form-select form-select-sm" :disabled="bloque">
-              <option value="">Aucun</option>
-              <option v-for="m in motifsProposes" :key="m.id" :value="m.id">{{ m.libelle }} — {{ formatNombre(m.km) }} km</option>
-              <option :value="AUTRE">Autre (distance libre)</option>
-            </select>
-          </div>
-          <div v-if="motifChoix === AUTRE" class="champ-motif">
-            <label for="jour-precision" class="form-label small text-muted mb-1">Précision</label>
-            <input id="jour-precision" v-model="motifPrecision" class="form-control form-control-sm" maxlength="255" required placeholder="ex : Pharmacie de Chartres" :disabled="bloque" />
-          </div>
-          <div class="champ-km">
-            <label for="jour-km" class="form-label small text-muted mb-1">Km</label>
-            <input
-              v-if="motifChoix === AUTRE"
-              id="jour-km"
-              v-model="km"
-              type="number"
-              min="0.1"
-              max="5000"
-              step="0.1"
-              class="form-control form-control-sm"
-              required
-              :disabled="bloque"
-            />
-            <input v-else id="jour-km" :value="kmAffiches" class="form-control form-control-sm" readonly tabindex="-1" />
-          </div>
+      <h6 class="small fw-semibold mt-3 mb-2">Déplacement professionnel</h6>
+      <div class="d-flex flex-wrap align-items-end gap-2">
+        <div class="champ-motif">
+          <label for="jour-motif" class="form-label small text-muted mb-1">Motif</label>
+          <select id="jour-motif" v-model="motifChoix" class="form-select form-select-sm" :disabled="bloque">
+            <option value="">Aucun</option>
+            <option v-for="m in motifsProposes" :key="m.id" :value="m.id">{{ m.libelle }} — {{ formatNombre(m.km) }} km</option>
+            <option :value="AUTRE">Autre (distance libre)</option>
+          </select>
         </div>
-        <p v-if="!referentiel.motifsDeplacement.length" class="form-text mb-0">
-          Aucun motif enregistré : la pharmacienne peut en créer dans <em>Paramètres</em>.
-        </p>
-        <div class="d-flex justify-content-end mt-3">
-          <button type="submit" class="btn btn-primary" :disabled="enCours || bloque">Enregistrer</button>
+        <div v-if="motifChoix === AUTRE" class="champ-motif">
+          <label for="jour-precision" class="form-label small text-muted mb-1">Précision</label>
+          <input id="jour-precision" v-model="motifPrecision" class="form-control form-control-sm" maxlength="255" required placeholder="ex : Pharmacie de Chartres" :disabled="bloque" />
         </div>
-      </template>
+        <div class="champ-km">
+          <label for="jour-km" class="form-label small text-muted mb-1">Km</label>
+          <input
+            v-if="motifChoix === AUTRE"
+            id="jour-km"
+            v-model="km"
+            type="number"
+            min="0.1"
+            max="5000"
+            step="0.1"
+            class="form-control form-control-sm"
+            required
+            :disabled="bloque"
+          />
+          <input v-else id="jour-km" :value="kmAffiches" class="form-control form-control-sm" readonly tabindex="-1" />
+        </div>
+      </div>
+      <p v-if="!referentiel.motifsDeplacement.length" class="form-text mb-0">
+        Aucun motif enregistré : la pharmacienne peut en créer dans <em>Paramètres</em>.
+      </p>
+      <div class="d-flex justify-content-end mt-3">
+        <button type="submit" class="btn btn-primary" :disabled="enCours || bloque">Enregistrer</button>
+      </div>
     </form>
 
     <div v-if="regularisations.length" :class="{ 'mb-4': !vueEmploye }" data-regularisations-jour>
@@ -104,42 +101,6 @@
       </p>
     </div>
 
-    <template v-if="!vueEmploye">
-    <h6>Absence</h6>
-    <div v-if="absence" class="d-flex flex-wrap align-items-center gap-2">
-      <span class="pastille-motif" :style="{ background: absence.motif_couleur }">{{ absence.motif_libelle }}</span>
-      <span class="small">
-        du {{ formatFr(absence.date_debut) }}
-        — {{ absence.date_reprise ? `reprise le ${formatFr(absence.date_reprise)}` : 'en cours' }}
-      </span>
-      <button type="button" class="btn btn-sm btn-outline-secondary ms-auto" @click="$emit('modifier-absence', absence)">
-        <i class="bi bi-pencil"></i> Modifier
-      </button>
-    </div>
-    <div v-else>
-      <p class="text-muted small mb-2">Présent(e) ce jour-là (aucune absence).</p>
-      <button type="button" class="btn btn-sm btn-outline-primary" @click="$emit('nouvelle-absence', jour)">
-        <i class="bi bi-calendar-plus"></i> Déclarer une absence à partir de ce jour
-      </button>
-    </div>
-    </template>
-
-    <template v-if="!vueEmploye">
-    <h6 class="mt-4">Déplacements du jour</h6>
-    <ul v-if="deplacements.length" class="list-group list-group-flush mb-2">
-      <li v-for="d in deplacements" :key="d.id" class="list-group-item d-flex align-items-center gap-2 px-0">
-        <i class="bi bi-car-front"></i>
-        <span class="flex-grow-1">{{ d.motif }} <span class="text-muted">— {{ formatNombre(d.km) }} km</span></span>
-        <button v-if="deplacementModifiable(d)" type="button" class="btn btn-sm btn-outline-secondary" title="Modifier" :aria-label="`Modifier le déplacement ${d.motif}`" @click="$emit('modifier-deplacement', d)">
-          <i class="bi bi-pencil"></i>
-        </button>
-      </li>
-    </ul>
-    <p v-else class="text-muted small mb-2">Aucun déplacement.</p>
-    <button type="button" class="btn btn-sm btn-outline-primary" :disabled="bloque" @click="$emit('nouveau-deplacement', jour)">
-      <i class="bi bi-plus-lg"></i> Ajouter un déplacement
-    </button>
-    </template>
   </Modal>
 </template>
 
@@ -147,19 +108,18 @@
 import { computed, nextTick, ref, watch } from 'vue'
 import api, { messageErreur } from '../services/api'
 import { useReferentielStore } from '../stores/referentiel'
-import { absenceBloquanteDuJour, absenceDuJour, blocageJourEmploye, ferie, formatFr, formatMinutes, formatNombre, saisieModifiableParEmploye } from '../utils/dates'
+import { absenceBloquanteDuJour, blocageJourEmploye, ferie, formatFr, formatMinutes, formatNombre, saisieModifiableParEmploye } from '../utils/dates'
 import Modal from './Modal.vue'
 
 const props = defineProps({
   ouvert: { type: Boolean, default: false },
   employe: { type: Object, default: null },
   jour: { type: String, default: '' },
-  // Vue de l'employé : pas de gestion des absences, saisie d'heures limitée à la fenêtre de clôture.
+  // Vue de l'employé : saisie limitée à la fenêtre de clôture et aux jours ouverts.
   vueEmploye: { type: Boolean, default: false },
-  joursFermeture: { type: Array, default: () => [] },
-  deplacementModifiable: { type: Function, default: () => true }
+  joursFermeture: { type: Array, default: () => [] }
 })
-const emit = defineEmits(['fermer', 'modifie', 'nouvelle-absence', 'modifier-absence', 'nouveau-deplacement', 'modifier-deplacement'])
+const emit = defineEmits(['fermer', 'modifie'])
 
 const minutes = ref('')
 const erreur = ref('')
@@ -173,7 +133,6 @@ const km = ref('')
 
 const minutesInitiales = computed(() => props.employe?.heures?.[props.jour] || 0)
 const apercu = computed(() => (Number.isInteger(Number(minutes.value)) ? formatMinutes(Number(minutes.value)) : ''))
-const absence = computed(() => (props.employe ? absenceDuJour(props.employe.absences, props.jour) : null))
 const absenceBloquante = computed(() => (props.employe ? absenceBloquanteDuJour(props.employe.absences, props.jour) : null))
 const verrouilleEmploye = computed(() => props.vueEmploye && !!props.jour && !saisieModifiableParEmploye(props.jour))
 const blocageEmploye = computed(() => (props.vueEmploye && props.jour ? blocageJourEmploye(props.jour, props.joursFermeture) : null))
@@ -220,7 +179,7 @@ watch(() => props.ouvert, async (ouvert) => {
   if (!ouvert) return
   erreur.value = ''
   minutes.value = minutesInitiales.value || ''
-  if (props.vueEmploye) initialiserDeplacement()
+  initialiserDeplacement()
   await nextTick()
   champHeures.value?.focus()
 })
@@ -243,7 +202,8 @@ const enregistrerDeplacement = () => {
     date: props.jour,
     motif_deplacement_id: autre ? null : motifChoix.value,
     motif: autre ? motifPrecision.value : null,
-    km: autre ? km.value : null
+    km: autre ? km.value : null,
+    ...(props.vueEmploye ? {} : { employe_id: props.employe.id })
   }
   return d ? api.put(`/deplacements/${d.id}`, corps) : api.post('/deplacements', corps)
 }
@@ -262,12 +222,12 @@ const executer = async (action) => {
 }
 
 const enregistrer = () => {
-  if (props.vueEmploye && motifChoix.value === '' && deplacementJour.value
+  if (motifChoix.value === '' && deplacementJour.value
     && !confirm(`Supprimer le déplacement du ${formatFr(props.jour)} (${deplacementJour.value.motif}) ?`)) return
   executer(async () => {
     const valeur = minutes.value === '' ? 0 : Number(minutes.value)
     if (!props.vueEmploye || valeur !== minutesInitiales.value) await sauverHeures(valeur)
-    if (props.vueEmploye && deplacementModifie()) await enregistrerDeplacement()
+    if (deplacementModifie()) await enregistrerDeplacement()
   })
 }
 

@@ -52,6 +52,9 @@
               <button type="button" class="btn btn-sm btn-secondary" aria-label="Heures +/-" v-infobulle="'Créditer ou débiter des heures +/-'" @click="heuresEmploye = e">
                 <i class="bi bi-clock-history"></i>
               </button>
+              <button type="button" class="btn btn-sm btn-secondary ms-1" aria-label="Absences" v-infobulle="'Saisir, modifier ou supprimer les absences (vacances, maladie…)'" @click="absenceEmploye = e">
+                <i class="bi bi-airplane"></i>
+              </button>
               <template v-if="!e.date_sortie">
                 <button type="button" class="btn btn-sm btn-secondary ms-1" aria-label="Mot de passe oublié" v-infobulle="'Générer un nouveau mot de passe provisoire'" :disabled="!e.actif" @click="ouvrirAction('mdp', e)">
                   <i class="bi bi-key"></i>
@@ -133,6 +136,7 @@
 
     <FicheEmploye :employe-id="ficheId" @fermer="ficheId = null" @modifie="charger" />
     <HeuresEmployeModal :employe="heuresEmploye" @fermer="heuresEmploye = null" @modifie="charger" />
+    <AbsenceModal :ouvert="!!absenceEmploye" :employe="absenceEmploye" @fermer="absenceEmploye = null" @enregistre="charger" />
     <ActionEmployeModal :action="action" @fermer="action = null" @modifie="surAction" />
   </div>
 </template>
@@ -140,6 +144,7 @@
 <script setup>
 import { reactive, ref, watch } from 'vue'
 import ActionEmployeModal from '../../components/ActionEmployeModal.vue'
+import AbsenceModal from '../../components/AbsenceModal.vue'
 import FicheEmploye from '../../components/FicheEmploye.vue'
 import HeuresEmployeModal from '../../components/HeuresEmployeModal.vue'
 import Modal from '../../components/Modal.vue'
@@ -159,6 +164,7 @@ const employes = ref([])
 const erreur = ref('')
 const ficheId = ref(null)
 const heuresEmploye = ref(null)
+const absenceEmploye = ref(null)
 const action = ref(null)
 const succes = ref('')
 const creationOuverte = ref(false)
