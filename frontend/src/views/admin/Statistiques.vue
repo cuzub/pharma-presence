@@ -5,17 +5,22 @@
       <AnneeNavigateur v-model="annee" />
     </div>
     <p class="text-muted small">
-      Cumul mensuel des heures en plus (au-dessus de l’axe) et en moins (en dessous), par employé.
+      Net mensuel des heures en plus et en moins, par employé (au-dessus de l’axe : en plus ; en dessous : en moins).
       Les employés partis sur l’année sont inclus, avec la mention « parti ».
     </p>
 
     <div v-if="erreur" class="alert alert-danger">{{ erreur }}</div>
 
+    <div v-if="employeIsole" class="alert alert-info d-flex align-items-center justify-content-between py-2" data-vue-isolee>
+      <span>Vue : <strong>{{ nomEmploye(employeIsole) }}</strong></span>
+      <button type="button" class="btn btn-sm btn-outline-secondary" aria-label="Revenir à toute l’équipe" @click="employeIsole = null">✕</button>
+    </div>
+
     <div v-if="employes.length" class="carte mb-3">
       <div class="graphique-statistiques">
         <Bar :data="graphique" :options="options" />
       </div>
-      <p class="text-muted small mt-2 mb-0">Cliquez sur un nom dans la légende pour masquer ou afficher un employé.</p>
+      <p class="text-muted small mt-2 mb-0">Cliquez sur un nom dans la légende, ou sur une ligne du tableau, pour n’afficher que cet employé. Cliquez à nouveau pour revenir à toute l’équipe.</p>
     </div>
 
     <div class="carte p-0 table-responsive">
@@ -36,7 +41,18 @@
               Aucune heure en plus ou en moins et aucun contrat en {{ annee }}.
             </td>
           </tr>
-          <tr v-for="e in employes" v-else :key="e.id" data-statistiques>
+          <tr
+            v-for="e in employesAffiches"
+            v-else
+            :key="e.id"
+            data-statistiques
+            role="button"
+            tabindex="0"
+            :class="{ 'table-active': e.id === employeIsole }"
+            :aria-pressed="e.id === employeIsole ? 'true' : 'false'"
+            @click="basculerIsolement(e.id)"
+            @keydown.enter.prevent="basculerIsolement(e.id)"
+          >
             <td class="text-nowrap">
               {{ e.nom }} {{ e.prenom }}
               <span v-if="!e.actif" class="badge text-bg-secondary">parti</span>
@@ -90,6 +106,14 @@ const donnees = ref({ employes: [], totaux: { plus: [], moins: [], net: [], tota
 const employes = computed(() => donnees.value.employes)
 const totaux = computed(() => donnees.value.totaux)
 
+// Employé isolé (id) : le graphique et le tableau ne montrent que lui. Conservé d'une année à l'autre s'il est toujours présent.
+const employeIsole = ref(null)
+const employesAffiches = computed(() => employes.value.filter((e) => employeIsole.value === null || e.id === employeIsole.value))
+const nomEmploye = (id) => {
+  const e = employes.value.find((employe) => employe.id === id)
+  return e ? `${e.prenom} ${e.nom}` : ''
+}
+
 // Une seule réponse compte : la plus récente, même si l'utilisateur change d'année pendant le chargement.
 let demande = 0
 const charger = async () => {
@@ -98,7 +122,10 @@ const charger = async () => {
   erreur.value = ''
   try {
     const reponse = (await api.get(`/statistiques/${annee.value}`)).data
-    if (numero === demande) donnees.value = reponse
+    if (numero === demande) {
+      donnees.value = reponse
+      if (!reponse.employes.some((e) => e.id === employeIsole.value)) employeIsole.value = null
+    }
   } catch (error) {
     if (numero === demande) erreur.value = await messageErreur(error)
   } finally {
@@ -107,22 +134,27 @@ const charger = async () => {
 }
 watch(annee, charger, { immediate: true })
 
-const graphique = computed(() => ({ labels: MOIS_COURTS, datasets: jeuxGraphique(employes.value) }))
+// Les employés hors isolement restent dans le graphique (et la légende), masqués.
+const graphique = computed(() => ({
+  labels: MOIS_COURTS,
+  datasets: jeuxGraphique(employes.value).map((jeu) => ({
+    ...jeu,
+    hidden: employeIsole.value !== null && jeu.employeId !== employeIsole.value
+  }))
+}))
+
+const basculerIsolement = (id) => {
+  employeIsole.value = employeIsole.value === id ? null : id
+}
+
+// Clic sur un employé dans la légende : même effet que sur une ligne du tableau.
+const cliqueLegende = (_event, item, legende) => {
+  basculerIsolement(legende.chart.data.datasets[item.datasetIndex].employeId)
+}
 
 // Les valeurs du graphique sont en heures ; on repasse en minutes pour l'affichage.
 const minutesDuMois = (jeu, index) => Math.round((jeu?.data[index] || 0) * 60)
-const moinsDuJeu = (jeu, chart) => chart.data.datasets.find((d) => d.employeId === jeu.employeId && d.sens === 'moins')
-
-// Clic sur un employé dans la légende : masque ou affiche ses deux jeux (plus et moins).
-const basculerEmploye = (_event, item, legende) => {
-  const chart = legende.chart
-  const jeu = chart.data.datasets[item.datasetIndex]
-  const visible = !chart.isDatasetVisible(item.datasetIndex)
-  chart.data.datasets.forEach((d, index) => {
-    if (d.employeId === jeu.employeId) chart.setDatasetVisibility(index, visible)
-  })
-  chart.update()
-}
+const employeDuJeu = (jeu) => employes.value.find((e) => e.id === jeu.employeId)
 
 const options = {
   responsive: true,
@@ -136,21 +168,20 @@ const options = {
   },
   plugins: {
     legend: {
-      labels: { filter: (item, data) => data.datasets[item.datasetIndex].sens === 'plus' },
-      onClick: basculerEmploye
+      onClick: cliqueLegende
     },
     tooltip: {
       mode: 'index',
       intersect: false,
       // Une seule ligne par employé et par mois, sans employé à zéro.
-      filter: (item) => item.dataset.sens === 'plus'
-        && (minutesDuMois(item.dataset, item.dataIndex) !== 0 || minutesDuMois(moinsDuJeu(item.dataset, item.chart), item.dataIndex) !== 0),
+      filter: (item) => minutesDuMois(item.dataset, item.dataIndex) !== 0,
       callbacks: {
         label: (item) => {
-          const moins = moinsDuJeu(item.dataset, item.chart)
-          const plus = minutesDuMois(item.dataset, item.dataIndex)
-          const enMoins = minutesDuMois(moins, item.dataIndex)
-          return `${item.dataset.label} — ${MOIS_FR[item.dataIndex]} : ${libelle(plus)} / ${libelle(enMoins)}`
+          const employe = employeDuJeu(item.dataset)
+          const net = minutesDuMois(item.dataset, item.dataIndex)
+          const plus = employe?.plus[item.dataIndex] || 0
+          const moins = employe?.moins[item.dataIndex] || 0
+          return `${item.dataset.label} — ${MOIS_FR[item.dataIndex]} : ${libelle(net)} (${detail(plus, moins)})`
         }
       }
     }
@@ -159,5 +190,6 @@ const options = {
 
 const libelle = (minutes) => formatMinutes(minutes) || '0'
 const classeMinutes = (minutes) => (minutes > 0 ? 'minutes-plus' : minutes < 0 ? 'minutes-moins' : '')
-const infobulle = (plus, moins) => (plus || moins ? `En plus : ${libelle(plus)} / En moins : ${libelle(moins)}` : '')
+const detail = (plus, moins) => `en plus ${libelle(plus)} / en moins ${libelle(moins)}`
+const infobulle = (plus, moins) => (plus || moins ? detail(plus, moins) : '')
 </script>

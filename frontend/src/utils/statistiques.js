@@ -8,19 +8,16 @@ export const PALETTE = [
   '#8c564b', '#e377c2', '#3f51b5', '#7f7f00', '#00695c', '#b71c1c'
 ]
 
-// Un employé = deux jeux de données (plus et moins) de même couleur, empilés ; les valeurs sont en heures.
+// Un employé = un jeu de données : son net mensuel, en heures (positif au-dessus de l'axe, négatif en dessous).
 export const jeuxGraphique = (employes) =>
-  employes.flatMap((employe, index) => {
+  employes.map((employe, index) => {
     const couleur = PALETTE[index % PALETTE.length]
-    const label = `${employe.prenom} ${employe.nom}`
-    const jeu = (sens, minutes) => ({
-      label,
+    return {
+      label: `${employe.prenom} ${employe.nom}`,
       employeId: employe.id,
-      sens,
-      data: minutes.map((m) => m / 60),
+      data: employe.net.map((m) => m / 60),
       backgroundColor: couleur,
       borderColor: couleur,
       stack: 'heures'
-    })
-    return [jeu('plus', employe.plus), jeu('moins', employe.moins)]
+    }
   })
