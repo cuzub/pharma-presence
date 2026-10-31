@@ -64,7 +64,11 @@ test('arrivée d’un employé, heures +/-, déplacements déclaratifs, historiq
   await expect(page.locator('tr', { hasText: nom })).toContainText('-1h')
   await page.goto(`/?mois=${mois}`)
   await expect(ligne.locator(`td[data-jour="${mois}-06"] [data-regularisation]`)).toHaveText('-2h')
-  await ligne.locator(`td[data-jour="${mois}-06"]`).hover()
+  // La ligne est en bas du tableau : on la fait défiler avant de survoler, sinon le défilement masque la bulle.
+  const caseJour6 = ligne.locator(`td[data-jour="${mois}-06"]`)
+  await caseJour6.scrollIntoViewIfNeeded()
+  await page.evaluate(() => new Promise((resoudre) => requestAnimationFrame(() => requestAnimationFrame(resoudre))))
+  await caseJour6.hover()
   await expect(page.locator('.infobulle')).toContainText('Heures payées e2e')
   await expect(ligne.locator('td[data-solde]')).toHaveText('-1h')
 
@@ -76,6 +80,7 @@ test('arrivée d’un employé, heures +/-, déplacements déclaratifs, historiq
   await page.fill('#md-km', '7')
   await page.locator('form', { has: page.locator('#md-libelle') }).getByRole('button', { name: 'Ajouter' }).click()
   await expect(page.locator(`input[aria-label=Motif]`).last()).toHaveValue(destination)
+  await page.locator('.modal.d-block').getByRole('button', { name: 'Fermer' }).click()
   await deconnecter(page)
 
   // 3. L'employé se connecte, doit changer son mot de passe, puis déclare un déplacement.
@@ -157,7 +162,7 @@ test('arrivée d’un employé, heures +/-, déplacements déclaratifs, historiq
   await expect(page.getByRole('button', { name: /Détail des heures/ })).toHaveCount(0)
   const [telechargement] = await Promise.all([
     page.waitForEvent('download'),
-    page.getByRole('button', { name: /État préparatoire Excel/ }).click()
+    page.getByRole('button', { name: /Télécharger État préparatoire/ }).click()
   ])
   expect(telechargement.suggestedFilename()).toBe(`etat-preparatoire-${mois}.xlsx`)
 

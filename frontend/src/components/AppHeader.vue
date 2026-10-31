@@ -1,26 +1,43 @@
 <template>
-  <nav class="navbar navbar-expand-lg navbar-dark app-navbar sticky-top">
-    <div class="container-fluid px-3 px-lg-4">
-      <RouterLink class="navbar-brand d-flex align-items-center gap-2" :to="auth.estAdmin ? '/' : '/mon-mois'">
-        <i class="bi bi-capsule"></i> Suivi
+  <aside class="app-sidebar" :class="{ 'app-sidebar--reduite': reduite }">
+    <div class="app-sidebar-entete">
+      <button
+        type="button"
+        class="app-sidebar-bascule"
+        :aria-expanded="!reduite"
+        :title="reduite ? 'Afficher le menu' : 'Réduire le menu'"
+        @click="basculer"
+      >
+        <svg viewBox="0 0 24 24" width="1.5rem" height="1.5rem" aria-hidden="true">
+          <g transform="rotate(-45 12 12)">
+            <path d="M12 8H7A4 4 0 0 0 3 12A4 4 0 0 0 7 16H12Z" :class="['capsule-moitie', { 'capsule-moitie--pleine': !reduite }]" />
+            <path d="M12 8H17A4 4 0 0 1 17 16H12Z" :class="['capsule-moitie', { 'capsule-moitie--pleine': reduite }]" />
+          </g>
+        </svg>
+      </button>
+      <RouterLink class="app-sidebar-marque" :to="auth.estAdmin ? '/' : '/mon-mois'" title="Suivi">
+        <span class="app-sidebar-texte">Suivi</span>
       </RouterLink>
-      <ul class="navbar-nav me-auto flex-row flex-wrap gap-1">
-        <li v-for="lien in liens" :key="lien.to" class="nav-item">
-          <RouterLink class="nav-link px-2" :to="lien.to" active-class="active" :exact-active-class="lien.to === '/' ? 'active' : ''">
-            <i :class="['bi', lien.icone]"></i> {{ lien.libelle }}
-          </RouterLink>
-        </li>
-      </ul>
-      <div class="d-flex align-items-center gap-2 text-white ms-3">
-        <RouterLink to="/mot-de-passe" class="nav-link text-white-50 small" title="Changer mon mot de passe">
-          <i class="bi bi-person-circle"></i> {{ auth.nomAffiche }}
-        </RouterLink>
-        <button type="button" class="btn btn-sm btn-outline-light" @click="deconnecter">
-          <i class="bi bi-box-arrow-right"></i> Déconnexion
-        </button>
-      </div>
     </div>
-  </nav>
+    <ul class="nav flex-column app-sidebar-liens">
+      <li v-for="lien in liens" :key="lien.to" class="nav-item">
+        <RouterLink class="nav-link" :to="lien.to" active-class="active" :exact-active-class="lien.to === '/' ? 'active' : ''" :title="lien.libelle">
+          <i :class="['bi', lien.icone]"></i>
+          <span class="app-sidebar-texte">{{ lien.libelle }}</span>
+        </RouterLink>
+      </li>
+    </ul>
+    <div class="app-sidebar-pied">
+      <RouterLink to="/mot-de-passe" class="nav-link" title="Changer mon mot de passe">
+        <i class="bi bi-person-circle"></i>
+        <span class="app-sidebar-texte">{{ auth.nomAffiche }}</span>
+      </RouterLink>
+      <button type="button" class="btn btn-sm btn-outline-light app-sidebar-deconnexion" title="Déconnexion" @click="deconnecter">
+        <i class="bi bi-box-arrow-right"></i>
+        <span class="app-sidebar-texte">Déconnexion</span>
+      </button>
+    </div>
+  </aside>
 </template>
 
 <script setup>
@@ -28,10 +45,12 @@ import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import { useReferentielStore } from '../stores/referentiel'
+import { useBarreLaterale } from '../composables/useBarreLaterale'
 
 const auth = useAuthStore()
 const referentiel = useReferentielStore()
 const router = useRouter()
+const { reduite, basculer } = useBarreLaterale()
 
 const liens = computed(() => auth.estAdmin
   ? [
