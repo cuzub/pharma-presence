@@ -129,7 +129,7 @@ def test_fenetre_de_modification_employe(reference, jour, attendu):
 
 
 def test_employe_bloque_hors_fenetre_admin_jamais(admin, creer_employe, aujourdhui):
-    fiche, session = creer_employe('alice')
+    fiche, session = creer_employe('alice', date_entree='2024-01-01')
     trajet = {'date': '2025-01-15', 'motif': 'Grossiste', 'km': 8}
     deplacement_id = session.post('/api/deplacements', trajet).get_json()['id']
 

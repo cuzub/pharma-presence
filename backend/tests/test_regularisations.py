@@ -69,7 +69,7 @@ def test_pas_soumise_aux_absences_bloquantes(admin, creer_employe, motifs):
 
 
 def test_solde_cumule_a_fin_de_mois_et_net_du_mois(admin, creer_employe):
-    alice, session = creer_employe('alice')
+    alice, session = creer_employe('alice', date_entree='2024-01-01')
     admin.put('/api/heures', {'employe_id': alice['id'], 'jour': '2024-12-10', 'minutes': 120})
     _regulariser(admin, alice['id'], '2024-12-31', 600, 'Solde de départ')
     admin.put('/api/heures', {'employe_id': alice['id'], 'jour': '2025-01-15', 'minutes': 90})

@@ -4,7 +4,10 @@
     <p v-if="ferieDuJour" class="alert alert-warning py-2 small mb-3"><i class="bi bi-flag"></i> Jour férié : {{ ferieDuJour }}</p>
 
     <h6 v-if="!vueEmploye">Heures en plus / en moins</h6>
-    <p v-if="absenceBloquante" class="alert alert-secondary py-2 small mb-2" data-jour-bloque>
+    <p v-if="horsContrat" class="alert alert-secondary py-2 small mb-2" data-jour-bloque>
+      Pas de contrat ce jour-là : saisie impossible.
+    </p>
+    <p v-else-if="absenceBloquante" class="alert alert-secondary py-2 small mb-2" data-jour-bloque>
       Absent(e) ({{ absenceBloquante.motif_libelle }}) : saisie impossible ce jour-là.
     </p>
     <p v-else-if="verrouilleEmploye" class="alert alert-secondary py-2 small mb-2" data-jour-bloque>
@@ -169,7 +172,9 @@ const apercu = computed(() => (Number.isInteger(Number(minutes.value)) ? formatM
 const absence = computed(() => (props.employe ? absenceDuJour(props.employe.absences, props.jour) : null))
 const absenceBloquante = computed(() => (props.employe ? absenceBloquanteDuJour(props.employe.absences, props.jour) : null))
 const verrouilleEmploye = computed(() => props.vueEmploye && !!props.jour && !saisieModifiableParEmploye(props.jour))
-const bloque = computed(() => !!absenceBloquante.value || verrouilleEmploye.value)
+const horsContrat = computed(() => !!props.employe && !!props.jour
+  && !(props.employe.contrats || []).some((c) => c.date_debut <= props.jour && (!c.date_fin || c.date_fin >= props.jour)))
+const bloque = computed(() => !!absenceBloquante.value || verrouilleEmploye.value || horsContrat.value)
 const deplacements = computed(() => (props.employe?.deplacements || []).filter((d) => d.date === props.jour))
 const regularisations = computed(() => (props.employe?.regularisations || []).filter((r) => r.jour === props.jour))
 const ferieDuJour = computed(() => (props.jour ? ferie(props.jour) : null))

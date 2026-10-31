@@ -41,3 +41,12 @@ def test_employe_bloque_pendant_une_absence_bloquante(admin, creer_employe, moti
     reponse = session.put('/api/heures', {'employe_id': alice['id'], 'jour': '2025-02-05', 'minutes': 30})
     assert reponse.status_code == 409
     assert reponse.get_json()['code'] == 'jour_absent'
+
+
+def test_saisie_refusee_avant_le_contrat(admin, creer_employe):
+    alice, session = creer_employe('alice', date_entree='2025-02-10')
+    reponse = session.put('/api/heures', {'employe_id': alice['id'], 'jour': '2025-02-05', 'minutes': 30})
+    assert reponse.status_code == 409
+    assert reponse.get_json()['code'] == 'hors_contrat'
+    assert admin.put('/api/heures', {'employe_id': alice['id'], 'jour': '2025-02-05', 'minutes': 30}).status_code == 409
+    assert session.put('/api/heures', {'employe_id': alice['id'], 'jour': '2025-02-10', 'minutes': 30}).status_code == 200

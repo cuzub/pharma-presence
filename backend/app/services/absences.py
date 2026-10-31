@@ -23,6 +23,12 @@ def absence_bloquante(employe_id, jour):
 
 
 def verifier_jour_saisissable(employe, jour):
+    if not any(c.date_debut <= jour and (c.date_fin is None or c.date_fin >= jour) for c in employe.contrats):
+        raise ApiError(
+            f'{employe.prenom} n’a pas de contrat le {format_date_fr(jour)} : saisie impossible',
+            409,
+            'hors_contrat',
+        )
     absence = absence_bloquante(employe.id, jour)
     if absence is not None:
         raise ApiError(
