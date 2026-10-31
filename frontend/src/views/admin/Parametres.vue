@@ -3,8 +3,8 @@
     <h1 class="h4 mb-3">Paramètres</h1>
     <div v-if="erreur && !ouvert" class="alert alert-danger">{{ erreur }}</div>
 
-    <div class="row g-3">
-      <div class="col-md-6 col-xl-3">
+    <div class="cartes-parametres">
+      <div>
         <div class="carte h-100">
           <div class="d-flex justify-content-between align-items-center mb-2">
             <h2 class="h6 mb-0">Motifs d'absence</h2>
@@ -23,7 +23,7 @@
         </div>
       </div>
 
-      <div class="col-md-6 col-xl-3">
+      <div>
         <div class="carte h-100">
           <div class="d-flex justify-content-between align-items-center mb-2">
             <h2 class="h6 mb-0">Motifs de déplacement</h2>
@@ -44,7 +44,7 @@
         </div>
       </div>
 
-      <div class="col-md-6 col-xl-3">
+      <div>
         <div class="carte h-100">
           <div class="d-flex justify-content-between align-items-center mb-2">
             <h2 class="h6 mb-0">Jours de fermeture de la pharmacie</h2>
@@ -65,7 +65,7 @@
         </div>
       </div>
 
-      <div class="col-md-6 col-xl-3">
+      <div>
         <div class="carte h-100">
           <div class="d-flex justify-content-between align-items-center mb-2">
             <h2 class="h6 mb-0">Envoi de l'export par mail</h2>
@@ -330,6 +330,19 @@ onMounted(() => {
 </script>
 
 <style scoped>
+.cartes-parametres {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-rows: 1fr;
+  gap: 1rem;
+}
+
+@media (min-width: 1200px) {
+  .cartes-parametres {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
 .btn {
   white-space: nowrap;
 }
