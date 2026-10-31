@@ -74,9 +74,10 @@ l'année, par employé et par mois, régularisations comprises (un crédit compt
 l'année précédente ou suivante, et le bouton calendrier à leur gauche revient à l'année en cours
 (de même, dans le *Tableau* et l'*Export*, il revient au mois en cours).
 
-- **Le graphique** empile, pour chaque mois, les heures en plus (au-dessus de l'axe) et en moins
-  (en dessous). Chaque employé a sa couleur. Survolez une barre pour voir le détail du mois
-  (« en plus / en moins »). Cliquez sur un nom dans la légende pour masquer ou afficher cet employé.
+- **Le graphique** montre, pour chaque mois, une barre par employé, côte à côte : le net du mois,
+  au-dessus de l'axe s'il est en plus, en dessous s'il est en moins. Chaque employé a sa couleur.
+  Survolez un mois pour voir le détail (« en plus / en moins ») de chacun. Cliquez sur un nom dans
+  la légende pour n'afficher que cet employé.
 - **Le tableau** donne, pour chaque employé et chaque mois, le **net** (plus moins moins). Survolez
   une case pour voir séparément le plus et le moins. La colonne **Total** donne le net de l'année,
   et la ligne **Équipe** le total de tous les employés.

@@ -29,8 +29,8 @@ indemnités kilométriques). Voir [docs/intent/suivi-presence-pharmacie.md](docs
   Déplacements) et CSV (format Excel FR). Sans heures +/- ni entrées / sorties.
 - Historique : journal immuable des créations / modifications / suppressions (déplacements, heures,
   régularisations, absences) avec auteur et avant → après, filtrable par employé, mois, auteur et type.
-- Statistiques : heures en plus / en moins par année, en net, avec un graphique empilé par employé
-  et mois, un tableau du net mensuel, les totaux annuels et d'équipe ; employés partis inclus.
+- Statistiques : heures en plus / en moins par année, en net, avec un graphique (une barre par
+  employé et par mois, côte à côte), un tableau du net mensuel, les totaux annuels et d'équipe ; employés partis inclus.
   Clic sur un employé (légende ou tableau) pour l'isoler.
 - Paramètres : motifs d'absence (avec l'option « Bloque heures et déplacements »), motifs de
   déplacement (destination + km), jours de fermeture.
@@ -84,7 +84,8 @@ docker compose -f deploy/compose/docker-compose.dev.yml up -d
 cd backend
 python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 FLASK_APP=run.py .venv/bin/flask db upgrade
-FLASK_APP=run.py FLASK_ENV=development .venv/bin/flask demo   # données FICTIVES : admin / admin-demo-1234
+FLASK_APP=run.py FLASK_ENV=development .venv/bin/flask demo   # données FICTIVES : admin / admin-demo-1234, 6 employés
+# --reinitialiser : vide d'abord la base de développement (ex. après les tests e2e, qui créent des employés)
 FLASK_ENV=development PORT=5002 .venv/bin/python run.py
 
 # Frontend (port 5174, proxy /api → 5002)

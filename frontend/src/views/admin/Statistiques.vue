@@ -151,9 +151,7 @@ const options = {
   responsive: true,
   maintainAspectRatio: false,
   scales: {
-    x: { stacked: true },
     y: {
-      stacked: true,
       ticks: { callback: (valeur) => formatMinutes(Math.round(valeur * 60)) || '0' }
     }
   },

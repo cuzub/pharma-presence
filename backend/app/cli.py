@@ -4,9 +4,23 @@ import secrets
 from datetime import date, timedelta
 
 import click
+from sqlalchemy import text
 
 from app.extensions import db
-from app.models import Absence, Contrat, Deplacement, Employe, HeuresEnPlus, MotifAbsence, MotifDeplacement, Utilisateur
+from app.models import (
+    Absence, Contrat, Deplacement, Employe, HeuresEnPlus, MotifAbsence, MotifDeplacement, RegularisationHeures, Utilisateur,
+)
+
+_TABLES_DEMO = [
+    'journal_modifications', 'regularisations_heures', 'heures_en_plus', 'deplacements', 'motifs_deplacement',
+    'absences', 'contrats', 'employes', 'jours_fermeture',
+]
+
+# Équipe fictive : nom, prénom, contrat (h/mois), tendance des heures +/- (minutes typiques par saisie).
+_EQUIPE_DEMO = [
+    ('MARTIN', 'Alice', 151.67, 30), ('DURAND', 'Bruno', 151.67, 60), ('PETIT', 'Chloé', 121.33, -15),
+    ('LEROY', 'David', 69.33, 15), ('MOREAU', 'Emma', 151.67, 45), ('GARNIER', 'Fanny', 121.33, -30),
+]
 
 
 def _mot_de_passe_aleatoire():
@@ -43,40 +57,84 @@ def enregistrer_commandes(app):
         click.echo(f'Mot de passe provisoire pour « {utilisateur.identifiant} » : {mot_de_passe}')
 
     @app.cli.command('demo')
-    def demo():
-        """Développement uniquement : crée des données FICTIVES (admin/admin-demo-1234)."""
+    @click.option('--reinitialiser', is_flag=True, help='Vide d\'abord toutes les données (comptes, saisies, motifs de déplacement).')
+    def demo(reinitialiser):
+        """Développement uniquement : crée des données FICTIVES (admin/admin-demo-1234, 6 employés)."""
         if app.config.get('ENV_NAME') != 'development':
             raise click.ClickException('Commande réservée au développement (FLASK_ENV=development).')
+        if reinitialiser:
+            for table in _TABLES_DEMO:
+                db.session.execute(text(f'DELETE FROM {table}'))
+            db.session.execute(text('UPDATE motifs_absence SET updated_by_id = NULL'))
+            db.session.execute(text('DELETE FROM utilisateurs'))
+            db.session.commit()
         if Utilisateur.query.first():
-            raise click.ClickException('La base contient déjà des comptes.')
-
-        admin = Utilisateur(identifiant='admin', role=Utilisateur.ROLE_ADMIN)
-        admin.definir_mot_de_passe('admin-demo-1234', provisoire=False)
-        db.session.add(admin)
-        motifs = {m.code: m for m in MotifAbsence.query.all()}
-        destinations = [MotifDeplacement(libelle=libelle, km=km, ordre=ordre) for ordre, (libelle, km) in enumerate(
-            [('Domitis', 2), ('Orgères', 5), ('LCL', 30)], start=1)]
-        db.session.add_all(destinations)
-        aujourdhui = date.today()
-        debut_mois = aujourdhui.replace(day=1)
-        fictifs = [
-            ('MARTIN', 'Alice', 151.67), ('DURAND', 'Bruno', 151.67), ('PETIT', 'Chloé', 121.33),
-            ('LEROY', 'David', 69.33), ('MOREAU', 'Emma', 151.67),
-        ]
-        for index, (nom, prenom, heures) in enumerate(fictifs):
-            utilisateur = Utilisateur(identifiant=prenom.lower().replace('é', 'e'), role=Utilisateur.ROLE_EMPLOYE)
-            utilisateur.definir_mot_de_passe('employe-demo-1234', provisoire=False)
-            employe = Employe(nom=nom, prenom=prenom, utilisateur=utilisateur)
-            db.session.add_all([utilisateur, employe, Contrat(employe=employe, heures_mensuelles=heures, date_debut=date(2024, 1, 1))])
-            db.session.flush()
-            if index == 0:
-                db.session.add(Absence(employe_id=employe.id, motif=motifs['CP'], date_debut=debut_mois + timedelta(days=9), date_reprise=debut_mois + timedelta(days=16)))
-            if index == 1:
-                db.session.add(HeuresEnPlus(employe_id=employe.id, jour=debut_mois + timedelta(days=2), minutes=90))
-                db.session.add(HeuresEnPlus(employe_id=employe.id, jour=debut_mois + timedelta(days=5), minutes=-30))
-                db.session.add(Deplacement(employe_id=employe.id, date=debut_mois + timedelta(days=3), motif_deplacement=destinations[2], motif='LCL', km=30))
-                db.session.add(Deplacement(employe_id=employe.id, date=debut_mois + timedelta(days=8), motif='Grossiste (récupération de commande)', km=24))
-            if index == 2:
-                db.session.add(Absence(employe_id=employe.id, motif=motifs['MAL'], date_debut=debut_mois + timedelta(days=4), date_reprise=debut_mois + timedelta(days=7)))
-        db.session.commit()
+            raise click.ClickException('La base contient déjà des comptes (utilisez --reinitialiser).')
+        _creer_demo()
         click.echo('Données de démonstration créées. Connexion : admin / admin-demo-1234 (employés : alice, bruno… / employe-demo-1234)')
+
+
+def _creer_demo():
+    """Deux ans d'historique fictif et reproductible : heures +/-, absences, déplacements, régularisations."""
+    import random
+
+    hasard = random.Random(42)
+    aujourdhui = date.today()
+    debut_historique = date(aujourdhui.year - 1, 1, 1)
+
+    admin = Utilisateur(identifiant='admin', role=Utilisateur.ROLE_ADMIN)
+    admin.definir_mot_de_passe('admin-demo-1234', provisoire=False)
+    db.session.add(admin)
+    motifs = {m.code: m for m in MotifAbsence.query.all()}
+    destinations = [MotifDeplacement(libelle=libelle, km=km, ordre=ordre) for ordre, (libelle, km) in enumerate(
+        [('Domitis', 2), ('Orgères', 5), ('LCL', 30)], start=1)]
+    db.session.add_all(destinations)
+
+    for index, (nom, prenom, heures, tendance) in enumerate(_EQUIPE_DEMO):
+        utilisateur = Utilisateur(identifiant=prenom.lower().replace('é', 'e'), role=Utilisateur.ROLE_EMPLOYE)
+        utilisateur.definir_mot_de_passe('employe-demo-1234', provisoire=False)
+        employe = Employe(nom=nom, prenom=prenom, utilisateur=utilisateur)
+        db.session.add_all([utilisateur, employe, Contrat(employe=employe, heures_mensuelles=heures, date_debut=date(2024, 1, 1))])
+        db.session.flush()
+
+        # Congés d'été (une semaine décalée par employé) et une absence dans le mois en cours pour certains.
+        absences = []
+        for annee in (aujourdhui.year - 1, aujourdhui.year):
+            debut_cp = date(annee, 7, 6) + timedelta(weeks=index)
+            absences.append((motifs['CP'], debut_cp, debut_cp + timedelta(days=7)))
+        debut_mois = aujourdhui.replace(day=1)
+        if index == 0:
+            absences.append((motifs['CP'], debut_mois + timedelta(days=9), debut_mois + timedelta(days=16)))
+        if index == 2:
+            absences.append((motifs['MAL'], debut_mois + timedelta(days=4), debut_mois + timedelta(days=7)))
+        if index == 4:
+            absences.append((motifs['RECUP'], debut_mois + timedelta(days=18), debut_mois + timedelta(days=20)))
+        for motif, debut, reprise in absences:
+            db.session.add(Absence(employe_id=employe.id, motif=motif, date_debut=debut, date_reprise=reprise))
+
+        def absent(jour):
+            return any(debut <= jour < reprise for _, debut, reprise in absences)
+
+        jour = debut_historique
+        while jour <= aujourdhui:
+            if jour.weekday() != 6 and not absent(jour):
+                if hasard.random() < 0.2:
+                    minutes = tendance + hasard.choice([-60, -45, -30, -15, 0, 15, 30, 45, 60])
+                    minutes = max(-240, min(240, minutes)) // 15 * 15
+                    if minutes:
+                        db.session.add(HeuresEnPlus(employe_id=employe.id, jour=jour, minutes=minutes))
+                if index in (1, 3) and hasard.random() < 0.08:
+                    destination = hasard.choice(destinations)
+                    db.session.add(Deplacement(
+                        employe_id=employe.id, date=jour, motif_deplacement=destination, motif=destination.libelle, km=destination.km,
+                    ))
+            jour += timedelta(days=1)
+
+    employes = {e.prenom: e for e in Employe.query.all()}
+    fin_mois_precedent = aujourdhui.replace(day=1) - timedelta(days=1)
+    db.session.add_all([
+        RegularisationHeures(employe_id=employes['Bruno'].id, jour=fin_mois_precedent, minutes=-600, commentaire='Heures payées sur la paie'),
+        RegularisationHeures(employe_id=employes['Fanny'].id, jour=debut_historique, minutes=300, commentaire="Solde de départ (avant l'outil)"),
+        RegularisationHeures(employe_id=employes['Emma'].id, jour=aujourdhui.replace(day=1) + timedelta(days=18), minutes=-420, commentaire='Récupération'),
+    ])
+    db.session.commit()

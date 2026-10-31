@@ -9,6 +9,7 @@ export const PALETTE = [
 ]
 
 // Un employé = un jeu de données : son net mensuel, en heures (positif au-dessus de l'axe, négatif en dessous).
+// Pas d'empilement : chaque mois montre une barre par employé, côte à côte.
 export const jeuxGraphique = (employes) =>
   employes.map((employe, index) => {
     const couleur = PALETTE[index % PALETTE.length]
@@ -17,7 +18,6 @@ export const jeuxGraphique = (employes) =>
       employeId: employe.id,
       data: employe.net.map((m) => m / 60),
       backgroundColor: couleur,
-      borderColor: couleur,
-      stack: 'heures'
+      borderColor: couleur
     }
   })

@@ -8,10 +8,10 @@ const alice = employe(1, 'Alice', 'Martin', [90, -90, ...vide.slice(2)])
 const bruno = employe(2, 'Bruno', 'Dupont', vide)
 
 describe('jeuxGraphique', () => {
-  it('crée un seul jeu par employé, en net, empilé', () => {
+  it('crée un seul jeu par employé, en net, non empilé (une barre par employé et par mois)', () => {
     const jeux = jeuxGraphique([alice, bruno])
     expect(jeux).toHaveLength(2)
-    expect(jeux.every((j) => j.stack === 'heures')).toBe(true)
+    expect(jeux.every((j) => j.stack === undefined)).toBe(true)
     expect(jeux[0].backgroundColor).not.toBe(jeux[1].backgroundColor)
   })
 
