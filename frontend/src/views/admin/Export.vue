@@ -8,7 +8,6 @@
     <div v-if="erreur" class="alert alert-danger">{{ erreur }}</div>
 
     <div class="carte p-0">
-      <h2 class="h6 p-3 mb-0">Aperçu du récapitulatif</h2>
       <div class="table-responsive">
         <table class="table table-hover mb-0 apercu">
           <colgroup>
