@@ -81,12 +81,19 @@ services:
         apk add --no-cache gnupg >/dev/null &&
         while true; do
           fichier="/backups/presence_$$(date +%Y%m%d_%H%M%S).dump.gpg";
-          echo "Sauvegarde chiffrée : $${fichier}";
-          pg_dump -h pharma-db -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}" -Fc |
-            gpg --batch --yes --pinentry-mode loopback --symmetric --cipher-algo AES256 --passphrase "$${BACKUP_ENCRYPTION_PASSPHRASE}" --output "$${fichier}" &&
-          chmod 600 "$${fichier}" &&
-          find /backups -name "presence_*.dump.gpg" -type f -mtime +"$${BACKUP_RETENTION_DAYS}" -delete;
-          sleep "$${BACKUP_INTERVAL_SECONDS}";
+          if pg_dump -h pharma-db -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}" -Fc -f /tmp/sauvegarde.dump &&
+            gpg --batch --yes --pinentry-mode loopback --symmetric --cipher-algo AES256 --passphrase "$${BACKUP_ENCRYPTION_PASSPHRASE}" --output "$${fichier}" /tmp/sauvegarde.dump &&
+            chmod 600 "$${fichier}"; then
+            echo "Sauvegarde chiffrée : $${fichier}";
+            find /backups -name "presence_*.dump.gpg" -type f -mtime +"$${BACKUP_RETENTION_DAYS}" -delete;
+            attente="$${BACKUP_INTERVAL_SECONDS}";
+          else
+            echo "ÉCHEC de la sauvegarde, nouvelle tentative dans 5 minutes" >&2;
+            rm -f "$${fichier}";
+            attente=300;
+          fi;
+          rm -f /tmp/sauvegarde.dump;
+          sleep "$${attente}";
         done
       '
     depends_on:

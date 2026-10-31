@@ -1,3 +1,6 @@
+import pytest
+
+from app.extensions import limiter
 from tests.conftest import EMPLOYE_MDP, EMPLOYE_MDP_PROVISOIRE, Session
 
 
@@ -68,3 +71,54 @@ def test_depart_coupe_l_acces_immediatement(app, admin, creer_employe):
 def test_logout(admin):
     assert admin.post('/api/auth/logout').status_code == 200
     assert admin.get('/api/auth/me').status_code == 401
+
+
+def test_logout_revoque_le_jeton_cote_serveur(app, admin):
+    jeton = admin.client.get_cookie('pharma_access_token', path='/api/').value
+    assert admin.post('/api/auth/logout').status_code == 200
+
+    # Le jeton copié avant la déconnexion (poste partagé, vol) n'est plus accepté.
+    rejoue = Session(app)
+    rejoue.client.set_cookie('pharma_access_token', jeton, path='/api/')
+    assert rejoue.get('/api/auth/me').status_code == 401
+
+
+def test_logout_sans_session(app):
+    assert Session(app).post('/api/auth/logout').status_code == 200
+
+
+@pytest.fixture
+def app_limitee(app, admin, monkeypatch):
+    """Application avec limitation active (désactivée par défaut dans les tests)."""
+    from app import create_app
+    from config import TestingConfig
+
+    monkeypatch.setattr(TestingConfig, 'RATELIMIT_ENABLED', True)
+    monkeypatch.setattr(TestingConfig, 'RATELIMIT_AUTH_LOGIN', '1000 per minute')
+    application = create_app('testing')
+    limiter.reset()
+    yield application
+    limiter.reset()
+    limiter.enabled = False
+
+
+def _tenter(application, mot_de_passe, ip, identifiant='pharmacienne'):
+    return Session(application).client.post(
+        '/api/auth/login',
+        json={'identifiant': identifiant, 'mot_de_passe': mot_de_passe},
+        environ_base={'REMOTE_ADDR': ip},
+    )
+
+
+def test_echecs_limites_par_compte_toutes_ip_confondues(app_limitee):
+    for numero in range(10):
+        assert _tenter(app_limitee, 'mauvais', f'10.0.0.{numero}').status_code == 401
+    # Même avec le bon mot de passe et une autre adresse IP, le compte est temporairement protégé.
+    assert _tenter(app_limitee, 'admin-mot-de-passe-test', '10.0.0.99').status_code == 429
+    # Les autres comptes ne sont pas touchés.
+    assert _tenter(app_limitee, 'mauvais', '10.0.0.99', identifiant='inconnu').status_code == 401
+
+
+def test_connexions_reussies_non_comptees_par_compte(app_limitee):
+    for numero in range(12):
+        assert _tenter(app_limitee, 'admin-mot-de-passe-test', f'10.0.1.{numero}').status_code == 200

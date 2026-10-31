@@ -50,10 +50,18 @@ indemnités kilométriques). Voir [docs/intent/suivi-presence-pharmacie.md](docs
 | Déploiement | Docker Compose sur Raspberry Pi : nginx (HTTPS Let's Encrypt), gunicorn, sauvegardes chiffrées GPG, copie hors site rclone |
 
 Sécurité : session JWT dans un cookie `HttpOnly; Secure; SameSite=Strict` (8 h) avec protection
-CSRF, mot de passe provisoire à changer à la première connexion, sessions invalidées au changement
-de mot de passe ou au départ, limitation des tentatives de connexion, cloisonnement des données par
-employé vérifié par les tests. Contraintes PostgreSQL d'exclusion contre les chevauchements de
-contrats et d'absences.
+CSRF, mot de passe provisoire à changer à la première connexion, sessions invalidées à la
+déconnexion, au changement de mot de passe ou au départ, limitation des tentatives de connexion
+(5/min par adresse IP, 10 échecs par 15 min par identifiant, toutes IP confondues ; temps de
+réponse identique pour un identifiant inconnu), politique CSP stricte servie par le conteneur
+frontend, cloisonnement des données par employé vérifié par les tests. Contraintes PostgreSQL
+d'exclusion contre les chevauchements de contrats et d'absences. Sauvegardes : en cas d'échec,
+aucun fichier n'est écrit et une nouvelle tentative a lieu 5 minutes plus tard.
+
+Recommandation : servir l'application sur son propre sous-domaine (ex. `pharmacie.pedalog.fr`)
+plutôt que sous `app.pedalog.fr/pharmacie`. Sur une origine partagée, une faille dans Pedalog
+donnerait accès aux données de la pharmacie (les chemins de cookies n'isolent pas deux applications
+d'une même origine).
 
 ```
 backend/          API Flask (app/routes, app/services, migrations/, tests/)

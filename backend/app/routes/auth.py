@@ -1,7 +1,10 @@
 from datetime import datetime, timezone
 
-from flask import Blueprint, current_app, jsonify
-from flask_jwt_extended import create_access_token, current_user, set_access_cookies, unset_jwt_cookies
+from flask import Blueprint, current_app, jsonify, request
+from flask_jwt_extended import (
+    create_access_token, current_user, get_current_user, set_access_cookies, unset_jwt_cookies, verify_jwt_in_request,
+)
+from werkzeug.security import check_password_hash, generate_password_hash
 
 from app.extensions import db, limiter
 from app.models import Utilisateur
@@ -9,6 +12,22 @@ from app.securite import connexion_requise, verifier_mot_de_passe_valide
 from app.utils import ApiError, donnees_json
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/api/auth')
+
+_HASH_FACTICE = None
+
+
+def _verifier_hash_factice(mot_de_passe):
+    """Identifiant inconnu : même calcul qu'un vrai compte, pour ne pas révéler les identifiants existants."""
+    global _HASH_FACTICE
+    if _HASH_FACTICE is None:
+        _HASH_FACTICE = generate_password_hash('mot-de-passe-factice')
+    check_password_hash(_HASH_FACTICE, mot_de_passe)
+
+
+def _identifiant_tente():
+    data = request.get_json(silent=True)
+    identifiant = data.get('identifiant') if isinstance(data, dict) else None
+    return f"compte:{(identifiant or '').strip().lower()[:80]}" if isinstance(identifiant, str) else 'compte:'
 
 
 def _reponse_session(utilisateur, status=200):
@@ -19,6 +38,12 @@ def _reponse_session(utilisateur, status=200):
 
 @auth_bp.route('/login', methods=['POST'])
 @limiter.limit(lambda: current_app.config['RATELIMIT_AUTH_LOGIN'])
+# Par compte, seuls les échecs comptent : freine les essais répartis sur plusieurs adresses IP.
+@limiter.limit(
+    lambda: current_app.config['RATELIMIT_AUTH_COMPTE'],
+    key_func=_identifiant_tente,
+    deduct_when=lambda response: response.status_code == 401,
+)
 def login():
     data = donnees_json()
     identifiant = (data.get('identifiant') or '').strip().lower()
@@ -27,6 +52,8 @@ def login():
         raise ApiError('Identifiant et mot de passe obligatoires')
 
     utilisateur = Utilisateur.query.filter_by(identifiant=identifiant).first()
+    if utilisateur is None:
+        _verifier_hash_factice(mot_de_passe)
     if utilisateur is None or not utilisateur.verifier_mot_de_passe(mot_de_passe) or not utilisateur.actif:
         raise ApiError('Identifiant ou mot de passe incorrect', 401, 'identifiants_invalides')
 
@@ -37,6 +64,15 @@ def login():
 
 @auth_bp.route('/logout', methods=['POST'])
 def logout():
+    """Révoque la session côté serveur (le jeton volé ou resté sur un poste partagé devient inutilisable)."""
+    try:
+        verify_jwt_in_request(optional=True)
+        utilisateur = get_current_user()
+    except Exception:  # Jeton expiré, invalide ou sans CSRF : on se contente d'effacer les cookies.
+        utilisateur = None
+    if utilisateur is not None:
+        utilisateur.version_session = (utilisateur.version_session or 0) + 1
+        db.session.commit()
     response = jsonify({'message': 'Déconnecté'})
     unset_jwt_cookies(response)
     return response, 200

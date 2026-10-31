@@ -58,7 +58,8 @@ def create_app(config_name=None):
     if config_name == 'production':
         _verifier_production(app)
 
-    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
+    # X-Forwarded-Host n'est pas fiable (non réécrit par le proxy du Raspberry Pi) : seul Host est utilisé.
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=0)
     db.init_app(app)
     migrate.init_app(app, db, directory=os.path.join(os.path.dirname(os.path.dirname(__file__)), 'migrations'))
     jwt.init_app(app)

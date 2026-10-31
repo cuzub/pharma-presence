@@ -59,6 +59,8 @@ class Config:
     RATELIMIT_HEADERS_ENABLED = True
     RATELIMIT_DEFAULT = os.environ.get('RATELIMIT_DEFAULT', '300 per minute')
     RATELIMIT_AUTH_LOGIN = os.environ.get('RATELIMIT_AUTH_LOGIN', '5 per minute')
+    # Échecs de connexion par identifiant, toutes adresses IP confondues.
+    RATELIMIT_AUTH_COMPTE = os.environ.get('RATELIMIT_AUTH_COMPTE', '10 per 15 minutes')
 
 
 class DevelopmentConfig(Config):
