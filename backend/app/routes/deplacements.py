@@ -54,7 +54,16 @@ def _remplir(deplacement, data):
             deplacement.motif_deplacement_id = motif.id
             deplacement.motif = motif.libelle
             deplacement.km = motif.km
+    _verifier_unicite_du_jour(deplacement)
     deplacement.updated_by_id = current_user.id
+
+
+def _verifier_unicite_du_jour(deplacement):
+    autres = Deplacement.query.filter(Deplacement.employe_id == deplacement.employe_id, Deplacement.date == deplacement.date)
+    if deplacement.id is not None:
+        autres = autres.filter(Deplacement.id != deplacement.id)
+    if autres.first() is not None:
+        raise ApiError('Un déplacement est déjà enregistré ce jour-là pour cet employé', 409)
 
 
 @deplacements_bp.route('', methods=['GET'])

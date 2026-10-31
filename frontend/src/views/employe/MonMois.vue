@@ -20,7 +20,7 @@
             :jours-fermeture="joursFermeture"
             :contrats="employe.contrats"
             @choisir-jour="ouvrirJour"
-            @modifier-deplacement="modifierDeplacement"
+            @modifier-deplacement="ouvrirJour"
           />
         </div>
         <p class="text-muted small mt-2">
@@ -42,16 +42,6 @@
       :deplacement-modifiable="(d) => saisieModifiableParEmploye(d.date)"
       @fermer="jourOuvert = false"
       @modifie="apresModification"
-      @nouveau-deplacement="nouveauDeplacement"
-      @modifier-deplacement="modifierDeplacement"
-    />
-
-    <DeplacementModal
-      :ouvert="modalOuvert"
-      :deplacement="deplacementEdite"
-      :date="dateChoisie"
-      @fermer="modalOuvert = false"
-      @enregistre="apresEnregistrement"
     />
   </div>
 </template>
@@ -59,7 +49,6 @@
 <script setup>
 import { computed, ref, watch } from 'vue'
 import Calendrier from '../../components/Calendrier.vue'
-import DeplacementModal from '../../components/DeplacementModal.vue'
 import JourModal from '../../components/JourModal.vue'
 import MoisNavigateur from '../../components/MoisNavigateur.vue'
 import ResumeMois from '../../components/ResumeMois.vue'
@@ -73,9 +62,6 @@ const erreur = ref('')
 
 const jourOuvert = ref(false)
 const jourChoisi = ref('')
-const modalOuvert = ref(false)
-const deplacementEdite = ref(null)
-const dateChoisie = ref('')
 
 const employe = computed(() => donnees.value?.employes[0] || null)
 const joursFermeture = computed(() => donnees.value?.jours_fermeture || [])
@@ -94,27 +80,8 @@ const ouvrirJour = (jour) => {
   jourOuvert.value = true
 }
 
-const nouveauDeplacement = (jour) => {
-  jourOuvert.value = false
-  deplacementEdite.value = null
-  dateChoisie.value = jour
-  modalOuvert.value = true
-}
-
-const modifierDeplacement = (d) => {
-  jourOuvert.value = false
-  deplacementEdite.value = d
-  dateChoisie.value = d.date
-  modalOuvert.value = true
-}
-
 const apresModification = () => {
   jourOuvert.value = false
-  charger()
-}
-
-const apresEnregistrement = () => {
-  modalOuvert.value = false
   charger()
 }
 

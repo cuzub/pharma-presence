@@ -13,6 +13,21 @@ def _creer_motif(admin, libelle='Domitis', km=2, **extra):
     return reponse.get_json()
 
 
+def test_un_seul_deplacement_par_jour_et_par_employe(admin, creer_employe):
+    domitis = _creer_motif(admin)
+    _, session = creer_employe('alice')
+    trajet = {'date': '2025-01-15', 'motif_deplacement_id': domitis['id']}
+    premier = session.post('/api/deplacements', trajet)
+    assert premier.status_code == 201, premier.get_json()
+
+    doublon = session.post('/api/deplacements', trajet)
+    assert doublon.status_code == 409
+    assert session.post('/api/deplacements', {**trajet, 'date': '2025-01-16'}).status_code == 201
+
+    # Modifier le déplacement existant reste possible (il n'est pas son propre doublon).
+    assert session.put(f"/api/deplacements/{premier.get_json()['id']}", trajet).status_code == 200
+
+
 def test_admin_gere_les_motifs(admin, creer_employe):
     domitis = _creer_motif(admin)
     lcl = _creer_motif(admin, 'LCL', 30)

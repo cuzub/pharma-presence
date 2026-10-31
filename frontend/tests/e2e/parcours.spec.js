@@ -105,29 +105,27 @@ test('arrivée d’un employé, heures +/-, déplacements déclaratifs, historiq
   await page.locator('.modal-body form button[type=submit]').click()
   await expect(page.locator(`[data-jour="${mois}-04"] .badge`)).toHaveText('+45min')
 
-  // Clic sur la date → choix du motif : les km sont remplis automatiquement.
+  // Clic sur la date → motif du déplacement dans le même formulaire : les km sont remplis automatiquement.
   await page.locator(`[data-jour="${mois}-03"]`).click()
-  await page.getByRole('button', { name: 'Ajouter un déplacement' }).click()
-  await page.selectOption('#dep-motif', { label: `${destination} — 7 km` })
-  await expect(page.locator('#dep-km')).toHaveValue('7')
-  await page.click('button[form=form-deplacement]')
+  await page.selectOption('#jour-motif', { label: `${destination} — 7 km` })
+  await expect(page.locator('#jour-km')).toHaveValue('7')
+  await page.click('[data-saisie-jour] button[type=submit]')
   await expect(page.locator(`[data-jour="${mois}-03"] [data-deplacement]`)).toContainText('7 km')
 
   // Motif « Autre » : distance et précision libres.
   await page.locator(`[data-jour="${mois}-02"]`).click()
-  await page.getByRole('button', { name: 'Ajouter un déplacement' }).click()
-  await page.selectOption('#dep-motif', 'autre')
-  await page.fill('#dep-precision', 'Test e2e')
-  await page.fill('#dep-km', '12')
-  await page.click('button[form=form-deplacement]')
+  await page.selectOption('#jour-motif', 'autre')
+  await page.fill('#jour-precision', 'Test e2e')
+  await page.fill('#jour-km', '12')
+  await page.click('[data-saisie-jour] button[type=submit]')
   const autre = page.locator(`[data-jour="${mois}-02"] [data-deplacement]`)
   await expect(autre).toContainText('12 km')
 
-  // Correction avec le crayon, depuis le modal du jour.
+  // Correction : rouvrir la même date, le formulaire reprend le déplacement existant.
   await page.locator(`[data-jour="${mois}-02"]`).click()
-  await page.locator('.modal.d-block').getByRole('button', { name: /Modifier le déplacement/ }).click()
-  await page.fill('#dep-km', '12.5')
-  await page.click('button[form=form-deplacement]')
+  await expect(page.locator('#jour-motif')).toHaveValue('autre')
+  await page.fill('#jour-km', '12.5')
+  await page.click('[data-saisie-jour] button[type=submit]')
   await expect(autre).toContainText('12,5 km')
   await deconnecter(page)
 
