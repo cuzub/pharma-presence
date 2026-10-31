@@ -203,6 +203,12 @@ const texteContrat = (employe) =>
   max-height: calc(100vh - 220px);
 }
 
+/* La barre de défilement suit la largeur du tableau, pas celle de la carte. */
+.tableau-conteneur {
+  width: fit-content;
+  max-width: 100%;
+}
+
 .tableau-mois {
   font-size: 0.8rem;
   border-collapse: separate;
