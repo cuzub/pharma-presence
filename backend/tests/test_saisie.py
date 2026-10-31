@@ -65,20 +65,23 @@ def test_modifier_absence_sans_se_chevaucher_elle_meme(admin, alice, motifs):
     assert admin.delete(f'/api/absences/{absence_id}').status_code == 204
 
 
-def test_heures_en_plus_upsert_et_suppression(admin, alice):
+def test_heures_plus_moins_en_minutes(admin, alice):
     url = '/api/heures'
-    assert admin.put(url, {'employe_id': alice['id'], 'jour': '2025-01-10', 'heures': '1,5'}).get_json()['heures'] == 1.5
-    assert admin.put(url, {'employe_id': alice['id'], 'jour': '2025-01-10', 'heures': 2.25}).get_json()['heures'] == 2.25
-    mois = admin.get('/api/mois/2025-01').get_json()
-    assert mois['employes'][0]['heures'] == {'2025-01-10': 2.25}
+    assert admin.put(url, {'employe_id': alice['id'], 'jour': '2025-01-10', 'minutes': 15}).get_json()['minutes'] == 15
+    assert admin.put(url, {'employe_id': alice['id'], 'jour': '2025-01-10', 'minutes': '-30'}).get_json()['minutes'] == -30
+    assert admin.put(url, {'employe_id': alice['id'], 'jour': '2025-01-11', 'minutes': 720}).status_code == 200
+    mois = admin.get('/api/mois/2025-01').get_json()['employes'][0]
+    assert mois['heures'] == {'2025-01-10': -30, '2025-01-11': 720}
+    assert mois['total_minutes'] == 690
 
-    assert admin.put(url, {'employe_id': alice['id'], 'jour': '2025-01-10', 'heures': 0}).status_code == 200
+    assert admin.put(url, {'employe_id': alice['id'], 'jour': '2025-01-10', 'minutes': 0}).status_code == 200
+    assert admin.put(url, {'employe_id': alice['id'], 'jour': '2025-01-11', 'minutes': ''}).status_code == 200
     assert admin.get('/api/mois/2025-01').get_json()['employes'][0]['heures'] == {}
 
 
-@pytest.mark.parametrize('valeur', [1.1, -1, 25, 'abc'])
-def test_heures_en_plus_invalides(admin, alice, valeur):
-    assert admin.put('/api/heures', {'employe_id': alice['id'], 'jour': '2025-01-10', 'heures': valeur}).status_code == 400
+@pytest.mark.parametrize('valeur', [7, -13, 725, -725, 1.5, 'abc', True])
+def test_heures_minutes_invalides(admin, alice, valeur):
+    assert admin.put('/api/heures', {'employe_id': alice['id'], 'jour': '2025-01-10', 'minutes': valeur}).status_code == 400
 
 
 def test_motifs_et_jours_fermeture(admin):

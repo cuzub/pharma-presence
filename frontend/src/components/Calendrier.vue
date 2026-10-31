@@ -19,14 +19,14 @@
       >
         <div class="d-flex justify-content-between align-items-start">
           <span class="numero">{{ jour.numero }}</span>
-          <span v-if="jour.heures" class="badge text-bg-success heures">+{{ formatNombre(jour.heures) }} h</span>
+          <span v-if="jour.minutes" :class="['badge', 'heures', jour.minutes < 0 ? 'minutes-moins' : 'minutes-plus']">{{ formatMinutes(jour.minutes) }}</span>
         </div>
         <div v-if="jour.ferie" class="libelle-special">{{ jour.ferie }}</div>
         <div v-else-if="jour.fermeture" class="libelle-special"><i class="bi bi-shop"></i> {{ jour.fermeture }}</div>
         <div
           v-for="d in jour.deplacements"
           :key="d.id"
-          :class="['ligne-deplacement', `statut-${d.statut}`]"
+          class="ligne-deplacement"
           :title="titreDeplacement(d)"
           data-deplacement
         >
@@ -54,12 +54,12 @@
 
 <script setup>
 import { computed } from 'vue'
-import { STATUTS_DEPLACEMENT } from '../utils/statuts'
-import { JOURS_COURTS, absenceDuJour, aujourdhuiIso, ferie, formatFr, formatNombre, jourSemaine, joursDuMois } from '../utils/dates'
+import { JOURS_COURTS, absenceDuJour, aujourdhuiIso, ferie, formatFr, formatMinutes, formatNombre, jourSemaine, joursDuMois } from '../utils/dates'
 
 const props = defineProps({
   mois: { type: String, required: true },
   absences: { type: Array, default: () => [] },
+  // Minutes en plus (> 0) / en moins (< 0) par jour.
   heures: { type: Object, default: () => ({}) },
   deplacements: { type: Array, default: () => [] },
   // Affiche le crayon de modification sur un déplacement.
@@ -76,7 +76,7 @@ const choisir = (iso) => {
 }
 
 const titreDeplacement = (d) =>
-  [`${d.motif} — ${formatNombre(d.km)} km`, STATUTS_DEPLACEMENT[d.statut]?.libelle, d.motif_refus].filter(Boolean).join(' — ')
+  `${d.motif} — ${formatNombre(d.km)} km`
 
 const decalage = computed(() => jourSemaine(`${props.mois}-01`))
 
@@ -92,15 +92,15 @@ const jours = computed(() => {
     const absence = absenceDuJour(props.absences, iso)
     const libelleFerie = ferie(iso)
     const fermeture = fermetures.get(iso) || null
-    const heures = props.heures[iso] || 0
-    const titre = [formatFr(iso), libelleFerie, fermeture, absence?.motif_libelle, heures ? `+${formatNombre(heures)} h` : null]
+    const minutes = props.heures[iso] || 0
+    const titre = [formatFr(iso), libelleFerie, fermeture, absence?.motif_libelle, formatMinutes(minutes) || null]
       .filter(Boolean)
       .join(' — ')
     return {
       iso,
       numero: Number(iso.slice(8)),
       absence,
-      heures,
+      minutes,
       deplacements: deplacementsParJour.get(iso) || [],
       ferie: libelleFerie,
       fermeture,
@@ -201,16 +201,6 @@ const jours = computed(() => {
   font-size: 0.72rem;
   background: #f1f8e9;
   border-color: var(--pharma-vert);
-}
-
-.ligne-deplacement.statut-en_attente {
-  background: #fff8e1;
-  border-color: #ffc107;
-}
-
-.ligne-deplacement.statut-refuse {
-  background: #fdecea;
-  border-color: #dc3545;
 }
 
 .crayon {

@@ -87,23 +87,23 @@ def generer_excel(debut, fin, lignes):
     _largeurs(ws, [18, 14, 16, 16, 22, 40])
 
     jours = _jours(debut, fin)
-    ws = _feuille(wb, 'Heures en plus', titre, ['Nom', 'Prénom'] + [j.day for j in jours] + ['Total'])
+    ws = _feuille(wb, 'Heures +- (min)', titre, ['Nom', 'Prénom'] + [j.day for j in jours] + ['Total (min)'])
     for index, jour in enumerate(jours, start=3):
         if jour.weekday() == 6:
             ws.cell(row=4, column=index).fill = PatternFill('solid', fgColor='757575')
     for ligne in lignes:
         valeurs = [ligne['heures'].get(jour) for jour in jours]
-        ws.append([ligne['employe'].nom.upper(), ligne['employe'].prenom] + valeurs + [ligne['total_heures']])
+        ws.append([ligne['employe'].nom.upper(), ligne['employe'].prenom] + valeurs + [ligne['total_minutes']])
         for index, jour in enumerate(jours, start=3):
             cellule = ws.cell(row=ws.max_row, column=index)
             if jour.weekday() == 6:
                 cellule.fill = _WEEKEND_FILL
         ws.cell(row=ws.max_row, column=len(jours) + 3).font = Font(bold=True)
-    _largeurs(ws, [18, 14] + [5] * len(jours) + [8])
+    _largeurs(ws, [18, 14] + [5] * len(jours) + [10])
 
     ws = _feuille(wb, 'Déplacements', titre, ['Nom', 'Prénom', 'Date', 'Motif', 'Km'])
     for ligne in lignes:
-        for deplacement in ligne['deplacements_valides']:
+        for deplacement in ligne['deplacements']:
             ws.append([
                 ligne['employe'].nom.upper(),
                 ligne['employe'].prenom,
@@ -149,6 +149,6 @@ def generer_csv_heures(debut, fin, lignes):
         for jour, valeur in sorted(ligne['heures'].items()):
             resultat.append([
                 _cellule_csv(ligne['employe'].nom.upper()), _cellule_csv(ligne['employe'].prenom),
-                format_date_fr(jour), format_nombre_fr(valeur),
+                format_date_fr(jour), valeur,
             ])
-    return _csv(['Nom', 'Prénom', 'Date', 'Heures en plus'], resultat)
+    return _csv(['Nom', 'Prénom', 'Date', 'Heures +/- (min)'], resultat)

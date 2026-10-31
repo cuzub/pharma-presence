@@ -15,16 +15,17 @@
             :absences="employe.absences"
             :heures="employe.heures"
             :deplacements="employe.deplacements"
-            :deplacement-modifiable="(d) => d.statut !== 'valide'"
+            :deplacement-modifiable="(d) => deplacementModifiableParEmploye(d.date)"
             :jours-fermeture="joursFermeture"
             :contrats="employe.contrats"
             @choisir-jour="nouveauDeplacement"
             @modifier-deplacement="modifierDeplacement"
           />
         </div>
+        <div v-if="info" class="alert alert-info py-2 small mt-2 mb-0" role="status">{{ info }}</div>
         <p class="text-muted small mt-2">
-          <i class="bi bi-car-front"></i> Pour déclarer un déplacement professionnel, cliquez sur la date ; pour le corriger, cliquez sur le crayon
-          (possible tant qu'il n'est pas validé).
+          <i class="bi bi-car-front"></i> Pour déclarer un déplacement professionnel, cliquez sur la date ; pour le corriger ou le supprimer,
+          cliquez sur le crayon. Possible pour le mois en cours, et pour le mois précédent jusqu'au {{ JOUR_LIMITE_MOIS_PRECEDENT }} inclus.
           Les heures et les absences sont saisies par la pharmacienne : si quelque chose vous semble inexact, parlez-lui en.
         </p>
       </div>
@@ -51,10 +52,12 @@ import MoisNavigateur from '../../components/MoisNavigateur.vue'
 import ResumeMois from '../../components/ResumeMois.vue'
 import { useMoisUrl } from '../../composables/useMoisUrl'
 import api, { messageErreur } from '../../services/api'
+import { JOUR_LIMITE_MOIS_PRECEDENT, deplacementModifiableParEmploye } from '../../utils/dates'
 
 const mois = useMoisUrl()
 const donnees = ref(null)
 const erreur = ref('')
+const info = ref('')
 
 const modalOuvert = ref(false)
 const deplacementEdite = ref(null)
@@ -73,6 +76,11 @@ const charger = async () => {
 }
 
 const nouveauDeplacement = (jour) => {
+  info.value = ''
+  if (!deplacementModifiableParEmploye(jour)) {
+    info.value = `Ce mois est clôturé pour la saisie des déplacements. Pour un oubli, adressez-vous à la pharmacienne.`
+    return
+  }
   deplacementEdite.value = null
   dateChoisie.value = jour
   modalOuvert.value = true
@@ -89,5 +97,8 @@ const apresEnregistrement = () => {
   charger()
 }
 
-watch(mois, charger, { immediate: true })
+watch(mois, () => {
+  info.value = ''
+  charger()
+}, { immediate: true })
 </script>

@@ -1,3 +1,5 @@
+from datetime import date
+
 import pytest
 from flask_migrate import downgrade, upgrade
 from sqlalchemy import text
@@ -10,7 +12,7 @@ ADMIN_MDP = 'admin-mot-de-passe-test'
 EMPLOYE_MDP_PROVISOIRE = 'provisoire-12345'
 EMPLOYE_MDP = 'employe-mot-de-passe-test'
 
-_TABLES = ['heures_en_plus', 'deplacements', 'motifs_deplacement', 'absences', 'contrats', 'employes', 'jours_fermeture']
+_TABLES = ['journal_modifications', 'heures_en_plus', 'deplacements', 'motifs_deplacement', 'absences', 'contrats', 'employes', 'jours_fermeture']
 
 
 @pytest.fixture(scope='session')
@@ -21,6 +23,16 @@ def app():
         upgrade()
         yield app
         db.session.remove()
+
+
+@pytest.fixture(autouse=True)
+def aujourdhui(monkeypatch):
+    """Date du jour figée (3 février 2025 : janvier et février sont modifiables par l'employé)."""
+    from app.routes import deplacements
+
+    reference = {'date': date(2025, 2, 3)}
+    monkeypatch.setattr(deplacements, 'aujourdhui', lambda: reference['date'])
+    return reference
 
 
 @pytest.fixture(autouse=True)

@@ -22,8 +22,8 @@
                 <div class="small text-muted">{{ jour.initiale }}</div>
                 <div>{{ jour.numero }}</div>
               </th>
-              <th class="col-total" title="Total des heures en plus du mois">H+</th>
-              <th class="col-total" title="Kilomètres de déplacements validés">Km</th>
+              <th class="col-total" title="Total net des heures en plus / en moins du mois">H +/-</th>
+              <th class="col-total" title="Kilomètres de déplacements">Km</th>
             </tr>
           </thead>
           <tbody>
@@ -55,14 +55,11 @@
                 @keydown.enter="saisie.ouvrirJour(employe.id, jour.iso)"
               >
                 <span v-if="absence(employe, jour.iso)" class="code-absence">{{ absence(employe, jour.iso).motif_code }}</span>
-                <span v-else-if="employe.heures[jour.iso]" class="heures">+{{ formatNombre(employe.heures[jour.iso]) }}</span>
+                <span v-else-if="employe.heures[jour.iso]" :class="['heures', employe.heures[jour.iso] < 0 ? 'minutes-moins' : 'minutes-plus']">{{ formatMinutes(employe.heures[jour.iso]) }}</span>
               </td>
-              <td class="col-total fw-semibold">{{ employe.total_heures ? formatNombre(employe.total_heures) : '' }}</td>
+              <td :class="['col-total', 'fw-semibold', employe.total_minutes < 0 ? 'minutes-moins' : 'minutes-plus']">{{ formatMinutes(employe.total_minutes) }}</td>
               <td class="col-total">
-                {{ employe.total_km_valides ? formatNombre(employe.total_km_valides) : '' }}
-                <RouterLink v-if="employe.deplacements_en_attente" to="/deplacements" class="badge text-bg-warning" title="Déplacements à valider">
-                  {{ employe.deplacements_en_attente }} ⏳
-                </RouterLink>
+                {{ employe.total_km ? formatNombre(employe.total_km) : '' }}
               </td>
             </tr>
           </tbody>
@@ -79,7 +76,7 @@
       <span><span class="legende ferie"></span> Férié</span>
       <span><span class="legende fermeture"></span> Fermeture</span>
       <span><span class="legende hors-contrat"></span> Hors contrat</span>
-      <span class="text-muted">Cliquez sur une case pour saisir des heures en plus ou une absence.</span>
+      <span class="text-muted">Cliquez sur une case pour saisir des heures en plus / en moins, une absence ou un déplacement.</span>
     </div>
 
     <JourModal
@@ -122,7 +119,7 @@ import { useMoisUrl } from '../../composables/useMoisUrl'
 import { useSaisieJour } from '../../composables/useSaisieJour'
 import api, { messageErreur } from '../../services/api'
 import { useReferentielStore } from '../../stores/referentiel'
-import { JOURS_COURTS, absenceDuJour, aujourdhuiIso, ferie, formatFr, formatNombre, jourSemaine, joursDuMois } from '../../utils/dates'
+import { JOURS_COURTS, absenceDuJour, aujourdhuiIso, ferie, formatFr, formatMinutes, formatNombre, jourSemaine, joursDuMois } from '../../utils/dates'
 
 const referentiel = useReferentielStore()
 const mois = useMoisUrl()
@@ -185,7 +182,7 @@ const titreCase = (employe, jour) => {
   const a = absence(employe, jour.iso)
   const morceaux = [`${employe.prenom} ${employe.nom}`, jour.titre]
   if (a) morceaux.push(`${a.motif_libelle}${a.date_reprise ? ` (reprise le ${formatFr(a.date_reprise)})` : ' (en cours)'}`)
-  if (employe.heures[jour.iso]) morceaux.push(`+${formatNombre(employe.heures[jour.iso])} h`)
+  if (employe.heures[jour.iso]) morceaux.push(formatMinutes(employe.heures[jour.iso]))
   return morceaux.join(' — ')
 }
 
@@ -270,8 +267,9 @@ thead .aujourdhui {
 }
 
 .heures {
-  color: #198754;
   font-weight: 700;
+  font-size: 0.7rem;
+  white-space: nowrap;
 }
 
 .col-total {

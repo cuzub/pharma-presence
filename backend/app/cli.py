@@ -72,8 +72,8 @@ def enregistrer_commandes(app):
             if index == 0:
                 db.session.add(Absence(employe_id=employe.id, motif=motifs['CP'], date_debut=debut_mois + timedelta(days=9), date_reprise=debut_mois + timedelta(days=16)))
             if index == 1:
-                db.session.add(HeuresEnPlus(employe_id=employe.id, jour=debut_mois + timedelta(days=2), heures=1.5))
-                db.session.add(HeuresEnPlus(employe_id=employe.id, jour=debut_mois + timedelta(days=5), heures=2))
+                db.session.add(HeuresEnPlus(employe_id=employe.id, jour=debut_mois + timedelta(days=2), minutes=90))
+                db.session.add(HeuresEnPlus(employe_id=employe.id, jour=debut_mois + timedelta(days=5), minutes=-30))
                 db.session.add(Deplacement(employe_id=employe.id, date=debut_mois + timedelta(days=3), motif_deplacement=destinations[2], motif='LCL', km=30))
                 db.session.add(Deplacement(employe_id=employe.id, date=debut_mois + timedelta(days=8), motif='Grossiste (récupération de commande)', km=24))
             if index == 2:

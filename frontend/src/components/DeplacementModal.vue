@@ -2,9 +2,6 @@
   <Modal :ouvert="ouvert" :titre="deplacement?.id ? 'Modifier le déplacement' : 'Nouveau déplacement'" @fermer="$emit('fermer')">
     <form id="form-deplacement" @submit.prevent="enregistrer">
       <div v-if="erreur" class="alert alert-danger py-2" role="alert">{{ erreur }}</div>
-      <div v-if="deplacement?.statut === 'refuse'" class="alert alert-warning py-2 small">
-        Refusé : {{ deplacement.motif_refus }}. Après correction, il repassera en attente de validation.
-      </div>
 
       <div class="mb-3">
         <label for="dep-date" class="form-label">Date</label>
@@ -40,7 +37,6 @@
         />
         <input v-else id="dep-km" :value="kmAffiches" class="form-control" readonly tabindex="-1" placeholder="Renseignée par le motif" />
       </div>
-      <p v-if="employeId && !deplacement?.id" class="form-text mb-0 mt-2">Un déplacement saisi par la pharmacienne est validé directement.</p>
     </form>
     <template #footer>
       <button v-if="deplacement?.id" type="button" class="btn btn-outline-danger me-auto" :disabled="enCours" @click="supprimer">

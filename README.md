@@ -11,21 +11,24 @@ indemnités kilométriques). Voir [docs/intent/suivi-presence-pharmacie.md](docs
 
 **Pharmacienne (administratrice)**
 - Tableau du mois : une ligne par employé, une colonne par jour ; clic sur une case pour saisir
-  des heures en plus (au quart d'heure) ou une absence.
+  des heures en plus / en moins (en minutes, par 5 : `15`, `-30`), une absence ou un déplacement.
 - Absences par période (premier jour d'absence → jour de reprise, ou « en cours ») avec motif ;
   les chevauchements sont refusés.
 - Déplacements professionnels : saisis depuis le calendrier (clic sur la date, crayon pour
   modifier), avec des motifs prédéfinis dont les km se remplissent automatiquement (ou « Autre »,
-  distance libre) ; validation des déplacements déclarés par les employés.
+  distance libre). Déclaratifs : pas de validation, la pharmacienne peut tout corriger.
 - Employés : arrivée (création du compte avec mot de passe provisoire), avenant, départ (compte
   désactivé, données conservées), retour, nouveau mot de passe provisoire.
-- Export comptable mensuel : contrôles avant export (bloquant si des déplacements sont en attente),
-  fichier Excel (Récapitulatif, Absences, Heures en plus, Déplacements) et CSV (format Excel FR).
+- Export comptable mensuel : contrôles avant export, fichier Excel (Récapitulatif, Absences,
+  Heures +/- en minutes avec total net, Déplacements) et CSV (format Excel FR).
+- Historique : journal immuable des créations / modifications / suppressions (déplacements, heures,
+  absences) avec auteur et avant → après, filtrable par employé, mois, auteur et type.
 - Paramètres : motifs d'absence, motifs de déplacement (destination + km), jours de fermeture.
 
 **Employé**
-- « Mon mois » : calendrier (absences et heures en plus en lecture seule) et résumé ; clic sur une
-  date pour déclarer un déplacement, crayon pour le modifier tant qu'il n'est pas validé.
+- « Mon mois » : calendrier (absences et heures +/- en lecture seule) et résumé ; clic sur une
+  date pour déclarer un déplacement, crayon pour le modifier ou le supprimer (mois en cours, et
+  mois précédent jusqu'au 5 inclus).
 
 ## Architecture
 

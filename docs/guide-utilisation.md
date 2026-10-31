@@ -6,15 +6,19 @@
 
 Par défaut, chaque employé est **présent**. Vous ne saisissez que les exceptions.
 
-- **Heures en plus** : *Tableau du mois* → clic sur la case de l'employé et du jour → saisissez
-  le nombre d'heures (ex. `1,5`) → *Enregistrer*. Pour effacer, mettez `0` ou cliquez sur la gomme.
+- **Heures en plus / en moins** : *Tableau* → clic sur la case de l'employé et du jour → saisissez
+  des **minutes**, par tranche de 5 : `15` = 15 min en plus, `-30` = 30 min en moins, `90` = 1h30
+  en plus (12 h maximum par jour) → *Enregistrer*. Pour effacer, mettez `0` ou cliquez sur la gomme.
+  À l'écran : « +1h30 » en vert, « -30min » en orange ; le total du mois est net (les minutes en
+  moins compensent les minutes en plus).
 - **Absence** : clic sur le premier jour d'absence → *Déclarer une absence à partir de ce jour* →
   motif et **jour de reprise** (le premier jour où l'employé revient). Laissez le jour de reprise
   vide s'il n'est pas connu (congé maternité, arrêt maladie sans date de fin) : l'absence reste
   « en cours » jusqu'à ce que vous le renseigniez.
-- **Déplacements** : le badge orange du menu *Déplacements* indique les déclarations à valider.
-  Pour en saisir un vous-même : *Calendrier* (ou *Tableau du mois*) → clic sur le jour →
-  *Ajouter un déplacement*. Il est validé directement. Pour le corriger : le crayon.
+- **Déplacements** : ils sont **déclaratifs** (pas de validation) et comptent tous. Le menu
+  *Déplacements* les liste par mois, avec le crayon pour corriger et la poubelle pour supprimer.
+  Pour en saisir un vous-même : *Calendrier* (ou *Tableau*) → clic sur le jour →
+  *Ajouter un déplacement*. Vous pouvez modifier n'importe quel déplacement, quel que soit le mois.
 
 ### Motifs de déplacement
 
@@ -26,6 +30,13 @@ pour une destination ponctuelle (distance et précision libres).
 Changer la distance d'un motif ne modifie **pas** les déplacements déjà saisis (ils gardent la
 distance du moment). Un motif qui ne sert plus se **désactive** (case *Actif*) : il n'est plus
 proposé, mais reste visible sur les anciens déplacements.
+
+### Historique des modifications
+
+Menu **Historique** : chaque création, modification ou suppression d'un déplacement, d'heures en
+plus / en moins ou d'une absence est enregistrée avec la date et l'heure, **qui** l'a faite (vous ou
+l'employé), l'employé concerné et le détail **avant → après**. Filtrez par employé, mois, auteur ou
+type. Cet historique ne peut être ni modifié ni effacé (il commence à la version 1.2.0).
 
 ### Arrivée, changement de contrat, départ
 
@@ -42,24 +53,27 @@ Menu **Employés** :
 
 ### En fin de mois : l'export pour le comptable
 
-Menu **Export comptable** :
-1. Lisez les **contrôles** : les points rouges bloquent l'export (ex. déplacement non validé), les
-   points orange sont des incohérences à vérifier (ex. heures en plus pendant une absence).
-2. Vérifiez l'aperçu, ou le *Tableau du mois* d'un coup d'œil.
+Menu **Export** :
+1. Lisez les **contrôles** : les points orange sont des incohérences à vérifier (ex. heures en plus
+   pendant une absence).
+2. Vérifiez l'aperçu, ou le *Tableau* d'un coup d'œil.
 3. Téléchargez l'**État préparatoire Excel** (ou les CSV) et envoyez-le au comptable.
 
 Le fichier Excel contient 4 onglets : *Récapitulatif* (une ligne par employé), *Absences*,
-*Heures en plus* (détail jour par jour) et *Déplacements* (justificatif des kilomètres).
+*Heures +- (min)* (détail jour par jour, en minutes, avec le total net) et *Déplacements*
+(justificatif des kilomètres). Dans le récapitulatif, la colonne *Heures +/- (min)* donne le total
+net du mois en minutes (ex. `60`, `-45`).
 
 ## Pour les employés
 
-- **Mon mois** : vos absences et heures en plus, saisies par la pharmacienne. Une erreur ?
-  Signalez-la-lui.
+- **Mon mois** : vos absences et heures en plus / en moins, saisies par la pharmacienne. Une
+  erreur ? Signalez-la-lui.
 - **Déplacements** : dans *Mon mois*, cliquez sur la date du déplacement → choisissez le motif
   (les kilomètres se remplissent tout seuls) → *Enregistrer*. Si la destination n'est pas dans la
   liste, choisissez « Autre » et saisissez la précision et les kilomètres. Plusieurs déplacements
   par jour sont possibles.
-  Pour corriger ou supprimer un déplacement, cliquez sur le **crayon** (possible tant qu'il n'est
-  pas validé). Couleurs : orange = en attente, vert = validé, rouge = refusé (le motif du refus
-  s'affiche au survol et dans la fenêtre : corrigez-le, il repassera en attente de validation).
+  Pour corriger ou supprimer un déplacement, cliquez sur le **crayon**.
+  Vous pouvez saisir, corriger ou supprimer vos déplacements du **mois en cours**, et ceux du
+  **mois précédent jusqu'au 5 inclus**. Après, le mois est clôturé : pour un oubli, adressez-vous à
+  la pharmacienne.
 - Pour changer votre mot de passe : cliquez sur votre nom en haut à droite.

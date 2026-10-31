@@ -8,7 +8,6 @@
         <li v-for="lien in liens" :key="lien.to" class="nav-item">
           <RouterLink class="nav-link px-2" :to="lien.to" active-class="active" :exact-active-class="lien.to === '/' ? 'active' : ''">
             <i :class="['bi', lien.icone]"></i> {{ lien.libelle }}
-            <span v-if="lien.badge" class="badge rounded-pill text-bg-warning ms-1">{{ lien.badge }}</span>
           </RouterLink>
         </li>
       </ul>
@@ -25,34 +24,29 @@
 </template>
 
 <script setup>
-import { computed, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { computed } from 'vue'
+import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import { useReferentielStore } from '../stores/referentiel'
 
 const auth = useAuthStore()
 const referentiel = useReferentielStore()
 const router = useRouter()
-const route = useRoute()
 
 const liens = computed(() => auth.estAdmin
   ? [
-      { to: '/', libelle: 'Tableau du mois', icone: 'bi-grid-3x3' },
+      { to: '/', libelle: 'Tableau', icone: 'bi-grid-3x3' },
       { to: '/calendrier', libelle: 'Calendrier', icone: 'bi-calendar3' },
       { to: '/absences', libelle: 'Absences', icone: 'bi-calendar-x' },
-      { to: '/deplacements', libelle: 'Déplacements', icone: 'bi-car-front', badge: referentiel.deplacementsEnAttente || null },
+      { to: '/deplacements', libelle: 'Déplacements', icone: 'bi-car-front' },
       { to: '/employes', libelle: 'Employés', icone: 'bi-people' },
-      { to: '/export', libelle: 'Export comptable', icone: 'bi-file-earmark-spreadsheet' },
+      { to: '/export', libelle: 'Export', icone: 'bi-file-earmark-spreadsheet' },
+      { to: '/historique', libelle: 'Historique', icone: 'bi-clock-history' },
       { to: '/parametres', libelle: 'Paramètres', icone: 'bi-gear' }
     ]
   : [
       { to: '/mon-mois', libelle: 'Mon mois', icone: 'bi-calendar3' }
     ])
-
-// Recompté à chaque changement de page (un employé a pu déclarer un déplacement entre-temps).
-watch(() => route.path, () => {
-  if (auth.estAdmin) referentiel.compterDeplacementsEnAttente().catch(() => {})
-}, { immediate: true })
 
 const deconnecter = async () => {
   await auth.logout()

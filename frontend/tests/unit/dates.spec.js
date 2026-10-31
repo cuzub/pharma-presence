@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
-  absenceCouvre, ajouterJours, decalerMois, estMoisValide, ferie, formatFr, jourSemaine, joursDuMois, libelleMois, paques
+  absenceCouvre, ajouterJours, decalerMois, deplacementModifiableParEmploye, estMoisValide, ferie, formatFr, formatMinutes, jourSemaine,
+  joursDuMois, libelleMois, paques
 } from '../../src/utils/dates'
 
 describe('paques', () => {
@@ -78,5 +79,32 @@ describe('absenceCouvre', () => {
 
   it('gère les absences en cours', () => {
     expect(absenceCouvre({ date_debut: '2025-02-01', date_reprise: null }, '2030-01-01')).toBe(true)
+  })
+})
+
+describe('formatMinutes', () => {
+  it.each([
+    [90, '+1h30'],
+    [15, '+15min'],
+    [-30, '-30min'],
+    [120, '+2h'],
+    [-65, '-1h05'],
+    [0, ''],
+    [null, '']
+  ])('%s → %s', (minutes, attendu) => {
+    expect(formatMinutes(minutes)).toBe(attendu)
+  })
+})
+
+describe('deplacementModifiableParEmploye', () => {
+  it.each([
+    ['2025-03-05', '2025-02-28', true],
+    ['2025-03-06', '2025-02-28', false],
+    ['2025-03-06', '2025-03-31', true],
+    ['2025-03-01', '2025-01-31', false],
+    ['2025-03-01', '2025-04-01', false],
+    ['2025-01-03', '2024-12-15', true]
+  ])('le %s, déplacement du %s → %s', (reference, jour, attendu) => {
+    expect(deplacementModifiableParEmploye(jour, reference)).toBe(attendu)
   })
 })

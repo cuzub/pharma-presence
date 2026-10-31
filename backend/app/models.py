@@ -232,16 +232,17 @@ class HeuresEnPlus(Horodatage, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     employe_id = db.Column(db.Integer, db.ForeignKey('employes.id', ondelete='CASCADE'), nullable=False)
     jour = db.Column(db.Date, nullable=False)
-    heures = db.Column(db.Numeric(5, 2), nullable=False)
+    # Minutes en plus (> 0) ou en moins (< 0) par rapport au contrat, par tranche de 5.
+    minutes = db.Column(db.Integer, nullable=False)
 
     __table_args__ = (
         db.UniqueConstraint('employe_id', 'jour', name='uq_heures_employe_jour'),
-        db.CheckConstraint('heures > 0 AND heures <= 24', name='ck_heures_bornes'),
-        db.CheckConstraint('heures * 4 = floor(heures * 4)', name='ck_heures_quart'),
+        db.CheckConstraint('minutes <> 0 AND minutes BETWEEN -720 AND 720', name='ck_heures_minutes_bornes'),
+        db.CheckConstraint('minutes % 5 = 0', name='ck_heures_minutes_pas'),
     )
 
     def to_dict(self):
-        return {'id': self.id, 'employe_id': self.employe_id, 'jour': _iso(self.jour), 'heures': float(self.heures)}
+        return {'id': self.id, 'employe_id': self.employe_id, 'jour': _iso(self.jour), 'minutes': self.minutes}
 
 
 class MotifDeplacement(Horodatage, db.Model):
@@ -266,10 +267,6 @@ class MotifDeplacement(Horodatage, db.Model):
 class Deplacement(Horodatage, db.Model):
     __tablename__ = 'deplacements'
 
-    EN_ATTENTE = 'en_attente'
-    VALIDE = 'valide'
-    REFUSE = 'refuse'
-
     id = db.Column(db.Integer, primary_key=True)
     employe_id = db.Column(db.Integer, db.ForeignKey('employes.id', ondelete='CASCADE'), nullable=False, index=True)
     date = db.Column(db.Date, nullable=False)
@@ -277,17 +274,12 @@ class Deplacement(Horodatage, db.Model):
     motif_deplacement_id = db.Column(db.Integer, db.ForeignKey('motifs_deplacement.id'), nullable=True)
     motif = db.Column(db.String(255), nullable=False)
     km = db.Column(db.Numeric(7, 1), nullable=False)
-    statut = db.Column(db.String(12), nullable=False, default=EN_ATTENTE)
-    motif_refus = db.Column(db.String(255), nullable=True)
-    valide_par_id = db.Column(db.Integer, db.ForeignKey('utilisateurs.id', ondelete='SET NULL'), nullable=True)
-    valide_le = db.Column(db.DateTime(timezone=True), nullable=True)
 
     employe = db.relationship('Employe')
     motif_deplacement = db.relationship('MotifDeplacement')
 
     __table_args__ = (
         db.CheckConstraint('km > 0', name='ck_deplacements_km'),
-        db.CheckConstraint("statut IN ('en_attente', 'valide', 'refuse')", name='ck_deplacements_statut'),
     )
 
     def to_dict(self):
@@ -300,9 +292,6 @@ class Deplacement(Horodatage, db.Model):
             'motif_deplacement_id': self.motif_deplacement_id,
             'motif': self.motif,
             'km': float(self.km),
-            'statut': self.statut,
-            'motif_refus': self.motif_refus,
-            'valide_le': _iso(self.valide_le),
         }
 
 
@@ -316,3 +305,49 @@ class JourFermeture(Horodatage, db.Model):
     def to_dict(self):
         return {'id': self.id, 'date': _iso(self.date), 'libelle': self.libelle}
 
+
+
+class JournalModification(db.Model):
+    """Trace immuable des créations / modifications / suppressions (déplacements, heures, absences)."""
+
+    __tablename__ = 'journal_modifications'
+
+    TYPES = ('deplacement', 'heures', 'absence')
+    ACTIONS = ('creation', 'modification', 'suppression')
+
+    id = db.Column(db.Integer, primary_key=True)
+    cree_le = db.Column(db.DateTime(timezone=True), nullable=False, default=_maintenant, index=True)
+    auteur_id = db.Column(db.Integer, db.ForeignKey('utilisateurs.id', ondelete='SET NULL'), nullable=True)
+    # Recopiés : le journal reste lisible même si le compte est supprimé ou change de rôle.
+    auteur_identifiant = db.Column(db.String(80), nullable=False)
+    auteur_role = db.Column(db.String(10), nullable=False)
+    employe_id = db.Column(db.Integer, db.ForeignKey('employes.id', ondelete='SET NULL'), nullable=True, index=True)
+    type = db.Column(db.String(12), nullable=False)
+    action = db.Column(db.String(12), nullable=False)
+    objet_id = db.Column(db.Integer, nullable=True)
+    avant = db.Column(db.JSON, nullable=True)
+    apres = db.Column(db.JSON, nullable=True)
+
+    employe = db.relationship('Employe')
+
+    __table_args__ = (
+        db.CheckConstraint("type IN ('deplacement', 'heures', 'absence')", name='ck_journal_type'),
+        db.CheckConstraint("action IN ('creation', 'modification', 'suppression')", name='ck_journal_action'),
+        db.CheckConstraint("auteur_role IN ('admin', 'employe')", name='ck_journal_auteur_role'),
+    )
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'cree_le': _iso(self.cree_le),
+            'auteur_identifiant': self.auteur_identifiant,
+            'auteur_role': self.auteur_role,
+            'employe_id': self.employe_id,
+            'employe_nom': self.employe.nom if self.employe else None,
+            'employe_prenom': self.employe.prenom if self.employe else None,
+            'type': self.type,
+            'action': self.action,
+            'objet_id': self.objet_id,
+            'avant': self.avant,
+            'apres': self.apres,
+        }

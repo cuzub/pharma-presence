@@ -65,3 +65,22 @@ body {
 .table th {
   vertical-align: middle;
 }
+
+/* Heures en plus (vert) / en moins (orange). */
+.minutes-plus {
+  color: #1b5e20;
+}
+
+.minutes-moins {
+  color: #b45309;
+}
+
+.badge.minutes-plus {
+  background: #2e7d32;
+  color: #fff;
+}
+
+.badge.minutes-moins {
+  background: #f59e0b;
+  color: #212529;
+}

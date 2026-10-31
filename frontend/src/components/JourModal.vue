@@ -3,20 +3,34 @@
     <div v-if="erreur" class="alert alert-danger py-2" role="alert">{{ erreur }}</div>
     <p v-if="ferieDuJour" class="alert alert-warning py-2 small mb-3"><i class="bi bi-flag"></i> Jour férié : {{ ferieDuJour }}</p>
 
-    <h6>Heures en plus</h6>
-    <form class="d-flex align-items-end gap-2 mb-4" @submit.prevent="enregistrerHeures">
+    <h6>Heures en plus / en moins</h6>
+    <form class="d-flex flex-wrap align-items-end gap-2 mb-1" @submit.prevent="enregistrerHeures">
       <div>
-        <label for="jour-heures" class="form-label small text-muted mb-1">Nombre d'heures (au quart d'heure)</label>
+        <label for="jour-minutes" class="form-label small text-muted mb-1">Minutes (par 5 ; négatif = en moins)</label>
         <div class="input-group">
-          <input id="jour-heures" ref="champHeures" v-model="heures" type="number" min="0" max="24" step="0.25" class="form-control" placeholder="0" />
-          <span class="input-group-text">h</span>
+          <input
+            id="jour-minutes"
+            ref="champHeures"
+            v-model="minutes"
+            type="number"
+            min="-720"
+            max="720"
+            step="5"
+            class="form-control"
+            placeholder="ex : 15 ou -30"
+          />
+          <span class="input-group-text">min</span>
         </div>
       </div>
       <button type="submit" class="btn btn-primary" :disabled="enCours">Enregistrer</button>
-      <button v-if="heuresInitiales" type="button" class="btn btn-outline-danger" :disabled="enCours" title="Effacer" @click="effacerHeures">
+      <button v-if="minutesInitiales" type="button" class="btn btn-outline-danger" :disabled="enCours" title="Effacer" @click="effacerHeures">
         <i class="bi bi-eraser"></i>
       </button>
     </form>
+    <p class="form-text mb-4">
+      <span v-if="apercu" :class="Number(minutes) < 0 ? 'minutes-moins' : 'minutes-plus'">Soit {{ apercu }}. </span>
+      Ex. : 15 = 15 min en plus, -30 = 30 min en moins, 90 = 1h30 en plus.
+    </p>
 
     <h6>Absence</h6>
     <div v-if="absence" class="d-flex flex-wrap align-items-center gap-2">
@@ -41,7 +55,6 @@
       <li v-for="d in deplacements" :key="d.id" class="list-group-item d-flex align-items-center gap-2 px-0">
         <i class="bi bi-car-front"></i>
         <span class="flex-grow-1">{{ d.motif }} <span class="text-muted">— {{ formatNombre(d.km) }} km</span></span>
-        <span :class="['badge', STATUTS_DEPLACEMENT[d.statut].classe]">{{ STATUTS_DEPLACEMENT[d.statut].libelle }}</span>
         <button type="button" class="btn btn-sm btn-outline-secondary" title="Modifier" :aria-label="`Modifier le déplacement ${d.motif}`" @click="$emit('modifier-deplacement', d)">
           <i class="bi bi-pencil"></i>
         </button>
@@ -57,8 +70,7 @@
 <script setup>
 import { computed, nextTick, ref, watch } from 'vue'
 import api, { messageErreur } from '../services/api'
-import { absenceDuJour, ferie, formatFr, formatNombre } from '../utils/dates'
-import { STATUTS_DEPLACEMENT } from '../utils/statuts'
+import { absenceDuJour, ferie, formatFr, formatMinutes, formatNombre } from '../utils/dates'
 import Modal from './Modal.vue'
 
 const props = defineProps({
@@ -68,12 +80,13 @@ const props = defineProps({
 })
 const emit = defineEmits(['fermer', 'modifie', 'nouvelle-absence', 'modifier-absence', 'nouveau-deplacement', 'modifier-deplacement'])
 
-const heures = ref('')
+const minutes = ref('')
 const erreur = ref('')
 const enCours = ref(false)
 const champHeures = ref(null)
 
-const heuresInitiales = computed(() => props.employe?.heures?.[props.jour] || 0)
+const minutesInitiales = computed(() => props.employe?.heures?.[props.jour] || 0)
+const apercu = computed(() => (Number.isInteger(Number(minutes.value)) ? formatMinutes(Number(minutes.value)) : ''))
 const absence = computed(() => (props.employe ? absenceDuJour(props.employe.absences, props.jour) : null))
 const deplacements = computed(() => (props.employe?.deplacements || []).filter((d) => d.date === props.jour))
 const ferieDuJour = computed(() => (props.jour ? ferie(props.jour) : null))
@@ -82,7 +95,7 @@ const titre = computed(() => props.employe ? `${props.employe.prenom} ${props.em
 watch(() => props.ouvert, async (ouvert) => {
   if (!ouvert) return
   erreur.value = ''
-  heures.value = heuresInitiales.value || ''
+  minutes.value = minutesInitiales.value || ''
   await nextTick()
   champHeures.value?.focus()
 })
@@ -91,7 +104,7 @@ const envoyer = async (valeur) => {
   erreur.value = ''
   enCours.value = true
   try {
-    await api.put('/heures', { employe_id: props.employe.id, jour: props.jour, heures: valeur })
+    await api.put('/heures', { employe_id: props.employe.id, jour: props.jour, minutes: valeur })
     emit('modifie')
   } catch (error) {
     erreur.value = await messageErreur(error)
@@ -100,6 +113,6 @@ const envoyer = async (valeur) => {
   }
 }
 
-const enregistrerHeures = () => envoyer(heures.value === '' ? 0 : heures.value)
+const enregistrerHeures = () => envoyer(minutes.value === '' ? 0 : Number(minutes.value))
 const effacerHeures = () => envoyer(0)
 </script>

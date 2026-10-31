@@ -98,7 +98,7 @@ const employe = computed(() => {
   const trouve = donnees.value.employes.find((e) => e.id === employeId.value)
   if (trouve) return trouve
   const fiche = referentiel.employes.find((e) => e.id === employeId.value)
-  return fiche ? { ...fiche, contrats: [], absences: [], heures: {}, deplacements: [], total_heures: 0, total_km_valides: 0, mouvements: [] } : null
+  return fiche ? { ...fiche, contrats: [], absences: [], heures: {}, deplacements: [], total_minutes: 0, total_km: 0, mouvements: [] } : null
 })
 
 const charger = async () => {

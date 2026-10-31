@@ -14,8 +14,13 @@
         <span v-else class="text-muted">Aucun contrat ce mois-ci</span>
       </dd>
 
-      <dt>Heures en plus</dt>
-      <dd>{{ employe.total_heures ? `${formatNombre(employe.total_heures)} h` : 'Aucune' }}</dd>
+      <dt>Heures en plus / en moins</dt>
+      <dd>
+        <span v-if="Object.keys(employe.heures || {}).length" :class="employe.total_minutes < 0 ? 'minutes-moins' : 'minutes-plus'">
+          {{ employe.total_minutes ? formatMinutes(employe.total_minutes) : '0' }}
+        </span>
+        <span v-else>Aucune</span>
+      </dd>
 
       <dt>Absences</dt>
       <dd>
@@ -28,20 +33,15 @@
         <span v-if="!employe.absences.length" class="text-muted">Aucune</span>
       </dd>
 
-      <dt>Déplacements validés</dt>
-      <dd>
-        {{ employe.total_km_valides ? `${formatNombre(employe.total_km_valides)} km` : 'Aucun' }}
-        <div v-if="employe.deplacements_en_attente" class="small text-warning-emphasis">
-          {{ employe.deplacements_en_attente }} en attente de validation
-        </div>
-      </dd>
+      <dt>Déplacements</dt>
+      <dd>{{ employe.total_km ? `${formatNombre(employe.total_km)} km` : 'Aucun' }}</dd>
     </dl>
   </div>
 </template>
 
 <script setup>
 import { computed } from 'vue'
-import { formatFr, formatNombre, joursDuMois } from '../utils/dates'
+import { formatFr, formatMinutes, formatNombre, joursDuMois } from '../utils/dates'
 
 const props = defineProps({
   employe: { type: Object, required: true },

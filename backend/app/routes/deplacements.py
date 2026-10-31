@@ -1,4 +1,5 @@
-from datetime import datetime, timezone
+from datetime import date, datetime
+from zoneinfo import ZoneInfo
 
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import current_user
@@ -6,26 +7,44 @@ from flask_jwt_extended import current_user
 from app.extensions import db
 from app.models import Deplacement, Employe, MotifDeplacement
 from app.securite import admin_requis, connexion_requise, employe_courant_id
+from app.services.journal import instantane_deplacement, journaliser
 from app.utils import ApiError, bornes_mois, donnees_json, parse_date, parse_decimal, texte
 
 deplacements_bp = Blueprint('deplacements', __name__, url_prefix='/api/deplacements')
 
-_STATUTS = {Deplacement.EN_ATTENTE, Deplacement.VALIDE, Deplacement.REFUSE}
+_FUSEAU = ZoneInfo('Europe/Paris')
+# Jusqu'à ce jour du mois (inclus), l'employé peut encore corriger les déplacements du mois précédent.
+JOUR_LIMITE_MOIS_PRECEDENT = 5
+
+
+def aujourdhui():
+    return datetime.now(_FUSEAU).date()
+
+
+def modifiable_par_employe(jour, reference):
+    """Mois en cours, ou mois précédent jusqu'au 5 inclus."""
+    debut_mois = reference.replace(day=1)
+    if (jour.year, jour.month) == (reference.year, reference.month):
+        return True
+    debut_precedent = date(debut_mois.year - (debut_mois.month == 1), (debut_mois.month - 2) % 12 + 1, 1)
+    return reference.day <= JOUR_LIMITE_MOIS_PRECEDENT and debut_precedent <= jour < debut_mois
+
+
+def _verifier_fenetre(jour):
+    if not modifiable_par_employe(jour, aujourdhui()):
+        raise ApiError(
+            'Les déplacements ne peuvent être saisis ou corrigés que pour le mois en cours '
+            f'(et le mois précédent jusqu’au {JOUR_LIMITE_MOIS_PRECEDENT} inclus). Demandez à la pharmacienne.',
+            403,
+            'hors_periode',
+        )
 
 
 def _get(deplacement_id):
     deplacement = db.session.get(Deplacement, deplacement_id)
-    if deplacement is None:
+    if deplacement is None or (not current_user.est_admin and deplacement.employe_id != employe_courant_id()):
         raise ApiError('Déplacement introuvable', 404)
     return deplacement
-
-
-def _verifier_modifiable_par_employe(deplacement):
-    """Un employé ne touche qu'à ses propres déclarations non encore validées."""
-    if deplacement.employe_id != employe_courant_id():
-        raise ApiError('Déplacement introuvable', 404)
-    if deplacement.statut == Deplacement.VALIDE:
-        raise ApiError('Ce déplacement a déjà été validé et ne peut plus être modifié', 409)
 
 
 def _km(valeur, cle='km'):
@@ -38,6 +57,8 @@ def _km(valeur, cle='km'):
 def _remplir(deplacement, data):
     """Motif connu : libellé et km recopiés depuis le motif. « Autre » (motif_deplacement_id vide) : précision et km libres."""
     deplacement.date = parse_date(data.get('date'), 'date')
+    if not current_user.est_admin:
+        _verifier_fenetre(deplacement.date)
     motif_id = data.get('motif_deplacement_id')
     if motif_id in (None, ''):
         deplacement.motif_deplacement_id = None
@@ -59,13 +80,6 @@ def _remplir(deplacement, data):
     deplacement.updated_by_id = current_user.id
 
 
-def _valider(deplacement):
-    deplacement.statut = Deplacement.VALIDE
-    deplacement.motif_refus = None
-    deplacement.valide_par_id = current_user.id
-    deplacement.valide_le = datetime.now(timezone.utc)
-
-
 @deplacements_bp.route('', methods=['GET'])
 @connexion_requise()
 def lister():
@@ -76,12 +90,6 @@ def lister():
             query = query.filter(Deplacement.employe_id == employe_id)
     else:
         query = query.filter(Deplacement.employe_id == employe_courant_id())
-
-    statut = request.args.get('statut')
-    if statut:
-        if statut not in _STATUTS:
-            raise ApiError('Statut invalide')
-        query = query.filter(Deplacement.statut == statut)
     if request.args.get('mois'):
         debut, fin = bornes_mois(request.args['mois'])
         query = query.filter(Deplacement.date.between(debut, fin))
@@ -99,14 +107,12 @@ def creer():
         if not isinstance(employe_id, int) or db.session.get(Employe, employe_id) is None:
             raise ApiError('Employé introuvable')
         deplacement.employe_id = employe_id
-        _remplir(deplacement, data)
-        # Saisi directement par la pharmacienne : validé d'office.
-        _valider(deplacement)
     else:
         deplacement.employe_id = employe_courant_id()
-        deplacement.statut = Deplacement.EN_ATTENTE
-        _remplir(deplacement, data)
+    _remplir(deplacement, data)
     db.session.add(deplacement)
+    db.session.flush()
+    journaliser('deplacement', 'creation', deplacement.employe_id, deplacement.id, apres=instantane_deplacement(deplacement))
     db.session.commit()
     return jsonify(deplacement.to_dict()), 201
 
@@ -116,10 +122,10 @@ def creer():
 def modifier(deplacement_id):
     deplacement = _get(deplacement_id)
     if not current_user.est_admin:
-        _verifier_modifiable_par_employe(deplacement)
-        deplacement.statut = Deplacement.EN_ATTENTE
-        deplacement.motif_refus = None
+        _verifier_fenetre(deplacement.date)
+    avant = instantane_deplacement(deplacement)
     _remplir(deplacement, donnees_json())
+    journaliser('deplacement', 'modification', deplacement.employe_id, deplacement.id, avant, instantane_deplacement(deplacement))
     db.session.commit()
     return jsonify(deplacement.to_dict()), 200
 
@@ -129,33 +135,11 @@ def modifier(deplacement_id):
 def supprimer(deplacement_id):
     deplacement = _get(deplacement_id)
     if not current_user.est_admin:
-        _verifier_modifiable_par_employe(deplacement)
+        _verifier_fenetre(deplacement.date)
+    journaliser('deplacement', 'suppression', deplacement.employe_id, deplacement.id, avant=instantane_deplacement(deplacement))
     db.session.delete(deplacement)
     db.session.commit()
     return '', 204
-
-
-@deplacements_bp.route('/<int:deplacement_id>/valider', methods=['POST'])
-@admin_requis
-def valider(deplacement_id):
-    deplacement = _get(deplacement_id)
-    _valider(deplacement)
-    deplacement.updated_by_id = current_user.id
-    db.session.commit()
-    return jsonify(deplacement.to_dict()), 200
-
-
-@deplacements_bp.route('/<int:deplacement_id>/refuser', methods=['POST'])
-@admin_requis
-def refuser(deplacement_id):
-    deplacement = _get(deplacement_id)
-    deplacement.statut = Deplacement.REFUSE
-    deplacement.motif_refus = texte(donnees_json(), 'motif_refus')
-    deplacement.valide_par_id = current_user.id
-    deplacement.valide_le = datetime.now(timezone.utc)
-    deplacement.updated_by_id = current_user.id
-    db.session.commit()
-    return jsonify(deplacement.to_dict()), 200
 
 
 # --- Motifs de déplacement ---------------------------------------------------

@@ -23,6 +23,15 @@ def format_nombre_fr(valeur):
     return texte.replace('.', ',') if texte else '0'
 
 
+def format_minutes(minutes):
+    """+90 → « +1h30 », -30 → « -30min »."""
+    signe = '-' if minutes < 0 else '+'
+    heures, reste = divmod(abs(minutes), 60)
+    if not heures:
+        return f'{signe}{reste}min'
+    return f'{signe}{heures}h{reste:02d}' if reste else f'{signe}{heures}h'
+
+
 def texte_absence(absence):
     reprise = f'reprise {format_date_fr(absence.date_reprise)}' if absence.date_reprise else 'en cours'
     return f'{format_date_fr(absence.date_debut)} → {reprise} : {absence.motif.libelle}'
@@ -77,7 +86,7 @@ def donnees_mois(debut, fin, employe_id=None):
         absences[absence.employe_id].append(absence)
     heures = defaultdict(dict)
     for ligne in heures_q.all():
-        heures[ligne.employe_id][ligne.jour] = float(ligne.heures)
+        heures[ligne.employe_id][ligne.jour] = ligne.minutes
     deplacements = defaultdict(list)
     for deplacement in deplacements_q.order_by(Deplacement.date).all():
         deplacements[deplacement.employe_id].append(deplacement)
@@ -88,16 +97,14 @@ def donnees_mois(debut, fin, employe_id=None):
         a_des_saisies = employe.id in absences or employe.id in heures or employe.id in deplacements
         if not contrats and not a_des_saisies and employe_id is None:
             continue
-        valides = [d for d in deplacements[employe.id] if d.statut == Deplacement.VALIDE]
         resultat.append({
             'employe': employe,
             'contrats': contrats,
             'absences': absences[employe.id],
             'heures': heures[employe.id],
             'deplacements': deplacements[employe.id],
-            'deplacements_valides': valides,
-            'total_heures': sum(heures[employe.id].values()),
-            'total_km': sum(float(d.km) for d in valides),
+            'total_minutes': sum(heures[employe.id].values()),
+            'total_km': sum(float(d.km) for d in deplacements[employe.id]),
             'mouvements': _mouvements(employe, debut, fin),
         })
     return resultat
@@ -115,9 +122,8 @@ def serialiser_mois(debut, fin, lignes):
             'contrats': [c.to_dict() for c in ligne['contrats']],
             'absences': [a.to_dict() for a in ligne['absences']],
             'heures': {jour.isoformat(): valeur for jour, valeur in sorted(ligne['heures'].items())},
-            'total_heures': ligne['total_heures'],
-            'total_km_valides': ligne['total_km'],
-            'deplacements_en_attente': sum(1 for d in ligne['deplacements'] if d.statut == Deplacement.EN_ATTENTE),
+            'total_minutes': ligne['total_minutes'],
+            'total_km': ligne['total_km'],
             'mouvements': ligne['mouvements'],
             'deplacements': [d.to_dict() for d in ligne['deplacements']],
         }
@@ -137,16 +143,13 @@ def _hors_contrat(contrats, jour):
 
 
 def controles(debut, fin, lignes):
-    """Contrôles avant export. Les « bloquants » empêchent l'export."""
+    """Contrôles avant export. Les « bloquants » empêchent l'export (aucun à ce jour : déplacements déclaratifs)."""
     bloquants, avertissements, infos = [], [], []
     for ligne in lignes:
         employe = ligne['employe']
         nom = f'{employe.prenom} {employe.nom}'
         contrats = employe.contrats
 
-        en_attente = [d for d in ligne['deplacements'] if d.statut == Deplacement.EN_ATTENTE]
-        if en_attente:
-            bloquants.append(f'{nom} : {len(en_attente)} déplacement(s) en attente de validation')
         if not ligne['contrats']:
             avertissements.append(f'{nom} : des saisies existent ce mois-ci mais aucun contrat ne couvre le mois')
 
@@ -154,12 +157,12 @@ def controles(debut, fin, lignes):
             absence = next((a for a in ligne['absences'] if a.couvre(jour)), None)
             if absence:
                 avertissements.append(
-                    f'{nom} : {format_nombre_fr(valeur)} h en plus le {format_date_fr(jour)} '
+                    f'{nom} : {format_minutes(valeur)} le {format_date_fr(jour)} '
                     f'alors qu’il/elle est absent(e) ({absence.motif.libelle})'
                 )
             if _hors_contrat(contrats, jour):
-                avertissements.append(f'{nom} : heures en plus le {format_date_fr(jour)} en dehors de son contrat')
-        for deplacement in ligne['deplacements_valides']:
+                avertissements.append(f'{nom} : heures +/- le {format_date_fr(jour)} en dehors de son contrat')
+        for deplacement in ligne['deplacements']:
             if _hors_contrat(contrats, deplacement.date):
                 avertissements.append(f'{nom} : déplacement le {format_date_fr(deplacement.date)} en dehors de son contrat')
         for absence in ligne['absences']:
@@ -179,7 +182,7 @@ def controles(debut, fin, lignes):
 
 
 ENTETES_RECAP = [
-    'Nom', 'Prénom', 'Contrat (h/mois)', 'Heures en plus', "Périodes d'absence", 'Km déplacements', 'Entrée / sortie',
+    'Nom', 'Prénom', 'Contrat (h/mois)', 'Heures +/- (min)', "Périodes d'absence", 'Km déplacements', 'Entrée / sortie',
 ]
 
 
@@ -194,7 +197,7 @@ def lignes_recap(debut, fin, lignes):
             employe.nom.upper(),
             employe.prenom,
             contrat,
-            ligne['total_heures'] or None,
+            ligne['total_minutes'] if ligne['heures'] else None,
             ' ; '.join(texte_absence(a) for a in ligne['absences']) or None,
             ligne['total_km'] or None,
             ' ; '.join(ligne['mouvements']) or None,

@@ -16,7 +16,7 @@ const deconnecter = async (page) => {
   await expect(page).toHaveURL(/\/login/)
 }
 
-test('arrivée d’un employé, déplacements saisis depuis le calendrier et export comptable', async ({ page }) => {
+test('arrivée d’un employé, heures +/-, déplacements déclaratifs, historique et export comptable', async ({ page }) => {
   const suffixe = Date.now().toString(36)
   const nom = `E2E${suffixe}`.toUpperCase()
   const mois = new Date().toISOString().slice(0, 7)
@@ -36,13 +36,18 @@ test('arrivée d’un employé, déplacements saisis depuis le calendrier et exp
   await expect(page.getByText('Compte créé')).toBeVisible()
   await page.keyboard.press('Escape')
 
-  // 2. La pharmacienne saisit des heures en plus depuis le tableau du mois.
+  // 2. La pharmacienne saisit des minutes en plus et en moins depuis le tableau du mois.
   await page.goto(`/?mois=${mois}`)
   const ligne = page.locator('tr', { hasText: nom })
   await ligne.locator(`td[data-jour="${mois}-02"]`).click()
-  await page.fill('#jour-heures', '1.5')
+  await page.fill('#jour-minutes', '90')
   await page.locator('.modal-body form button[type=submit]').click()
-  await expect(ligne.locator(`td[data-jour="${mois}-02"]`)).toHaveText('+1,5')
+  await expect(ligne.locator(`td[data-jour="${mois}-02"]`)).toHaveText('+1h30')
+  await ligne.locator(`td[data-jour="${mois}-05"]`).click()
+  await page.fill('#jour-minutes', '-30')
+  await page.locator('.modal-body form button[type=submit]').click()
+  await expect(ligne.locator(`td[data-jour="${mois}-05"]`)).toHaveText('-30min')
+  await expect(ligne.locator('td.col-total').first()).toHaveText('+1h')
 
   // La pharmacienne crée un motif de déplacement avec sa distance.
   const destination = `Dest${suffixe}`
@@ -61,7 +66,7 @@ test('arrivée d’un employé, déplacements saisis depuis le calendrier et exp
   await page.fill('#confirmation', 'mot-de-passe-e2e-solide')
   await page.click('button[type=submit]')
   await expect(page).toHaveURL(/\/mon-mois/)
-  await expect(page.getByText('+1,5 h').first()).toBeVisible()
+  await expect(page.locator(`[data-jour="${mois}-02"] .badge`)).toHaveText('+1h30')
 
   await page.goto('/employes')
   await expect(page).toHaveURL(/\/mon-mois/)
@@ -89,21 +94,27 @@ test('arrivée d’un employé, déplacements saisis depuis le calendrier et exp
   await expect(autre).toContainText('12,5 km')
   await deconnecter(page)
 
-  // 4. La pharmacienne voit l'export bloqué, valide le déplacement, puis exporte.
+  // 4. La pharmacienne voit les déplacements (déclaratifs, sans validation), l'historique, puis exporte.
   await connecter(page, ADMIN, ADMIN_MDP)
-  await page.goto(`/export?mois=${mois}`)
-  await expect(page.getByText(`Test ${nom} : 2 déplacement(s) en attente de validation`)).toBeVisible()
-
-  // Validation de ses déplacements (et de ceux de démonstration éventuellement en attente, pour débloquer l'export).
-  await page.goto('/deplacements')
+  await page.goto(`/deplacements?mois=${mois}`)
   await expect(page.locator('tr', { hasText: nom })).toHaveCount(2)
-  while (await page.locator('tbody tr button.btn-success').count()) {
-    await page.locator('tbody tr button.btn-success').first().click()
-    await page.waitForTimeout(300)
-  }
+
+  await page.goto('/historique')
+  await page.selectOption('#h-employe', { label: `${nom} Test` })
+  await page.selectOption('#h-auteur', 'employe')
+  const journal = page.locator('tr[data-journal]')
+  await expect(journal).toHaveCount(3)
+  await expect(journal.first()).toContainText('Modification')
+  await expect(journal.first()).toContainText('12,5 km')
+  await page.selectOption('#h-auteur', 'admin')
+  await page.selectOption('#h-type', 'heures')
+  await expect(journal).toHaveCount(2)
+  await expect(journal.first()).toContainText('-30min')
 
   await page.goto(`/export?mois=${mois}`)
-  await expect(page.locator('tr', { hasText: nom })).toContainText('19,5')
+  const apercu = page.locator('tr', { hasText: nom })
+  await expect(apercu).toContainText('19,5')
+  await expect(apercu.locator('td').nth(3)).toHaveText('60')
   const [telechargement] = await Promise.all([
     page.waitForEvent('download'),
     page.getByRole('button', { name: /État préparatoire Excel/ }).click()

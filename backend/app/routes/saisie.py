@@ -6,7 +6,8 @@ from flask_jwt_extended import current_user
 from app.extensions import db
 from app.models import Employe, HeuresEnPlus, JourFermeture, MotifAbsence
 from app.securite import admin_requis, connexion_requise
-from app.utils import ApiError, donnees_json, parse_date, parse_decimal, texte
+from app.services.journal import instantane_heures, journaliser
+from app.utils import ApiError, donnees_json, parse_date, texte
 
 saisie_bp = Blueprint('saisie', __name__, url_prefix='/api')
 
@@ -18,32 +19,45 @@ _COULEUR_RE = re.compile(r'^#[0-9a-fA-F]{6}$')
 @saisie_bp.route('/heures', methods=['PUT'])
 @admin_requis
 def enregistrer_heures():
-    """Enregistre le nombre d'heures en plus d'un employé pour un jour (0 ou vide = suppression)."""
+    """Minutes en plus (> 0) ou en moins (< 0) d'un employé pour un jour (0 ou vide = suppression)."""
     data = donnees_json()
     employe_id = data.get('employe_id')
     if not isinstance(employe_id, int) or db.session.get(Employe, employe_id) is None:
         raise ApiError('Employé introuvable')
     jour = parse_date(data.get('jour'), 'jour')
     existant = HeuresEnPlus.query.filter_by(employe_id=employe_id, jour=jour).first()
+    avant = instantane_heures(existant) if existant else None
 
-    valeur = data.get('heures')
-    if valeur in (None, '', 0, '0'):
+    valeur = data.get('minutes')
+    if valeur in (None, ''):
+        valeur = 0
+    if isinstance(valeur, str):
+        try:
+            valeur = int(valeur.strip())
+        except ValueError:
+            raise ApiError('Nombre de minutes invalide (ex : 15, -30, 90)') from None
+    if isinstance(valeur, bool) or not isinstance(valeur, int):
+        raise ApiError('Nombre de minutes invalide (ex : 15, -30, 90)')
+
+    if valeur == 0:
         if existant:
+            journaliser('heures', 'suppression', employe_id, existant.id, avant=avant)
             db.session.delete(existant)
             db.session.commit()
-        return jsonify({'employe_id': employe_id, 'jour': jour.isoformat(), 'heures': 0}), 200
+        return jsonify({'employe_id': employe_id, 'jour': jour.isoformat(), 'minutes': 0}), 200
 
-    heures = parse_decimal(valeur, 'heures')
-    if heures > 24:
-        raise ApiError('24 heures maximum par jour')
-    if (heures * 4) % 1 != 0:
-        raise ApiError('Les heures se saisissent au quart d’heure près (ex : 1,25 / 1,5 / 1,75)')
+    if abs(valeur) > 720:
+        raise ApiError('12 heures maximum (720 minutes) en plus ou en moins par jour')
+    if valeur % 5:
+        raise ApiError('Les minutes se saisissent par tranche de 5 (ex : 15, -30, 95)')
 
     if existant is None:
         existant = HeuresEnPlus(employe_id=employe_id, jour=jour)
         db.session.add(existant)
-    existant.heures = heures
+    existant.minutes = valeur
     existant.updated_by_id = current_user.id
+    db.session.flush()
+    journaliser('heures', 'modification' if avant else 'creation', employe_id, existant.id, avant, instantane_heures(existant))
     db.session.commit()
     return jsonify(existant.to_dict()), 200
 

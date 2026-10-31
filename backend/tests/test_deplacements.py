@@ -1,4 +1,10 @@
-"""Motifs de déplacement : km renseignés automatiquement, « Autre » libre, historique figé."""
+"""Déplacements déclaratifs : motifs (km automatiques), « Autre », historique figé, fenêtre de modification."""
+
+from datetime import date
+
+import pytest
+
+from app.routes.deplacements import modifiable_par_employe
 
 
 def _creer_motif(admin, libelle='Domitis', km=2, **extra):
@@ -93,3 +99,33 @@ def test_mois_admin_inclut_les_deplacements(admin, creer_employe):
     session.post('/api/deplacements', {'date': '2025-01-15', 'motif': 'Grossiste', 'km': 8})
     employe = next(e for e in admin.get('/api/mois/2025-01').get_json()['employes'] if e['id'] == fiche['id'])
     assert [(d['date'], d['motif']) for d in employe['deplacements']] == [('2025-01-15', 'Grossiste')]
+
+
+@pytest.mark.parametrize('reference, jour, attendu', [
+    (date(2025, 3, 5), date(2025, 2, 28), True),    # mois précédent, jusqu'au 5 inclus
+    (date(2025, 3, 6), date(2025, 2, 28), False),   # trop tard
+    (date(2025, 3, 6), date(2025, 3, 31), True),    # mois en cours, même dans le futur
+    (date(2025, 3, 1), date(2025, 1, 31), False),   # deux mois avant
+    (date(2025, 3, 1), date(2025, 4, 1), False),    # mois suivant
+    (date(2025, 1, 3), date(2024, 12, 15), True),   # passage d'année
+])
+def test_fenetre_de_modification_employe(reference, jour, attendu):
+    assert modifiable_par_employe(jour, reference) is attendu
+
+
+def test_employe_bloque_hors_fenetre_admin_jamais(admin, creer_employe, aujourdhui):
+    fiche, session = creer_employe('alice')
+    trajet = {'date': '2025-01-15', 'motif': 'Grossiste', 'km': 8}
+    deplacement_id = session.post('/api/deplacements', trajet).get_json()['id']
+
+    aujourdhui['date'] = date(2025, 2, 6)
+    assert session.post('/api/deplacements', trajet).status_code == 403
+    assert session.put(f'/api/deplacements/{deplacement_id}', {**trajet, 'km': 9}).status_code == 403
+    assert session.delete(f'/api/deplacements/{deplacement_id}').status_code == 403
+    # Déplacer un déplacement récent vers une date verrouillée : refusé aussi.
+    recent_id = session.post('/api/deplacements', {**trajet, 'date': '2025-02-04'}).get_json()['id']
+    assert session.put(f'/api/deplacements/{recent_id}', trajet).status_code == 403
+
+    assert admin.put(f'/api/deplacements/{deplacement_id}', {**trajet, 'km': 9}).get_json()['km'] == 9
+    assert admin.post('/api/deplacements', {**trajet, 'employe_id': fiche['id'], 'date': '2024-06-01'}).status_code == 201
+    assert admin.delete(f'/api/deplacements/{deplacement_id}').status_code == 204

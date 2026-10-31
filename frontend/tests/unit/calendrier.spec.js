@@ -25,9 +25,12 @@ describe('Calendrier', () => {
     expect(wrapper.find('[data-jour="2025-02-03"]').text()).not.toContain('Congés payés')
   })
 
-  it('affiche les heures en plus, les dimanches et les fermetures', () => {
-    const wrapper = monter({ heures: { '2025-02-04': 1.5 }, joursFermeture: [{ date: '2025-02-10', libelle: 'Inventaire' }] })
-    expect(wrapper.find('[data-jour="2025-02-04"]').text()).toContain('+1,5 h')
+  it('affiche les heures en plus / en moins, les dimanches et les fermetures', () => {
+    const wrapper = monter({ heures: { '2025-02-04': 90, '2025-02-05': -30 }, joursFermeture: [{ date: '2025-02-10', libelle: 'Inventaire' }] })
+    expect(wrapper.find('[data-jour="2025-02-04"] .badge').text()).toBe('+1h30')
+    expect(wrapper.find('[data-jour="2025-02-04"] .badge').classes()).toContain('minutes-plus')
+    expect(wrapper.find('[data-jour="2025-02-05"] .badge').text()).toBe('-30min')
+    expect(wrapper.find('[data-jour="2025-02-05"] .badge').classes()).toContain('minutes-moins')
     expect(wrapper.find('[data-jour="2025-02-09"]').classes()).toContain('dimanche')
     expect(wrapper.find('[data-jour="2025-02-10"]').text()).toContain('Inventaire')
   })
@@ -51,10 +54,10 @@ describe('Calendrier', () => {
 
   it('affiche les déplacements du jour avec un crayon de modification', async () => {
     const deplacements = [
-      { id: 1, date: '2025-02-12', motif: 'Domitis', km: 2, statut: 'valide' },
-      { id: 2, date: '2025-02-12', motif: 'Pharmacie de Chartres', km: 12.5, statut: 'en_attente' }
+      { id: 1, date: '2025-02-12', motif: 'Domitis', km: 2 },
+      { id: 2, date: '2025-02-12', motif: 'Pharmacie de Chartres', km: 12.5 }
     ]
-    const wrapper = monter({ deplacements, deplacementModifiable: (d) => d.statut !== 'valide' })
+    const wrapper = monter({ deplacements, deplacementModifiable: (d) => d.id !== 1 })
     const jour = wrapper.find('[data-jour="2025-02-12"]')
     expect(jour.findAll('[data-deplacement]')).toHaveLength(2)
     expect(jour.text()).toContain('Domitis')

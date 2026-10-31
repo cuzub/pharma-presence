@@ -59,7 +59,7 @@
                   <th>Nom</th>
                   <th>Prénom</th>
                   <th class="text-end">Contrat</th>
-                  <th class="text-end">H+</th>
+                  <th class="text-end" title="Total net, en minutes (comme dans l'export)">H +/- (min)</th>
                   <th>Périodes d'absence</th>
                   <th class="text-end">Km</th>
                   <th>Entrée / sortie</th>
@@ -73,7 +73,7 @@
                   <td class="fw-semibold">{{ e.nom.toUpperCase() }}</td>
                   <td>{{ e.prenom }}</td>
                   <td class="text-end text-nowrap">{{ e.contrat }}</td>
-                  <td class="text-end">{{ e.heures }}</td>
+                  <td class="text-end" :title="e.heuresLisible">{{ e.heures }}</td>
                   <td class="small">
                     <div v-for="a in e.absences" :key="a">{{ a }}</div>
                   </td>
@@ -94,7 +94,7 @@ import { computed, ref, watch } from 'vue'
 import MoisNavigateur from '../../components/MoisNavigateur.vue'
 import { useMoisUrl } from '../../composables/useMoisUrl'
 import api, { messageErreur, telecharger } from '../../services/api'
-import { formatFr, formatNombre } from '../../utils/dates'
+import { formatFr, formatMinutes, formatNombre } from '../../utils/dates'
 
 const mois = useMoisUrl()
 const controles = ref(null)
@@ -109,10 +109,11 @@ const apercu = computed(() => donnees.value.employes.map((e) => ({
   nom: e.nom,
   prenom: e.prenom,
   contrat: e.contrats.map((c) => formatNombre(c.heures_mensuelles)).join(' puis '),
-  heures: e.total_heures ? formatNombre(e.total_heures) : '',
+  heures: Object.keys(e.heures).length ? e.total_minutes : '',
+  heuresLisible: formatMinutes(e.total_minutes),
   absences: e.absences.map((a) =>
     `${formatFr(a.date_debut)} → ${a.date_reprise ? `reprise ${formatFr(a.date_reprise)}` : 'en cours'} : ${a.motif_libelle}`),
-  km: e.total_km_valides ? formatNombre(e.total_km_valides) : '',
+  km: e.total_km ? formatNombre(e.total_km) : '',
   mouvements: e.mouvements.join(' ; ')
 })))
 

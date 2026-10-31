@@ -70,10 +70,11 @@ def create_app(config_name=None):
     from app.routes.auth import auth_bp
     from app.routes.deplacements import deplacements_bp
     from app.routes.employes import employes_bp
+    from app.routes.journal import journal_bp
     from app.routes.mois import mois_bp
     from app.routes.saisie import saisie_bp
 
-    for blueprint in (auth_bp, employes_bp, absences_bp, deplacements_bp, saisie_bp, mois_bp):
+    for blueprint in (auth_bp, employes_bp, absences_bp, deplacements_bp, saisie_bp, mois_bp, journal_bp):
         app.register_blueprint(blueprint)
     _enregistrer_erreurs(app)
     enregistrer_commandes(app)

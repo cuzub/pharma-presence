@@ -23,7 +23,7 @@ def test_requete_sans_session(app):
 
 def test_ecriture_sans_jeton_csrf_refusee(admin, creer_employe):
     fiche, _ = creer_employe('alice', connecter=False)
-    reponse = admin.client.put('/api/heures', json={'employe_id': fiche['id'], 'jour': '2025-01-02', 'heures': 1})
+    reponse = admin.client.put('/api/heures', json={'employe_id': fiche['id'], 'jour': '2025-01-02', 'minutes': 15})
     assert reponse.status_code == 401
 
 

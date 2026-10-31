@@ -5,6 +5,7 @@ from sqlalchemy import or_
 from app.extensions import db
 from app.models import Absence, Employe, MotifAbsence
 from app.securite import admin_requis, connexion_requise, employe_courant_id
+from app.services.journal import instantane_absence, journaliser
 from app.utils import ApiError, donnees_json, parse_date, texte
 
 absences_bp = Blueprint('absences', __name__, url_prefix='/api/absences')
@@ -75,6 +76,8 @@ def creer():
     absence = Absence()
     _valider(donnees_json(), absence)
     db.session.add(absence)
+    db.session.flush()
+    journaliser('absence', 'creation', absence.employe_id, absence.id, apres=instantane_absence(absence))
     db.session.commit()
     return jsonify(absence.to_dict()), 201
 
@@ -85,7 +88,15 @@ def modifier(absence_id):
     absence = db.session.get(Absence, absence_id)
     if absence is None:
         raise ApiError('Absence introuvable', 404)
+    avant = instantane_absence(absence)
+    ancien_employe_id = absence.employe_id
     _valider(donnees_json(), absence)
+    if absence.employe_id != ancien_employe_id:
+        # Réattribuée à un autre employé : visible dans l'historique de chacun des deux.
+        journaliser('absence', 'suppression', ancien_employe_id, absence.id, avant=avant)
+        journaliser('absence', 'creation', absence.employe_id, absence.id, apres=instantane_absence(absence))
+    else:
+        journaliser('absence', 'modification', absence.employe_id, absence.id, avant, instantane_absence(absence))
     db.session.commit()
     return jsonify(absence.to_dict()), 200
 
@@ -96,6 +107,7 @@ def supprimer(absence_id):
     absence = db.session.get(Absence, absence_id)
     if absence is None:
         raise ApiError('Absence introuvable', 404)
+    journaliser('absence', 'suppression', absence.employe_id, absence.id, avant=instantane_absence(absence))
     db.session.delete(absence)
     db.session.commit()
     return '', 204

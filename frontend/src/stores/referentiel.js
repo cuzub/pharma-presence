@@ -7,7 +7,6 @@ export const useReferentielStore = defineStore('referentiel', () => {
   const motifs = ref([])
   const motifsDeplacement = ref([])
   const employes = ref([])
-  const deplacementsEnAttente = ref(0)
 
   const motifsActifs = computed(() => motifs.value.filter((m) => m.actif))
 
@@ -28,16 +27,10 @@ export const useReferentielStore = defineStore('referentiel', () => {
     return employes.value
   }
 
-  const compterDeplacementsEnAttente = async () => {
-    deplacementsEnAttente.value = (await api.get('/deplacements', { params: { statut: 'en_attente' } })).data.length
-    return deplacementsEnAttente.value
-  }
-
   const reinitialiser = () => {
     motifs.value = []
     motifsDeplacement.value = []
     employes.value = []
-    deplacementsEnAttente.value = 0
   }
 
   return {
@@ -45,11 +38,9 @@ export const useReferentielStore = defineStore('referentiel', () => {
     motifsActifs,
     motifsDeplacement,
     employes,
-    deplacementsEnAttente,
     chargerMotifs,
     chargerMotifsDeplacement,
     chargerEmployes,
-    compterDeplacementsEnAttente,
     reinitialiser
   }
 })

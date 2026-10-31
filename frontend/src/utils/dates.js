@@ -114,3 +114,27 @@ export const formatNombre = (valeur) => {
   if (valeur === null || valeur === undefined || valeur === '') return ''
   return Number(valeur).toLocaleString('fr-FR', { maximumFractionDigits: 2 })
 }
+
+// --- Heures en plus / en moins (minutes signées) ----------------------------
+
+// +90 → « +1h30 », -30 → « -30min », +120 → « +2h ».
+export const formatMinutes = (minutes) => {
+  if (!minutes) return ''
+  const signe = minutes < 0 ? '-' : '+'
+  const total = Math.abs(minutes)
+  const heures = Math.floor(total / 60)
+  const reste = total % 60
+  if (!heures) return `${signe}${reste}min`
+  return reste ? `${signe}${heures}h${String(reste).padStart(2, '0')}` : `${signe}${heures}h`
+}
+
+// --- Déplacements ------------------------------------------------------------
+
+// Même règle que le serveur : mois en cours, ou mois précédent jusqu'au 5 inclus.
+export const JOUR_LIMITE_MOIS_PRECEDENT = 5
+
+export const deplacementModifiableParEmploye = (jour, reference = aujourdhuiIso()) => {
+  const moisReference = reference.slice(0, 7)
+  if (jour.slice(0, 7) === moisReference) return true
+  return Number(reference.slice(8)) <= JOUR_LIMITE_MOIS_PRECEDENT && jour.slice(0, 7) === decalerMois(moisReference, -1)
+}
