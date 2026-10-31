@@ -1,6 +1,8 @@
 <template>
   <div class="parametres-page">
-    <h1 class="h4 mb-3">Paramètres</h1>
+    <div class="page-titre">
+      <h1 class="h4 mb-0">Paramètres</h1>
+    </div>
     <div v-if="erreur && !ouvert" class="alert alert-danger">{{ erreur }}</div>
 
     <div class="cartes-parametres">
