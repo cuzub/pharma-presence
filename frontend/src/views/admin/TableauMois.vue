@@ -70,7 +70,7 @@
               >
                 {{ formatMinutes(employe.solde_minutes) || '0' }}
               </td>
-              <td class="col-total col-km">
+              <td class="col-total col-km" v-infobulle="titreKm(employe)">
                 {{ employe.total_km ? formatNombre(employe.total_km) : '' }}
               </td>
             </tr>
@@ -220,6 +220,15 @@ const titreSolde = (employe) => {
   ]
   if (regularisations) lignes.push(`dont régularisations : ${formatMinutes(regularisations)}`)
   return lignes
+}
+
+const titreKm = (employe) => {
+  const deplacements = [...(employe.deplacements || [])].sort((a, b) => a.date.localeCompare(b.date))
+  if (!deplacements.length) return ['Aucun déplacement ce mois-ci']
+  return [
+    `Total du mois : ${formatNombre(employe.total_km)} km`,
+    ...deplacements.map((d) => `${formatFr(d.date)} — ${d.motif} — ${formatNombre(d.km)} km`)
+  ]
 }
 
 const horsContrat = (employe, iso) =>
