@@ -14,6 +14,7 @@
     </ul>
 
     <div v-if="erreur" class="alert alert-danger">{{ erreur }}</div>
+    <div v-if="succes" class="alert alert-success py-2" role="status">{{ succes }}</div>
 
     <div class="carte p-0">
       <table class="table table-hover mb-0">
@@ -53,6 +54,20 @@
               </button>
               <button type="button" class="btn btn-sm btn-outline-primary ms-1" @click="ficheId = e.id">
                 <i class="bi bi-person-gear"></i> Gérer
+              </button>
+              <template v-if="!e.date_sortie">
+                <button type="button" class="btn btn-sm btn-outline-secondary ms-1" title="Avenant" aria-label="Avenant" @click="ouvrirAction('avenant', e)">
+                  <i class="bi bi-pencil-square"></i>
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-danger ms-1" title="Départ" aria-label="Départ" @click="ouvrirAction('depart', e)">
+                  <i class="bi bi-box-arrow-right"></i>
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-secondary ms-1" title="Mot de passe oublié" aria-label="Mot de passe oublié" :disabled="!e.actif" @click="ouvrirAction('mdp', e)">
+                  <i class="bi bi-key"></i>
+                </button>
+              </template>
+              <button v-else type="button" class="btn btn-sm btn-outline-primary ms-1" title="Retour de l'employé" aria-label="Retour de l'employé" @click="ouvrirAction('retour', e)">
+                <i class="bi bi-arrow-return-left"></i>
               </button>
             </td>
           </tr>
@@ -118,11 +133,13 @@
 
     <FicheEmploye :employe-id="ficheId" @fermer="ficheId = null" @modifie="charger" />
     <HeuresEmployeModal :employe="heuresEmploye" @fermer="heuresEmploye = null" @modifie="charger" />
+    <ActionEmployeModal :action="action" @fermer="action = null" @modifie="surAction" />
   </div>
 </template>
 
 <script setup>
 import { reactive, ref, watch } from 'vue'
+import ActionEmployeModal from '../../components/ActionEmployeModal.vue'
 import FicheEmploye from '../../components/FicheEmploye.vue'
 import HeuresEmployeModal from '../../components/HeuresEmployeModal.vue'
 import Modal from '../../components/Modal.vue'
@@ -142,6 +159,8 @@ const employes = ref([])
 const erreur = ref('')
 const ficheId = ref(null)
 const heuresEmploye = ref(null)
+const action = ref(null)
+const succes = ref('')
 const creationOuverte = ref(false)
 const erreurCreation = ref('')
 const identifiantModifie = ref(false)
@@ -157,6 +176,16 @@ const charger = async () => {
   } catch (error) {
     erreur.value = await messageErreur(error)
   }
+}
+
+const ouvrirAction = (type, employe) => {
+  succes.value = ''
+  action.value = { type, employe }
+}
+
+const surAction = async (message) => {
+  succes.value = message
+  await charger()
 }
 
 const normaliser = (texte) => texte.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '')
