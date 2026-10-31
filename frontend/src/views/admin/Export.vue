@@ -35,7 +35,7 @@
               <td>{{ e.prenom }}</td>
               <td class="text-end text-nowrap">{{ e.contrat }}</td>
               <td class="text-end">{{ e.km }}</td>
-              <td class="small">
+              <td>
                 <div v-for="a in e.absences" :key="a">{{ a }}</div>
               </td>
             </tr>
