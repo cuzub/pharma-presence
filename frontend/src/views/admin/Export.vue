@@ -7,62 +7,55 @@
 
     <div v-if="erreur" class="alert alert-danger">{{ erreur }}</div>
 
-    <div class="row g-3">
-      <div class="col-lg-5">
-        <div class="carte">
-          <h2 class="h6">Télécharger</h2>
-          <p v-if="controles?.bloquants.length" class="small text-danger">Corrigez les points bloquants pour pouvoir exporter.</p>
-          <div class="d-grid gap-2">
-            <button type="button" class="btn btn-primary" :disabled="!exportPossible" @click="exporter('etat-preparatoire.xlsx', `etat-preparatoire-${mois}.xlsx`)">
-              <i class="bi bi-file-earmark-excel"></i> État préparatoire Excel (3 onglets)
-            </button>
-            <button type="button" class="btn btn-outline-primary" :disabled="!exportPossible" @click="envoyerParMail">
-              <i class="bi bi-envelope"></i> Envoyer par mail
-            </button>
-          </div>
-          <p class="form-text mb-0">Ouvre un nouveau mail pré-rempli (destinataire, titre, texte) et télécharge l'Excel à joindre. Ces champs se configurent dans Paramètres.</p>
-        </div>
+    <div class="carte p-0">
+      <h2 class="h6 p-3 mb-0">Aperçu du récapitulatif</h2>
+      <div class="table-responsive">
+        <table class="table table-sm mb-0 apercu">
+          <colgroup>
+            <col style="width: 16%" />
+            <col style="width: 14%" />
+            <col style="width: 12%" />
+            <col style="width: 8%" />
+            <col />
+          </colgroup>
+          <thead>
+            <tr>
+              <th>Nom</th>
+              <th>Prénom</th>
+              <th class="text-end">Contrat</th>
+              <th class="text-end">Km</th>
+              <th>Périodes d'absence</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-if="!apercu.length">
+              <td colspan="5" class="text-center text-muted py-3">Aucun employé concerné ce mois-ci.</td>
+            </tr>
+            <tr v-for="e in apercu" :key="e.id">
+              <td class="fw-semibold">{{ e.nom.toUpperCase() }}</td>
+              <td>{{ e.prenom }}</td>
+              <td class="text-end text-nowrap">{{ e.contrat }}</td>
+              <td class="text-end">{{ e.km }}</td>
+              <td class="small">
+                <div v-for="a in e.absences" :key="a">{{ a }}</div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
+    </div>
 
-      <div class="col-lg-7">
-        <div class="carte p-0">
-          <h2 class="h6 p-3 mb-0">Aperçu du récapitulatif</h2>
-          <div class="table-responsive">
-            <table class="table table-sm mb-0 apercu">
-              <colgroup>
-                <col style="width: 16%" />
-                <col style="width: 14%" />
-                <col style="width: 12%" />
-                <col style="width: 8%" />
-                <col />
-              </colgroup>
-              <thead>
-                <tr>
-                  <th>Nom</th>
-                  <th>Prénom</th>
-                  <th class="text-end">Contrat</th>
-                  <th class="text-end">Km</th>
-                  <th>Périodes d'absence</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-if="!apercu.length">
-                  <td colspan="5" class="text-center text-muted py-3">Aucun employé concerné ce mois-ci.</td>
-                </tr>
-                <tr v-for="e in apercu" :key="e.id">
-                  <td class="fw-semibold">{{ e.nom.toUpperCase() }}</td>
-                  <td>{{ e.prenom }}</td>
-                  <td class="text-end text-nowrap">{{ e.contrat }}</td>
-                  <td class="text-end">{{ e.km }}</td>
-                  <td class="small">
-                    <div v-for="a in e.absences" :key="a">{{ a }}</div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
+    <div class="mt-3">
+      <p v-if="controles?.bloquants.length" class="small text-danger">Corrigez les points bloquants pour pouvoir exporter.</p>
+      <div class="d-flex flex-wrap gap-2">
+        <button type="button" class="btn btn-primary" :disabled="!exportPossible" @click="exporter('etat-preparatoire.xlsx', `etat-preparatoire-${mois}.xlsx`)">
+          <i class="bi bi-file-earmark-excel"></i> Télécharger État préparatoire
+        </button>
+        <button type="button" class="btn btn-outline-primary" :disabled="!exportPossible" @click="envoyerParMail">
+          <i class="bi bi-envelope"></i> Envoyer par mail
+        </button>
       </div>
+      <p class="form-text mb-0 mt-2">Ouvre un nouveau mail pré-rempli (destinataire, titre, texte) et télécharge l'Excel à joindre. Ces champs se configurent dans Paramètres.</p>
     </div>
   </div>
 </template>
