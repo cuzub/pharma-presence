@@ -110,8 +110,9 @@ Menu **Employés** :
 Menu **Export** :
 1. Vérifiez l'aperçu, ou le *Tableau* d'un coup d'œil.
 2. Téléchargez l'**État préparatoire Excel** et envoyez-le au comptable, ou cliquez sur
-   **Envoyer par mail** : un brouillon de mail (fichier `.eml`) est créé avec l'Excel en pièce
-   jointe. Ouvrez-le dans votre messagerie, relisez-le et envoyez-le.
+   **Envoyer par mail** : votre messagerie s'ouvre avec un nouveau mail pré-rempli (destinataire,
+   titre, texte) et l'Excel est téléchargé. Joignez le fichier au mail (glisser-déposer), relisez
+   et envoyez.
 
 Le destinataire, le titre et le texte du mail se configurent dans **Paramètres** → *Envoi de
 l'export par mail*. `{mois}` y est remplacé par le mois exporté (ex : Octobre 2026).

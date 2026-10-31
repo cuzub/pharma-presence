@@ -122,7 +122,7 @@
         <div class="carte">
           <h2 class="h6">Envoi de l'export par mail</h2>
           <p class="form-text">
-            Depuis la vue Export, un brouillon de mail est créé avec l'état préparatoire en pièce jointe. Vous le relisez puis l'envoyez depuis votre messagerie.
+            Depuis la vue Export, un nouveau mail s'ouvre pré-rempli et l'état préparatoire est téléchargé : vous le joignez (glisser-déposer) puis envoyez.
             Dans le titre et le texte, <code>{mois}</code> est remplacé par le mois exporté (ex : Octobre 2026).
           </p>
           <form class="mb-0" @submit.prevent="enregistrerMail">
