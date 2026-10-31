@@ -67,7 +67,6 @@
             <td class="text-nowrap small">{{ formatHorodatage(l.cree_le) }}</td>
             <td class="text-nowrap">
               {{ l.auteur_identifiant }}
-              <span v-if="l.auteur_role === 'admin'" class="badge text-bg-secondary">pharmacienne</span>
             </td>
             <td class="text-nowrap">{{ l.employe_nom ? `${l.employe_nom} ${l.employe_prenom}` : '—' }}</td>
             <td class="text-nowrap"><i :class="['bi', TYPES[l.type].icone]"></i> {{ TYPES[l.type].libelle }}</td>
