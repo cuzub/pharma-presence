@@ -227,7 +227,7 @@ const titreKm = (employe) => {
   if (!deplacements.length) return ['Aucun déplacement ce mois-ci']
   return [
     `Total du mois : ${formatNombre(employe.total_km)}\u00a0km`,
-    ...deplacements.map((d) => `${formatFr(d.date)} — ${d.motif} — ${formatNombre(d.km)}\u00a0km`)
+    ...deplacements.map((d) => `${formatFr(d.date)}: ${d.motif} ${formatNombre(d.km)}\u00a0km`)
   ]
 }
 
