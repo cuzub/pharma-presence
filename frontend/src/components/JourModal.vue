@@ -48,7 +48,7 @@
         </li>
       </ul>
       <p class="form-text mb-0">
-        {{ vueEmploye ? 'Saisies par la pharmacienne.' : 'À modifier depuis Employés → Gérer.' }}
+        {{ vueEmploye ? 'Saisies par la pharmacienne.' : 'À modifier depuis Employés → Heures +/-.' }}
       </p>
     </div>
 

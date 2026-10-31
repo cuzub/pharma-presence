@@ -36,12 +36,18 @@ Par défaut, chaque employé est **présent**. Vous ne saisissez que les excepti
 
 ### Régulariser les heures +/- (crédit ou débit)
 
-Menu **Employés** → *Gérer* → section **Heures +/- : régularisations**. Choisissez *Créditer (+)* ou
-*Débiter (−)*, la durée (heures et minutes), la date (aujourd'hui par défaut) et, si vous le
-souhaitez, un commentaire → *Ajouter*. Exemples : « Heures payées sur la paie d'octobre » (débit),
-« Récupération du 15/11 » (débit), « Solde au démarrage de l'outil » (crédit ou débit), correction
-d'une erreur. Le solde à ce jour s'affiche en haut de la section ; le crayon modifie une
-régularisation et la poubelle la supprime (tout est tracé dans l'*Historique*).
+Menu **Employés** : la colonne *Solde H +/-* donne le compteur de chacun à ce jour. Le bouton
+**Heures +/-** de la ligne ouvre une fenêtre dédiée :
+
+1. En haut, le **solde à ce jour**.
+2. **Motif** (raccourci, facultatif) : *Heures payées* ou *Récupération* (retirent des heures),
+   *Solde de départ* (ajoute), *Correction*. Le sens et le commentaire sont préremplis.
+3. **Opération** : *Ajouter au compteur* ou *Retirer du compteur*.
+4. **Durée** (heures et minutes), **date** (aujourd'hui par défaut) et commentaire facultatif.
+5. L'aperçu « Solde : avant → après » se met à jour ; cliquez sur *Enregistrer*.
+
+Dessous, l'**historique des régularisations** : le crayon recharge une opération dans le formulaire
+pour la corriger, la poubelle la supprime (tout est tracé dans l'*Historique*).
 
 Une régularisation apparaît en **violet** à sa date dans le *Tableau du mois* et dans le calendrier
 de l'employé (commentaire au survol), et compte dans le solde (colonne *H +/-*) et dans les

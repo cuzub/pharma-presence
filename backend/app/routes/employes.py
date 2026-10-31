@@ -7,6 +7,8 @@ from flask_jwt_extended import current_user
 from app.extensions import db
 from app.models import Contrat, Employe, Utilisateur
 from app.securite import admin_requis, verifier_mot_de_passe_valide
+from app.services import fenetre
+from app.services.solde import soldes_jusqua
 from app.utils import ApiError, donnees_json, parse_date, parse_decimal, texte
 
 employes_bp = Blueprint('employes', __name__, url_prefix='/api/employes')
@@ -53,7 +55,8 @@ def lister():
         employes = [e for e in employes if _est_en_poste(e, aujourdhui)]
     elif statut == 'partis':
         employes = [e for e in employes if not _est_en_poste(e, aujourdhui)]
-    return jsonify([e.to_dict() for e in employes]), 200
+    soldes = soldes_jusqua(fenetre.aujourdhui(), [e.id for e in employes])
+    return jsonify([{**e.to_dict(), 'solde_minutes': soldes[e.id]} for e in employes]), 200
 
 
 @employes_bp.route('', methods=['POST'])

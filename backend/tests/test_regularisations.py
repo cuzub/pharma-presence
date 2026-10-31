@@ -121,3 +121,13 @@ def test_regularisation_seule_absente_de_l_export(admin, creer_employe):
     assert 'PARTI' not in csv.upper()
     controles = admin.get('/api/exports/2025-02/controles').get_json()
     assert not any('Parti' in message for message in controles['avertissements'])
+
+
+def test_solde_dans_la_liste_des_employes(admin, creer_employe):
+    alice, _ = creer_employe('alice', connecter=False)
+    admin.put('/api/heures', {'employe_id': alice['id'], 'jour': '2025-01-15', 'minutes': 90})
+    _regulariser(admin, alice['id'], '2025-01-31', -30)
+    # Postérieur à aujourd'hui (3 février 2025) : pas encore compté.
+    _regulariser(admin, alice['id'], '2025-03-01', -600)
+    ligne = next(e for e in admin.get('/api/employes').get_json() if e['id'] == alice['id'])
+    assert ligne['solde_minutes'] == 60

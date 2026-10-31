@@ -26,12 +26,13 @@
             <th>Entrée</th>
             <th>Sortie</th>
             <th>Compte</th>
+            <th class="text-end" title="Solde cumulé des heures en plus / en moins à ce jour">Solde H +/-</th>
             <th></th>
           </tr>
         </thead>
         <tbody>
           <tr v-if="!employes.length">
-            <td colspan="8" class="text-center text-muted py-4">Aucun employé.</td>
+            <td colspan="9" class="text-center text-muted py-4">Aucun employé.</td>
           </tr>
           <tr v-for="e in employes" :key="e.id">
             <td class="fw-semibold">{{ e.nom }}</td>
@@ -43,8 +44,14 @@
             <td>
               <span :class="['badge', e.actif ? 'text-bg-success' : 'text-bg-secondary']">{{ e.actif ? 'Actif' : 'Désactivé' }}</span>
             </td>
-            <td class="text-end">
-              <button type="button" class="btn btn-sm btn-outline-primary" @click="ficheId = e.id">
+            <td :class="['text-end fw-semibold text-nowrap', e.solde_minutes < 0 ? 'minutes-moins' : e.solde_minutes > 0 ? 'minutes-plus' : '']">
+              {{ formatMinutes(e.solde_minutes) || '0' }}
+            </td>
+            <td class="text-end text-nowrap">
+              <button type="button" class="btn btn-sm btn-outline-secondary" title="Créditer ou débiter des heures +/-" @click="heuresEmploye = e">
+                <i class="bi bi-clock-history"></i> Heures +/-
+              </button>
+              <button type="button" class="btn btn-sm btn-outline-primary ms-1" @click="ficheId = e.id">
                 <i class="bi bi-person-gear"></i> Gérer
               </button>
             </td>
@@ -110,16 +117,18 @@
     </Modal>
 
     <FicheEmploye :employe-id="ficheId" @fermer="ficheId = null" @modifie="charger" />
+    <HeuresEmployeModal :employe="heuresEmploye" @fermer="heuresEmploye = null" @modifie="charger" />
   </div>
 </template>
 
 <script setup>
 import { reactive, ref, watch } from 'vue'
 import FicheEmploye from '../../components/FicheEmploye.vue'
+import HeuresEmployeModal from '../../components/HeuresEmployeModal.vue'
 import Modal from '../../components/Modal.vue'
 import api, { messageErreur } from '../../services/api'
 import { useReferentielStore } from '../../stores/referentiel'
-import { aujourdhuiIso, formatFr, formatNombre } from '../../utils/dates'
+import { aujourdhuiIso, formatFr, formatMinutes, formatNombre } from '../../utils/dates'
 import { LONGUEUR_MIN_MDP, genererMotDePasse } from '../../utils/motDePasse'
 
 const referentiel = useReferentielStore()
@@ -132,6 +141,7 @@ const statut = ref('actifs')
 const employes = ref([])
 const erreur = ref('')
 const ficheId = ref(null)
+const heuresEmploye = ref(null)
 const creationOuverte = ref(false)
 const erreurCreation = ref('')
 const identifiantModifie = ref(false)

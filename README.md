@@ -14,7 +14,7 @@ indemnités kilométriques). Voir [docs/intent/suivi-presence-pharmacie.md](docs
   des heures en plus / en moins (en minutes, par 5 : `15`, `-30`), une absence ou un déplacement.
 - Tableau du mois : colonnes Employé, H +/- et Km figées, km du jour sous les minutes. H +/- = solde
   cumulé à la fin du mois affiché (tout l'historique, régularisations comprises).
-- Régularisations d'heures +/- (Employés → Gérer) : crédit ou débit daté avec commentaire facultatif
+- Régularisations d'heures +/- (Employés → Heures +/-) : crédit ou débit daté avec commentaire facultatif
   (heures payées, récupération, solde de départ, correction), affiché en violet dans le tableau et le
   calendrier de l'employé, compté dans le solde et les statistiques, absent de l'export.
 - Absences par période (premier jour d'absence → jour de reprise, ou « en cours ») avec motif ;

@@ -88,7 +88,7 @@
       <span><span class="legende ferie"></span> Férié</span>
       <span><span class="legende fermeture"></span> Fermeture</span>
       <span><span class="legende hors-contrat"></span> Hors contrat</span>
-      <span><span class="badge regularisation">±h</span> Régularisation (Employés → Gérer)</span>
+      <span><span class="badge regularisation">±h</span> Régularisation (Employés → Heures +/-)</span>
       <span class="text-muted">H +/- : solde cumulé à la fin du mois.</span>
       <span class="text-muted">Cliquez sur une case pour saisir des heures en plus / en moins, une absence ou un déplacement.</span>
     </div>
