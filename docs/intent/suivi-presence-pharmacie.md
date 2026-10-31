@@ -53,7 +53,7 @@ L'outil **enregistre les faits, le comptable interprète**. Aucun calcul de paie
 - **Hors périmètre :** export des statistiques, statistiques des déplacements et des absences, vue employé, ratio par rapport au contrat.
 
 ## Version 1.4.0 (validée le 2026-10-31)
-- **Statistiques en net :** un jeu de données par employé (net mensuel en heures, barres empilées : le positif monte, le négatif descend). Clic sur un employé (légende ou ligne du tableau) pour l'isoler ; un bandeau « Vue : Prénom NOM ✕ » permet de revenir à l'équipe. L'isolement est conservé au changement d'année si l'employé est toujours présent.
+- **Statistiques en net :** un jeu de données par employé (net mensuel en heures, barres empilées : le positif monte, le négatif descend). Clic sur un employé (légende ou ligne du tableau) pour l'isoler, un nouveau clic revient à l'équipe. L'isolement est conservé au changement d'année si l'employé est toujours présent.
 - **Tableau du mois :** colonnes Employé (à gauche), H +/- et Km (à droite) figées lors du défilement horizontal. Chaque case affiche les km du jour sous les minutes ; l'info-bulle détaille les déplacements.
 - **Blocage pendant les absences :** un motif a une option « Bloque heures et déplacements » (migration 0004 : vrai par défaut, faux pour Formation et Autre).
   - Un jour couvert par une absence bloquante refuse les heures non nulles et la création ou la modification de déplacement, quel que soit le rôle. L'effacement et la suppression restent permis.

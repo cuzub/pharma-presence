@@ -11,11 +11,6 @@
 
     <div v-if="erreur" class="alert alert-danger">{{ erreur }}</div>
 
-    <div v-if="employeIsole" class="alert alert-info d-flex align-items-center justify-content-between py-2" data-vue-isolee>
-      <span>Vue : <strong>{{ nomEmploye(employeIsole) }}</strong></span>
-      <button type="button" class="btn btn-sm btn-outline-secondary" aria-label="Revenir à toute l’équipe" @click="employeIsole = null">✕</button>
-    </div>
-
     <div v-if="employes.length" class="carte mb-3">
       <div class="graphique-statistiques">
         <Bar :data="graphique" :options="options" />
@@ -109,10 +104,6 @@ const totaux = computed(() => donnees.value.totaux)
 // Employé isolé (id) : le graphique et le tableau ne montrent que lui. Conservé d'une année à l'autre s'il est toujours présent.
 const employeIsole = ref(null)
 const employesAffiches = computed(() => employes.value.filter((e) => employeIsole.value === null || e.id === employeIsole.value))
-const nomEmploye = (id) => {
-  const e = employes.value.find((employe) => employe.id === id)
-  return e ? `${e.prenom} ${e.nom}` : ''
-}
 
 // Une seule réponse compte : la plus récente, même si l'utilisateur change d'année pendant le chargement.
 let demande = 0

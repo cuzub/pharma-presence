@@ -63,8 +63,7 @@ l'année précédente ou suivante, et « Cette année » revient à l'année en 
   et la ligne **Équipe** le total de tous les employés.
 - **Isoler un employé** : cliquez sur son nom dans la légende ou sur sa ligne du tableau. Le
   graphique et le tableau ne montrent alors que cet employé (ligne surlignée, ligne Équipe conservée).
-  Un bandeau « Vue : Prénom NOM ✕ » permet de revenir à toute l'équipe, et un nouveau clic sur la
-  même ligne a le même effet.
+  Un nouveau clic sur la même ligne (ou dans la légende) rétablit toute l'équipe.
 - Les employés partis dans l'année restent affichés, avec la mention « parti ».
 
 ### Arrivée, changement de contrat, départ
