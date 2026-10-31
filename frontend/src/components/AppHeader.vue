@@ -30,7 +30,7 @@
     <div class="app-sidebar-pied">
       <RouterLink to="/mot-de-passe" class="nav-link" title="Changer mon mot de passe">
         <i class="bi bi-person-circle"></i>
-        <span class="app-sidebar-texte">{{ auth.nomAffiche }}</span>
+        <span class="app-sidebar-texte app-sidebar-nom" v-infobulle="auth.nomAffiche">{{ auth.nomAffiche }}</span>
       </RouterLink>
       <button type="button" class="btn btn-sm btn-outline-light app-sidebar-deconnexion" title="Déconnexion" @click="deconnecter">
         <i class="bi bi-box-arrow-right"></i>

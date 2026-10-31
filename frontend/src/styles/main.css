@@ -176,6 +176,13 @@ html {
   display: none;
 }
 
+/* Le nom tronqué garde son nom complet dans l'infobulle. */
+.app-sidebar-nom {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* Sur petit écran, la barre passe par-dessus le contenu au lieu de le pousser. */
 @media (max-width: 767.98px) {
   .app-shell.avec-barre > main {
