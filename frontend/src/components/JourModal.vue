@@ -10,7 +10,7 @@
     <p v-else-if="verrouilleEmploye" class="alert alert-secondary py-2 small mb-2" data-jour-bloque>
       Ce mois est clôturé pour la saisie. Pour un oubli, adressez-vous à la pharmacienne.
     </p>
-    <form class="mb-4" data-saisie-jour @submit.prevent="enregistrer">
+    <form :class="{ 'mb-4': !vueEmploye || regularisations.length }" data-saisie-jour @submit.prevent="enregistrer">
       <h6 v-if="vueEmploye" class="small fw-semibold mb-2">Heures +/-</h6>
       <div class="d-flex flex-wrap align-items-end gap-2">
         <div :class="{ 'champ-heures': vueEmploye }">
@@ -85,7 +85,7 @@
       </template>
     </form>
 
-    <div v-if="regularisations.length" class="mb-4" data-regularisations-jour>
+    <div v-if="regularisations.length" :class="{ 'mb-4': !vueEmploye }" data-regularisations-jour>
       <h6 class="regularisation"><i class="bi bi-arrow-left-right"></i> Régularisations du jour</h6>
       <ul class="list-group list-group-flush mb-1">
         <li v-for="r in regularisations" :key="r.id" class="list-group-item d-flex gap-2 px-0 py-1">
