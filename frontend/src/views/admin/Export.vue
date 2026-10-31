@@ -46,16 +46,19 @@
 
     <div class="mt-3">
       <p v-if="controles?.bloquants.length" class="small text-danger">Corrigez les points bloquants pour pouvoir exporter.</p>
-      <div class="d-flex flex-wrap gap-3 align-items-start">
+      <div class="d-flex flex-wrap gap-2">
         <button type="button" class="btn btn-primary" :disabled="!exportPossible" @click="exporter('etat-preparatoire.xlsx', `etat-preparatoire-${mois}.xlsx`)">
           <i class="bi bi-file-earmark-excel"></i> Télécharger État préparatoire
         </button>
-        <div class="export-mail">
-          <button type="button" class="btn btn-outline-primary" :disabled="!exportPossible" @click="envoyerParMail">
-            <i class="bi bi-envelope"></i> Envoyer par mail
-          </button>
-          <p class="form-text mb-0 mt-1">Ouvre un nouveau mail pré-rempli (destinataire, titre, texte) et télécharge l'Excel à joindre. Ces champs se configurent dans Paramètres.</p>
-        </div>
+        <button
+          type="button"
+          class="btn btn-outline-primary"
+          :disabled="!exportPossible"
+          v-infobulle="'Ouvre un nouveau mail pré-rempli (destinataire, titre, texte) et télécharge l\'Excel à joindre. Ces champs se configurent dans Paramètres.'"
+          @click="envoyerParMail"
+        >
+          <i class="bi bi-envelope"></i> Envoyer par mail
+        </button>
       </div>
     </div>
   </div>
@@ -140,9 +143,5 @@ watch(mois, charger, { immediate: true })
 .apercu {
   table-layout: fixed;
   width: 100%;
-}
-
-.export-mail {
-  max-width: 22rem;
 }
 </style>
