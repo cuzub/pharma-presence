@@ -6,6 +6,7 @@ from flask_jwt_extended import current_user
 from app.extensions import db
 from app.models import Employe, HeuresEnPlus, JourFermeture, MotifAbsence
 from app.securite import admin_requis, connexion_requise
+from app.services.absences import verifier_jour_saisissable
 from app.services.journal import instantane_heures, journaliser
 from app.utils import ApiError, donnees_json, parse_date, texte
 
@@ -22,7 +23,8 @@ def enregistrer_heures():
     """Minutes en plus (> 0) ou en moins (< 0) d'un employé pour un jour (0 ou vide = suppression)."""
     data = donnees_json()
     employe_id = data.get('employe_id')
-    if not isinstance(employe_id, int) or db.session.get(Employe, employe_id) is None:
+    employe = db.session.get(Employe, employe_id)
+    if not isinstance(employe_id, int) or employe is None:
         raise ApiError('Employé introuvable')
     jour = parse_date(data.get('jour'), 'jour')
     existant = HeuresEnPlus.query.filter_by(employe_id=employe_id, jour=jour).first()
@@ -39,6 +41,8 @@ def enregistrer_heures():
     if isinstance(valeur, bool) or not isinstance(valeur, int):
         raise ApiError('Nombre de minutes invalide (ex : 15, -30, 90)')
 
+    if valeur != 0:
+        verifier_jour_saisissable(employe, jour)
     if valeur == 0:
         if existant:
             journaliser('heures', 'suppression', employe_id, existant.id, avant=avant)
@@ -78,6 +82,8 @@ def _remplir_motif(motif, data):
         raise ApiError('Couleur invalide (format #RRGGBB)')
     motif.couleur = couleur
     motif.actif = bool(data.get('actif', True))
+    if 'bloque_saisie' in data:
+        motif.bloque_saisie = bool(data['bloque_saisie'])
     if isinstance(data.get('ordre'), int):
         motif.ordre = data['ordre']
     motif.updated_by_id = current_user.id

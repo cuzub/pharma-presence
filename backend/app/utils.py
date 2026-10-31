@@ -7,14 +7,15 @@ from flask import jsonify, request
 
 
 class ApiError(Exception):
-    def __init__(self, message, status=400, code=None):
+    def __init__(self, message, status=400, code=None, **details):
         super().__init__(message)
         self.message = message
         self.status = status
         self.code = code
+        self.details = details
 
     def to_response(self):
-        payload = {'message': self.message}
+        payload = {'message': self.message, **self.details}
         if self.code:
             payload['code'] = self.code
         return jsonify(payload), self.status

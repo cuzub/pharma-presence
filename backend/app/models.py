@@ -175,6 +175,8 @@ class MotifAbsence(Horodatage, db.Model):
     couleur = db.Column(db.String(7), nullable=False, default='#6c757d')
     actif = db.Column(db.Boolean, nullable=False, default=True)
     ordre = db.Column(db.Integer, nullable=False, default=0)
+    # Pendant une absence de ce motif, la saisie d'heures et de déplacements est refusée.
+    bloque_saisie = db.Column(db.Boolean, nullable=False, default=True, server_default=db.true())
 
     def to_dict(self):
         return {
@@ -184,6 +186,7 @@ class MotifAbsence(Horodatage, db.Model):
             'couleur': self.couleur,
             'actif': self.actif,
             'ordre': self.ordre,
+            'bloque_saisie': self.bloque_saisie,
         }
 
 
@@ -220,6 +223,7 @@ class Absence(Horodatage, db.Model):
             'motif_code': self.motif.code if self.motif else None,
             'motif_libelle': self.motif.libelle if self.motif else None,
             'motif_couleur': self.motif.couleur if self.motif else None,
+            'motif_bloque_saisie': self.motif.bloque_saisie if self.motif else None,
             'date_debut': _iso(self.date_debut),
             'date_reprise': _iso(self.date_reprise),
             'commentaire': self.commentaire,

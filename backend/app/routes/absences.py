@@ -5,6 +5,7 @@ from sqlalchemy import or_
 from app.extensions import db
 from app.models import Absence, Employe, MotifAbsence
 from app.securite import admin_requis, connexion_requise, employe_courant_id
+from app.services.absences import decrire_saisies, saisies_en_conflit, supprimer_saisies
 from app.services.journal import instantane_absence, journaliser
 from app.utils import ApiError, donnees_json, parse_date, texte
 
@@ -40,6 +41,18 @@ def _valider(data, absence):
             f'{autre.date_debut.strftime("%d/%m/%Y")}, reprise {reprise})',
             409,
         )
+
+    if motif.bloque_saisie:
+        saisies = saisies_en_conflit(employe_id, date_debut, date_reprise)
+        if saisies:
+            if data.get('confirmer_suppression') is not True:
+                raise ApiError(
+                    'Des heures ou des déplacements sont saisis pendant cette absence : confirmez leur suppression',
+                    409,
+                    'saisies_en_conflit',
+                    conflits=decrire_saisies(saisies),
+                )
+            supprimer_saisies(saisies, employe_id)
 
     absence.employe_id = employe_id
     absence.motif = motif

@@ -7,6 +7,7 @@ from flask_jwt_extended import current_user
 from app.extensions import db
 from app.models import Deplacement, Employe, MotifDeplacement
 from app.securite import admin_requis, connexion_requise, employe_courant_id
+from app.services.absences import verifier_jour_saisissable
 from app.services.journal import instantane_deplacement, journaliser
 from app.utils import ApiError, bornes_mois, donnees_json, parse_date, parse_decimal, texte
 
@@ -59,6 +60,7 @@ def _remplir(deplacement, data):
     deplacement.date = parse_date(data.get('date'), 'date')
     if not current_user.est_admin:
         _verifier_fenetre(deplacement.date)
+    verifier_jour_saisissable(db.session.get(Employe, deplacement.employe_id), deplacement.date)
     motif_id = data.get('motif_deplacement_id')
     if motif_id in (None, ''):
         deplacement.motif_deplacement_id = None

@@ -1,9 +1,13 @@
 """Export mensuel pour le comptable, sur un mois de février type."""
 
 import io
+from datetime import date
 
 import pytest
 from openpyxl import load_workbook
+
+from app.extensions import db
+from app.models import HeuresEnPlus
 
 MOIS = '2025-02'
 
@@ -42,7 +46,9 @@ def test_deplacements_declaratifs_ne_bloquent_pas_l_export(admin, fevrier):
 
 
 def test_avertissement_heures_pendant_absence(admin, fevrier):
-    admin.put('/api/heures', {'employe_id': fevrier['laudren']['id'], 'jour': '2025-01-30', 'minutes': -45})
+    # Saisie antérieure à la règle de blocage : insérée directement en base.
+    db.session.add(HeuresEnPlus(employe_id=fevrier['laudren']['id'], jour=date(2025, 1, 30), minutes=-45))
+    db.session.commit()
     controles = admin.get('/api/exports/2025-01/controles').get_json()
     assert any('-45min le 30/01/2025' in a and 'Congés payés' in a for a in controles['avertissements'])
 

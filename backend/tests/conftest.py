@@ -43,6 +43,7 @@ def base_propre(app):
         db.session.execute(text(f'DELETE FROM {table}'))
     db.session.execute(text("DELETE FROM motifs_absence WHERE code NOT IN ('CP','MAL','RECUP','MAT','PAT','SS','FORM','AUTRE')"))
     db.session.execute(text('UPDATE motifs_absence SET updated_by_id = NULL'))
+    db.session.execute(text("UPDATE motifs_absence SET bloque_saisie = (code NOT IN ('FORM', 'AUTRE'))"))
     db.session.execute(text('DELETE FROM utilisateurs'))
     db.session.commit()
     db.session.remove()
