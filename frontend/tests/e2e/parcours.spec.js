@@ -168,6 +168,7 @@ test('arrivée d’un employé, heures +/-, déplacements déclaratifs, historiq
   await page.goto('/employes')
   await page.locator('tr', { hasText: nom }).getByRole('button', { name: 'Gérer' }).click()
   page.once('dialog', (dialog) => dialog.accept())
+  await page.locator('button', { hasText: 'Départ' }).first().click()
   await page.getByRole('button', { name: 'Enregistrer le départ' }).click()
   await expect(page.getByText('Départ enregistré, compte désactivé.')).toBeVisible()
   await page.keyboard.press('Escape')

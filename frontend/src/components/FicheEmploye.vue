@@ -7,92 +7,120 @@
     </div>
 
     <template v-if="fiche">
-      <h6>Identité</h6>
-      <form class="row g-2 align-items-end mb-4" @submit.prevent="enregistrerIdentite">
-        <div class="col-sm-4">
-          <label for="f-nom" class="form-label small mb-1">Nom</label>
-          <input id="f-nom" v-model.trim="identite.nom" class="form-control form-control-sm" required />
+      <form id="form-fiche" class="row g-3" @submit.prevent="enregistrer">
+        <div class="col-sm-6">
+          <label for="f-nom" class="form-label">Nom</label>
+          <input id="f-nom" v-model.trim="identite.nom" class="form-control" required maxlength="100" />
         </div>
-        <div class="col-sm-3">
-          <label for="f-prenom" class="form-label small mb-1">Prénom</label>
-          <input id="f-prenom" v-model.trim="identite.prenom" class="form-control form-control-sm" required />
+        <div class="col-sm-6">
+          <label for="f-prenom" class="form-label">Prénom</label>
+          <input id="f-prenom" v-model.trim="identite.prenom" class="form-control" required maxlength="100" />
         </div>
-        <div class="col-sm-3">
-          <label for="f-identifiant" class="form-label small mb-1">Identifiant</label>
-          <input id="f-identifiant" v-model.trim="identite.identifiant" class="form-control form-control-sm" required />
+        <div class="col-sm-6">
+          <label for="f-identifiant" class="form-label">Identifiant de connexion</label>
+          <input id="f-identifiant" v-model.trim="identite.identifiant" class="form-control" required pattern="[a-z0-9][a-z0-9._\-]{2,39}" />
         </div>
-        <div class="col-sm-2">
-          <button type="submit" class="btn btn-sm btn-outline-primary w-100">Enregistrer</button>
+        <div class="col-12">
+          <div class="form-label mb-1">Contrat</div>
+          <table class="table table-sm mb-1">
+            <thead>
+              <tr><th>Heures / mois</th><th>Début</th><th>Fin</th><th></th></tr>
+            </thead>
+            <tbody>
+              <tr v-for="c in contratsEdites" :key="c.id">
+                <td><input v-model="c.heures_mensuelles" type="number" min="1" step="0.01" class="form-control form-control-sm" aria-label="Heures par mois" /></td>
+                <td><input v-model="c.date_debut" type="date" class="form-control form-control-sm" aria-label="Début" /></td>
+                <td><input v-model="c.date_fin" type="date" class="form-control form-control-sm" aria-label="Fin" /></td>
+                <td class="text-end">
+                  <button v-if="contratsEdites.length > 1" type="button" class="btn btn-sm btn-outline-danger" title="Supprimer ce contrat" @click="supprimerContrat(c)">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="form-text">Pour un changement de contrat, utilisez « Avenant » ci-dessous.</div>
+        </div>
+        <div class="col-12 d-flex justify-content-end">
+          <button type="submit" class="btn btn-primary">Enregistrer</button>
         </div>
       </form>
 
-      <h6>Contrats</h6>
-      <table class="table table-sm mb-2">
-        <thead>
-          <tr><th>Heures / mois</th><th>Début</th><th>Fin</th><th></th></tr>
-        </thead>
-        <tbody>
-          <tr v-for="c in contratsEdites" :key="c.id">
-            <td><input v-model="c.heures_mensuelles" type="number" min="1" step="0.01" class="form-control form-control-sm" aria-label="Heures par mois" /></td>
-            <td><input v-model="c.date_debut" type="date" class="form-control form-control-sm" aria-label="Début" /></td>
-            <td><input v-model="c.date_fin" type="date" class="form-control form-control-sm" aria-label="Fin" /></td>
-            <td class="text-end text-nowrap">
-              <button type="button" class="btn btn-sm btn-outline-secondary me-1" title="Enregistrer la correction" @click="corrigerContrat(c)">
-                <i class="bi bi-check-lg"></i>
-              </button>
-              <button v-if="contratsEdites.length > 1" type="button" class="btn btn-sm btn-outline-danger" title="Supprimer" @click="supprimerContrat(c)">
-                <i class="bi bi-trash"></i>
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-      <p class="form-text mb-4">Corrigez ici une erreur de saisie. Pour un changement de contrat, utilisez « Avenant » ci-dessous.</p>
+      <div class="d-flex flex-wrap gap-2 mt-3">
+        <template v-if="enPoste">
+          <button type="button" class="btn btn-outline-primary" :class="{ active: panneau === 'avenant' }" @click="basculer('avenant')">
+            <i class="bi bi-pencil-square"></i> Avenant
+          </button>
+          <button type="button" class="btn btn-outline-danger" :class="{ active: panneau === 'depart' }" @click="basculer('depart')">
+            <i class="bi bi-box-arrow-right"></i> Départ
+          </button>
+          <button type="button" class="btn btn-outline-secondary" :class="{ active: panneau === 'mdp' }" @click="basculer('mdp')">
+            <i class="bi bi-key"></i> Mot de passe oublié
+          </button>
+        </template>
+        <button v-else type="button" class="btn btn-outline-primary" :class="{ active: panneau === 'retour' }" @click="basculer('retour')">
+          <i class="bi bi-arrow-return-left"></i> Retour de l'employé
+        </button>
+      </div>
 
-      <div v-if="enPoste" class="row g-3">
-        <div class="col-md-4">
-          <form class="border rounded p-3 h-100" @submit.prevent="avenant">
-            <h6><i class="bi bi-pencil-square"></i> Avenant</h6>
-            <label for="a-heures" class="form-label small mb-1">Nouvelles heures / mois</label>
-            <input id="a-heures" v-model="formAvenant.heures_mensuelles" type="number" min="1" step="0.01" class="form-control form-control-sm mb-2" required />
-            <label for="a-debut" class="form-label small mb-1">À partir du</label>
-            <input id="a-debut" v-model="formAvenant.date_debut" type="date" class="form-control form-control-sm mb-2" required />
-            <button type="submit" class="btn btn-sm btn-outline-primary w-100">Appliquer</button>
-          </form>
+      <form v-if="panneau === 'avenant'" class="border rounded p-3 mt-3" @submit.prevent="avenant">
+        <h6>Avenant</h6>
+        <div class="row g-3 align-items-end">
+          <div class="col-sm-6">
+            <label for="a-heures" class="form-label">Nouvelles heures / mois</label>
+            <input id="a-heures" v-model="formAvenant.heures_mensuelles" type="number" min="1" step="0.01" class="form-control" required />
+          </div>
+          <div class="col-sm-6">
+            <label for="a-debut" class="form-label">À partir du</label>
+            <input id="a-debut" v-model="formAvenant.date_debut" type="date" class="form-control" required />
+          </div>
+          <div class="col-12 d-flex justify-content-end">
+            <button type="submit" class="btn btn-primary">Appliquer l'avenant</button>
+          </div>
         </div>
-        <div class="col-md-4">
-          <form class="border rounded p-3 h-100" @submit.prevent="depart">
-            <h6><i class="bi bi-box-arrow-right"></i> Départ</h6>
-            <label for="d-sortie" class="form-label small mb-1">Dernier jour sous contrat</label>
-            <input id="d-sortie" v-model="formDepart.date_sortie" type="date" class="form-control form-control-sm mb-2" required />
-            <p class="form-text">Le compte est désactivé immédiatement. Ses données sont conservées.</p>
-            <button type="submit" class="btn btn-sm btn-outline-danger w-100">Enregistrer le départ</button>
-          </form>
+      </form>
+
+      <form v-if="panneau === 'depart'" class="border rounded p-3 mt-3" @submit.prevent="depart">
+        <h6>Départ</h6>
+        <div class="row g-3 align-items-end">
+          <div class="col-sm-6">
+            <label for="d-sortie" class="form-label">Dernier jour sous contrat</label>
+            <input id="d-sortie" v-model="formDepart.date_sortie" type="date" class="form-control" required />
+          </div>
+          <div class="col-sm-6">
+            <div class="form-text">Le compte est désactivé immédiatement. Ses données sont conservées.</div>
+          </div>
+          <div class="col-12 d-flex justify-content-end">
+            <button type="submit" class="btn btn-danger">Enregistrer le départ</button>
+          </div>
         </div>
-        <div class="col-md-4">
-          <div class="border rounded p-3 h-100">
-            <h6><i class="bi bi-key"></i> Mot de passe oublié</h6>
-            <p class="form-text">Génère un nouveau mot de passe provisoire, à changer à la prochaine connexion.</p>
-            <button type="button" class="btn btn-sm btn-outline-secondary w-100" :disabled="!fiche.actif" @click="reinitialiser">
-              Nouveau mot de passe provisoire
-            </button>
+      </form>
+
+      <div v-if="panneau === 'mdp'" class="border rounded p-3 mt-3">
+        <h6>Mot de passe oublié</h6>
+        <div class="row g-3 align-items-center">
+          <div class="col-sm-9">
+            <div class="form-text">Génère un nouveau mot de passe provisoire, à changer à la prochaine connexion.</div>
+          </div>
+          <div class="col-sm-3 d-flex justify-content-end">
+            <button type="button" class="btn btn-secondary" :disabled="!fiche.actif" @click="reinitialiser">Générer</button>
           </div>
         </div>
       </div>
 
-      <form v-else class="border rounded p-3" @submit.prevent="retour">
-        <h6><i class="bi bi-arrow-return-left"></i> Retour de l'employé</h6>
-        <div class="row g-2 align-items-end">
-          <div class="col-sm-4">
-            <label for="r-entree" class="form-label small mb-1">Date de retour</label>
-            <input id="r-entree" v-model="formRetour.date_entree" type="date" class="form-control form-control-sm" required />
+      <form v-if="panneau === 'retour'" class="border rounded p-3 mt-3" @submit.prevent="retour">
+        <h6>Retour de l'employé</h6>
+        <div class="row g-3 align-items-end">
+          <div class="col-sm-6">
+            <label for="r-entree" class="form-label">Date de retour</label>
+            <input id="r-entree" v-model="formRetour.date_entree" type="date" class="form-control" required />
           </div>
-          <div class="col-sm-4">
-            <label for="r-heures" class="form-label small mb-1">Contrat (heures / mois)</label>
-            <input id="r-heures" v-model="formRetour.heures_mensuelles" type="number" min="1" step="0.01" class="form-control form-control-sm" required />
+          <div class="col-sm-6">
+            <label for="r-heures" class="form-label">Contrat (heures / mois)</label>
+            <input id="r-heures" v-model="formRetour.heures_mensuelles" type="number" min="1" step="0.01" class="form-control" required />
           </div>
-          <div class="col-sm-4">
-            <button type="submit" class="btn btn-sm btn-primary w-100">Réactiver le compte</button>
+          <div class="col-12 d-flex justify-content-end">
+            <button type="submit" class="btn btn-primary">Réactiver le compte</button>
           </div>
         </div>
       </form>
@@ -114,6 +142,7 @@ const fiche = ref(null)
 const erreur = ref('')
 const message = ref('')
 const motDePasseAffiche = ref('')
+const panneau = ref(null)
 const identite = reactive({ nom: '', prenom: '', identifiant: '' })
 const contratsEdites = ref([])
 const formAvenant = reactive({ heures_mensuelles: '', date_debut: '' })
@@ -134,6 +163,7 @@ const appliquer = (donnees) => {
 
 watch(() => props.employeId, async (id) => {
   fiche.value = null
+  panneau.value = null
   erreur.value = message.value = motDePasseAffiche.value = ''
   if (!id) return
   try {
@@ -151,39 +181,58 @@ const executer = async (requete, succes, motDePasse = '') => {
     message.value = succes
     motDePasseAffiche.value = motDePasse
     emit('modifie')
+    return true
   } catch (error) {
     erreur.value = await messageErreur(error)
+    return false
   }
+}
+
+const basculer = (nom) => {
+  panneau.value = panneau.value === nom ? null : nom
 }
 
 const url = () => `/employes/${props.employeId}`
 
-const enregistrerIdentite = () => executer(() => api.put(url(), identite), 'Identité enregistrée.')
+const contratModifie = (c) => {
+  const origine = fiche.value.contrats.find((o) => o.id === c.id)
+  return Number(origine.heures_mensuelles) !== Number(c.heures_mensuelles)
+    || origine.date_debut !== c.date_debut
+    || (origine.date_fin || '') !== (c.date_fin || '')
+}
 
-const corrigerContrat = (c) => executer(
-  () => api.put(`${url()}/contrats/${c.id}`, { heures_mensuelles: c.heures_mensuelles, date_debut: c.date_debut, date_fin: c.date_fin || null }),
-  'Contrat corrigé.'
-)
+const enregistrer = () => executer(async () => {
+  let reponse = await api.put(url(), identite)
+  for (const c of contratsEdites.value.filter(contratModifie)) {
+    reponse = await api.put(`${url()}/contrats/${c.id}`, {
+      heures_mensuelles: c.heures_mensuelles,
+      date_debut: c.date_debut,
+      date_fin: c.date_fin || null,
+    })
+  }
+  return reponse
+}, 'Fiche enregistrée.')
 
 const supprimerContrat = (c) => {
   if (confirm('Supprimer ce contrat ?')) executer(() => api.delete(`${url()}/contrats/${c.id}`), 'Contrat supprimé.')
 }
 
-const avenant = () => executer(() => api.post(`${url()}/contrats`, formAvenant), 'Avenant enregistré.')
-
-const depart = () => {
-  if (confirm(`Enregistrer le départ de ${fiche.value.prenom} ${fiche.value.nom} ? Son compte sera désactivé immédiatement.`)) {
-    executer(() => api.post(`${url()}/depart`, formDepart), 'Départ enregistré, compte désactivé.')
-  }
+const avenant = async () => {
+  if (await executer(() => api.post(`${url()}/contrats`, formAvenant), 'Avenant enregistré.')) panneau.value = null
 }
 
-const retour = () => {
+const depart = async () => {
+  if (!confirm(`Enregistrer le départ de ${fiche.value.prenom} ${fiche.value.nom} ? Son compte sera désactivé immédiatement.`)) return
+  if (await executer(() => api.post(`${url()}/depart`, formDepart), 'Départ enregistré, compte désactivé.')) panneau.value = null
+}
+
+const retour = async () => {
   const motDePasse = genererMotDePasse()
-  executer(
+  if (await executer(
     () => api.post(`${url()}/retour`, { ...formRetour, mot_de_passe_provisoire: motDePasse }),
     'Retour enregistré, compte réactivé.',
     motDePasse
-  )
+  )) panneau.value = null
 }
 
 const reinitialiser = () => {
