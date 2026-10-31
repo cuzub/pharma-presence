@@ -9,7 +9,7 @@
 
     <div class="carte p-0 overflow-hidden">
       <div class="table-responsive tableau-conteneur">
-        <table class="table table-sm table-bordered mb-0 tableau-mois">
+        <table class="table table-sm mb-0 tableau-mois">
           <thead>
             <tr>
               <th class="col-employe">Employé</th>
@@ -22,8 +22,8 @@
                 <div class="small text-muted">{{ jour.initiale }}</div>
                 <div>{{ jour.numero }}</div>
               </th>
-              <th class="col-total" title="Total net des heures en plus / en moins du mois">H +/-</th>
-              <th class="col-total" title="Kilomètres de déplacements">Km</th>
+              <th class="col-total col-hpm" title="Total net des heures en plus / en moins du mois">H +/-</th>
+              <th class="col-total col-km" title="Kilomètres de déplacements">Km</th>
             </tr>
           </thead>
           <tbody>
@@ -54,11 +54,14 @@
                 @click="saisie.ouvrirJour(employe.id, jour.iso)"
                 @keydown.enter="saisie.ouvrirJour(employe.id, jour.iso)"
               >
-                <span v-if="absence(employe, jour.iso)" class="code-absence">{{ absence(employe, jour.iso).motif_code }}</span>
-                <span v-else-if="employe.heures[jour.iso]" :class="['heures', employe.heures[jour.iso] < 0 ? 'minutes-moins' : 'minutes-plus']">{{ formatMinutes(employe.heures[jour.iso]) }}</span>
+                <div>
+                  <span v-if="absence(employe, jour.iso)" class="code-absence">{{ absence(employe, jour.iso).motif_code }}</span>
+                  <span v-else-if="employe.heures[jour.iso]" :class="['heures', employe.heures[jour.iso] < 0 ? 'minutes-moins' : 'minutes-plus']">{{ formatMinutes(employe.heures[jour.iso]) }}</span>
+                </div>
+                <div v-if="kmDuJour(employe, jour.iso)" class="km-jour">{{ formatNombre(kmDuJour(employe, jour.iso)) }} km</div>
               </td>
-              <td :class="['col-total', 'fw-semibold', employe.total_minutes < 0 ? 'minutes-moins' : 'minutes-plus']">{{ formatMinutes(employe.total_minutes) }}</td>
-              <td class="col-total">
+              <td :class="['col-total', 'col-hpm', 'fw-semibold', employe.total_minutes < 0 ? 'minutes-moins' : 'minutes-plus']">{{ formatMinutes(employe.total_minutes) }}</td>
+              <td class="col-total col-km">
                 {{ employe.total_km ? formatNombre(employe.total_km) : '' }}
               </td>
             </tr>
@@ -170,6 +173,9 @@ const jours = computed(() => {
 
 const absence = (employe, iso) => absenceDuJour(employe.absences, iso)
 
+const deplacementsDuJour = (employe, iso) => employe.deplacements.filter((d) => d.date === iso)
+const kmDuJour = (employe, iso) => deplacementsDuJour(employe, iso).reduce((somme, d) => somme + d.km, 0)
+
 const horsContrat = (employe, iso) =>
   !employe.contrats.some((c) => c.date_debut <= iso && (!c.date_fin || c.date_fin >= iso))
 
@@ -183,6 +189,8 @@ const titreCase = (employe, jour) => {
   const morceaux = [`${employe.prenom} ${employe.nom}`, jour.titre]
   if (a) morceaux.push(`${a.motif_libelle}${a.date_reprise ? ` (reprise le ${formatFr(a.date_reprise)})` : ' (en cours)'}`)
   if (employe.heures[jour.iso]) morceaux.push(formatMinutes(employe.heures[jour.iso]))
+  const deplacements = deplacementsDuJour(employe, jour.iso)
+  if (deplacements.length) morceaux.push(`Déplacements : ${deplacements.map((d) => `${d.motif} ${formatNombre(d.km)} km`).join(', ')}`)
   return morceaux.join(' — ')
 }
 
@@ -201,11 +209,19 @@ const texteContrat = (employe) =>
   border-spacing: 0;
 }
 
+/* Bordures dessinées par cellule (droite et bas) : avec border-collapse, les cellules collantes décrochent au défilement. */
+.tableau-mois th,
+.tableau-mois td {
+  border: solid #dee2e6;
+  border-width: 0 1px 1px 0;
+}
+
 .tableau-mois thead th {
   position: sticky;
   top: 0;
   z-index: 2;
-  background: #fff;
+  background-color: #fff;
+  border-top-width: 1px;
   text-align: center;
 }
 
@@ -213,8 +229,10 @@ const texteContrat = (employe) =>
   position: sticky;
   left: 0;
   z-index: 1;
-  background: #fff;
+  background-color: #fff;
   min-width: 170px;
+  border-left-width: 1px !important;
+  box-shadow: 2px 0 3px -2px rgba(0, 0, 0, 0.25);
 }
 
 thead .col-employe {
@@ -272,10 +290,42 @@ thead .aujourdhui {
   white-space: nowrap;
 }
 
+.km-jour {
+  font-size: 0.65rem;
+  color: #6c757d;
+  white-space: nowrap;
+}
+
 .col-total {
   text-align: center;
   min-width: 52px;
   white-space: nowrap;
+}
+
+/* Colonnes de totaux figées à droite : H +/- juste à gauche de Km. */
+.col-km,
+.col-hpm {
+  position: sticky;
+  z-index: 1;
+  background-color: #fff;
+  width: 56px;
+  min-width: 56px;
+  max-width: 56px;
+}
+
+.col-km {
+  right: 0;
+  box-shadow: -2px 0 3px -2px rgba(0, 0, 0, 0.25);
+}
+
+.col-hpm {
+  right: 56px;
+  box-shadow: -2px 0 3px -2px rgba(0, 0, 0, 0.25);
+}
+
+thead .col-km,
+thead .col-hpm {
+  z-index: 3;
 }
 
 .legende {
