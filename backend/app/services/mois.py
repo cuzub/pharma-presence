@@ -173,8 +173,6 @@ def controles(debut, fin, lignes):
             if absence.date_reprise is None:
                 infos.append(f'{nom} : absence en cours ({absence.motif.libelle} depuis le {format_date_fr(absence.date_debut)})')
 
-        for mouvement in ligne['mouvements']:
-            infos.append(f'{nom} : {mouvement}')
         if len(ligne['contrats']) > 1:
             infos.append(f'{nom} : changement de contrat dans le mois ({_texte_contrats(ligne["contrats"], debut, fin)})')
 
@@ -182,7 +180,7 @@ def controles(debut, fin, lignes):
 
 
 ENTETES_RECAP = [
-    'Nom', 'Prénom', 'Contrat (h/mois)', 'Heures +/- (min)', "Périodes d'absence", 'Km déplacements', 'Entrée / sortie',
+    'Nom', 'Prénom', 'Contrat (h/mois)', "Périodes d'absence", 'Km déplacements',
 ]
 
 
@@ -197,9 +195,7 @@ def lignes_recap(debut, fin, lignes):
             employe.nom.upper(),
             employe.prenom,
             contrat,
-            ligne['total_minutes'] if ligne['heures'] else None,
             ' ; '.join(texte_absence(a) for a in ligne['absences']) or None,
             ligne['total_km'] or None,
-            ' ; '.join(ligne['mouvements']) or None,
         ])
     return resultat

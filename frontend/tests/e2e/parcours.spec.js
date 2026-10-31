@@ -121,7 +121,8 @@ test('arrivée d’un employé, heures +/-, déplacements déclaratifs, historiq
   await page.goto(`/export?mois=${mois}`)
   const apercu = page.locator('tr', { hasText: nom })
   await expect(apercu).toContainText('19,5')
-  await expect(apercu.locator('td').nth(3)).toHaveText('60')
+  await expect(apercu).not.toContainText('Entrée')
+  await expect(page.getByRole('button', { name: /Détail des heures/ })).toHaveCount(0)
   const [telechargement] = await Promise.all([
     page.waitForEvent('download'),
     page.getByRole('button', { name: /État préparatoire Excel/ }).click()

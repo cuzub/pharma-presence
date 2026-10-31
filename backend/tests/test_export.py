@@ -41,7 +41,7 @@ def test_deplacements_declaratifs_ne_bloquent_pas_l_export(admin, fevrier):
     controles = admin.get(f'/api/exports/{MOIS}/controles').get_json()
     assert controles['bloquants'] == []
     assert any('Tiffany Gilet : absence en cours' in info for info in controles['infos'])
-    assert 'Orlane Besnard : Entrée le 10/02/2025' in controles['infos']
+    assert 'Orlane Besnard : Entrée le 10/02/2025' not in controles['infos']
     assert admin.get(f'/api/exports/{MOIS}/etat-preparatoire.xlsx').status_code == 200
 
 
@@ -59,27 +59,20 @@ def test_export_excel(admin, fevrier):
     assert 'etat-preparatoire-2025-02.xlsx' in reponse.headers['Content-Disposition']
 
     wb = load_workbook(io.BytesIO(reponse.data))
-    assert wb.sheetnames == ['Récapitulatif', 'Absences', 'Heures +- (min)', 'Déplacements']
+    assert wb.sheetnames == ['Récapitulatif', 'Absences', 'Déplacements']
 
     recap = wb['Récapitulatif']
     assert recap['A1'].value == 'État préparatoire — février 2025'
+    assert [c.value for c in recap[4]] == ['Nom', 'Prénom', 'Contrat (h/mois)', "Périodes d'absence", 'Km déplacements']
     lignes = [list(r) for r in recap.iter_rows(min_row=5, values_only=True)]
     par_nom = {ligne[0]: ligne for ligne in lignes}
     assert set(par_nom) == {'BESNARD', 'GILET', 'LAUDREN'}
 
     assert par_nom['LAUDREN'][2] == 151.67
-    assert par_nom['LAUDREN'][3] == 60
-    assert par_nom['LAUDREN'][4] == '28/01/2025 → reprise 03/02/2025 : Congés payés'
-    assert par_nom['GILET'][4] == '01/02/2025 → en cours : Congé maternité'
+    assert par_nom['LAUDREN'][3] == '28/01/2025 → reprise 03/02/2025 : Congés payés'
+    assert par_nom['GILET'][3] == '01/02/2025 → en cours : Congé maternité'
     assert par_nom['BESNARD'][2] == 121.33
-    assert par_nom['BESNARD'][5] == 22
-    assert par_nom['BESNARD'][6] == 'Entrée le 10/02/2025'
-
-    heures = wb['Heures +- (min)']
-    entete = [c.value for c in heures[4]]
-    assert entete[:3] == ['Nom', 'Prénom', 1] and entete[-1] == 'Total (min)' and len(entete) == 2 + 28 + 1
-    ligne_laudren = next(r for r in heures.iter_rows(min_row=5, values_only=True) if r[0] == 'LAUDREN')
-    assert ligne_laudren[2 + 3] == 90 and ligne_laudren[2 + 10] == -30 and ligne_laudren[-1] == 60
+    assert par_nom['BESNARD'][4] == 22
 
     assert [c.value for c in wb['Déplacements'][4]] == ['Nom', 'Prénom', 'Date', 'Motif', 'Km']
     deplacements = list(wb['Déplacements'].iter_rows(min_row=5, values_only=True))
@@ -90,11 +83,11 @@ def test_export_csv(admin, fevrier):
     recap = admin.get(f'/api/exports/{MOIS}/recap.csv')
     assert recap.status_code == 200
     contenu = recap.data.decode('utf-8')
-    assert contenu.startswith('\ufeffNom;Prénom;Contrat (h/mois);Heures +/- (min);')
-    assert 'LAUDREN;Camille;151,67;60;28/01/2025 → reprise 03/02/2025 : Congés payés;;' in contenu
+    assert contenu.startswith('\ufeffNom;Prénom;Contrat (h/mois);Périodes d\'absence;Km déplacements')
+    assert 'LAUDREN;Camille;151,67;28/01/2025 → reprise 03/02/2025 : Congés payés;' in contenu
+    assert 'Heures' not in contenu and 'Entrée' not in contenu and 'Sortie' not in contenu
 
-    heures = admin.get(f'/api/exports/{MOIS}/heures.csv').data.decode('utf-8')
-    assert heures.splitlines()[1:] == ['LAUDREN;Camille;04/02/2025;90', 'LAUDREN;Camille;11/02/2025;-30']
+    assert admin.get(f'/api/exports/{MOIS}/heures.csv').status_code == 404
 
 
 def test_changement_de_contrat_dans_le_mois(admin, fevrier):

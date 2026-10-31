@@ -62,8 +62,10 @@ L'outil **enregistre les faits, le comptable interprète**. Aucun calcul de paie
 - **Hors périmètre :** saisie des heures par les employés, calcul de paie.
 
 ## Export mensuel (CSV + Excel)
-- **Onglet Récapitulatif :** une ligne par employé avec nom, prénom, contrat (h/mois), total net des heures +/- (en minutes), périodes d'absence (jour d'absence, jour de reprise, motif) et total des km.
-- **Onglet Détail :** les heures +/- jour par jour (en minutes), pour chaque employé.
+- **Onglet Récapitulatif :** une ligne par employé avec nom, prénom, contrat (h/mois), périodes d'absence (jour d'absence, jour de reprise, motif) et total des km.
+- **Onglet Absences :** le détail des absences du mois.
+- **Onglet Déplacements :** le justificatif des km (date, motif, km).
+- **Hors export :** les heures +/- et les entrées / sorties ne figurent pas dans le fichier pour le comptable.
 
 ## Hors périmètre
 - Tout calcul de paie : classement des heures (complémentaires, supplémentaires 25 % / 50 %), nombre de jours de CP, montant des indemnités kilométriques.

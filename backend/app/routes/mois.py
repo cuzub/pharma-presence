@@ -2,7 +2,7 @@ from flask import Blueprint, Response, jsonify
 from flask_jwt_extended import current_user
 
 from app.securite import admin_requis, connexion_requise, employe_courant_id
-from app.services.export import generer_csv_heures, generer_csv_recap, generer_excel
+from app.services.export import generer_csv_recap, generer_excel
 from app.services.mois import controles, donnees_mois, serialiser_mois
 from app.utils import ApiError, bornes_mois
 
@@ -59,10 +59,3 @@ def export_excel(mois):
 def export_csv_recap(mois):
     debut, fin, lignes = _lignes_exportables(mois)
     return _fichier(generer_csv_recap(debut, fin, lignes), f'recap-{mois}.csv', 'text/csv; charset=utf-8')
-
-
-@mois_bp.route('/exports/<mois>/heures.csv', methods=['GET'])
-@admin_requis
-def export_csv_heures(mois):
-    debut, fin, lignes = _lignes_exportables(mois)
-    return _fichier(generer_csv_heures(debut, fin, lignes), f'heures-{mois}.csv', 'text/csv; charset=utf-8')

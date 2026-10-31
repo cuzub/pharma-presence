@@ -87,10 +87,10 @@ Menu **Export** :
 2. Vérifiez l'aperçu, ou le *Tableau* d'un coup d'œil.
 3. Téléchargez l'**État préparatoire Excel** (ou les CSV) et envoyez-le au comptable.
 
-Le fichier Excel contient 4 onglets : *Récapitulatif* (une ligne par employé), *Absences*,
-*Heures +- (min)* (détail jour par jour, en minutes, avec le total net) et *Déplacements*
-(justificatif des kilomètres). Dans le récapitulatif, la colonne *Heures +/- (min)* donne le total
-net du mois en minutes (ex. `60`, `-45`).
+Le fichier Excel contient 3 onglets : *Récapitulatif* (une ligne par employé : contrat, périodes
+d'absence, km), *Absences* et *Déplacements* (justificatif des kilomètres). Le CSV récapitulatif
+reprend les mêmes colonnes. Les heures +/- et les entrées / sorties ne figurent pas dans l'export
+(elles restent visibles dans le *Tableau* du mois).
 
 ## Pour les employés
 

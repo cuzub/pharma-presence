@@ -37,13 +37,10 @@
           <p v-if="controles?.bloquants.length" class="small text-danger">Corrigez les points bloquants pour pouvoir exporter.</p>
           <div class="d-grid gap-2">
             <button type="button" class="btn btn-primary" :disabled="!exportPossible" @click="exporter('etat-preparatoire.xlsx', `etat-preparatoire-${mois}.xlsx`)">
-              <i class="bi bi-file-earmark-excel"></i> État préparatoire Excel (4 onglets)
+              <i class="bi bi-file-earmark-excel"></i> État préparatoire Excel (3 onglets)
             </button>
             <button type="button" class="btn btn-outline-primary" :disabled="!exportPossible" @click="exporter('recap.csv', `recap-${mois}.csv`)">
               <i class="bi bi-filetype-csv"></i> Récapitulatif CSV
-            </button>
-            <button type="button" class="btn btn-outline-primary" :disabled="!exportPossible" @click="exporter('heures.csv', `heures-${mois}.csv`)">
-              <i class="bi bi-filetype-csv"></i> Détail des heures en plus CSV
             </button>
           </div>
         </div>
@@ -59,26 +56,22 @@
                   <th>Nom</th>
                   <th>Prénom</th>
                   <th class="text-end">Contrat</th>
-                  <th class="text-end" title="Total net, en minutes (comme dans l'export)">H +/- (min)</th>
                   <th>Périodes d'absence</th>
                   <th class="text-end">Km</th>
-                  <th>Entrée / sortie</th>
                 </tr>
               </thead>
               <tbody>
                 <tr v-if="!apercu.length">
-                  <td colspan="7" class="text-center text-muted py-3">Aucun employé concerné ce mois-ci.</td>
+                  <td colspan="5" class="text-center text-muted py-3">Aucun employé concerné ce mois-ci.</td>
                 </tr>
                 <tr v-for="e in apercu" :key="e.id">
                   <td class="fw-semibold">{{ e.nom.toUpperCase() }}</td>
                   <td>{{ e.prenom }}</td>
                   <td class="text-end text-nowrap">{{ e.contrat }}</td>
-                  <td class="text-end" :title="e.heuresLisible">{{ e.heures }}</td>
                   <td class="small">
                     <div v-for="a in e.absences" :key="a">{{ a }}</div>
                   </td>
                   <td class="text-end">{{ e.km }}</td>
-                  <td class="small">{{ e.mouvements }}</td>
                 </tr>
               </tbody>
             </table>
@@ -94,7 +87,7 @@ import { computed, ref, watch } from 'vue'
 import MoisNavigateur from '../../components/MoisNavigateur.vue'
 import { useMoisUrl } from '../../composables/useMoisUrl'
 import api, { messageErreur, telecharger } from '../../services/api'
-import { formatFr, formatMinutes, formatNombre } from '../../utils/dates'
+import { formatFr, formatNombre } from '../../utils/dates'
 
 const mois = useMoisUrl()
 const controles = ref(null)
@@ -109,12 +102,9 @@ const apercu = computed(() => donnees.value.employes.map((e) => ({
   nom: e.nom,
   prenom: e.prenom,
   contrat: e.contrats.map((c) => formatNombre(c.heures_mensuelles)).join(' puis '),
-  heures: Object.keys(e.heures).length ? e.total_minutes : '',
-  heuresLisible: formatMinutes(e.total_minutes),
   absences: e.absences.map((a) =>
     `${formatFr(a.date_debut)} → ${a.date_reprise ? `reprise ${formatFr(a.date_reprise)}` : 'en cours'} : ${a.motif_libelle}`),
-  km: e.total_km ? formatNombre(e.total_km) : '',
-  mouvements: e.mouvements.join(' ; ')
+  km: e.total_km ? formatNombre(e.total_km) : ''
 })))
 
 const charger = async () => {
