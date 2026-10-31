@@ -3,9 +3,9 @@
     <h1 class="h4 mb-3">Paramètres</h1>
     <div v-if="erreur && !ouvert" class="alert alert-danger">{{ erreur }}</div>
 
-    <div class="row g-3 align-items-start">
-      <div class="col-lg-6">
-        <div class="carte">
+    <div class="row g-3">
+      <div class="col-md-6 col-xl-3">
+        <div class="carte h-100">
           <div class="d-flex justify-content-between align-items-center mb-2">
             <h2 class="h6 mb-0">Motifs d'absence</h2>
             <button type="button" class="btn btn-sm btn-outline-primary" @click="ouvrir('absences')">
@@ -23,8 +23,8 @@
         </div>
       </div>
 
-      <div class="col-lg-6">
-        <div class="carte">
+      <div class="col-md-6 col-xl-3">
+        <div class="carte h-100">
           <div class="d-flex justify-content-between align-items-center mb-2">
             <h2 class="h6 mb-0">Motifs de déplacement</h2>
             <button type="button" class="btn btn-sm btn-outline-primary" @click="ouvrir('deplacements')">
@@ -44,8 +44,8 @@
         </div>
       </div>
 
-      <div class="col-lg-6">
-        <div class="carte">
+      <div class="col-md-6 col-xl-3">
+        <div class="carte h-100">
           <div class="d-flex justify-content-between align-items-center mb-2">
             <h2 class="h6 mb-0">Jours de fermeture de la pharmacie</h2>
             <button type="button" class="btn btn-sm btn-outline-primary" @click="ouvrir('fermetures')">
@@ -65,21 +65,21 @@
         </div>
       </div>
 
-      <div class="col-lg-6">
-        <div class="carte">
+      <div class="col-md-6 col-xl-3">
+        <div class="carte h-100">
           <div class="d-flex justify-content-between align-items-center mb-2">
             <h2 class="h6 mb-0">Envoi de l'export par mail</h2>
             <button type="button" class="btn btn-sm btn-outline-primary" @click="ouvrir('mail')">
               <i class="bi bi-pencil"></i> Modifier
             </button>
           </div>
-          <dl class="row small mb-0">
-            <dt class="col-3">Destinataire</dt>
-            <dd class="col-9">{{ mail.destinataire || 'Non renseigné' }}</dd>
-            <dt class="col-3">Titre</dt>
-            <dd class="col-9">{{ mail.titre || 'Export {mois} (par défaut)' }}</dd>
-            <dt class="col-3">Texte</dt>
-            <dd class="col-9 texte-resume">{{ mail.texte || 'Texte par défaut' }}</dd>
+          <dl class="small mb-0">
+            <dt>Destinataire</dt>
+            <dd class="mb-2">{{ mail.destinataire || 'Non renseigné' }}</dd>
+            <dt>Titre</dt>
+            <dd class="mb-2">{{ mail.titre || 'Export {mois} (par défaut)' }}</dd>
+            <dt>Texte</dt>
+            <dd class="mb-0 texte-resume">{{ mail.texte || 'Texte par défaut' }}</dd>
           </dl>
         </div>
       </div>
@@ -330,8 +330,8 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.parametres-page {
-  max-width: 1200px;
+.btn {
+  white-space: nowrap;
 }
 
 .motif-code {
