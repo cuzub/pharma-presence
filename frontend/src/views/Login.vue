@@ -3,7 +3,7 @@
     <form class="carte login-carte" @submit.prevent="connecter">
       <div class="text-center mb-4">
         <div class="login-logo"><i class="bi bi-capsule"></i></div>
-        <h1 class="h4 mt-2 mb-0">Présences de l'équipe</h1>
+        <h1 class="h4 mt-2 mb-0">Suivi de l'équipe</h1>
         <p class="text-muted small mb-0">Connectez-vous avec l'identifiant fourni par la pharmacie</p>
       </div>
 

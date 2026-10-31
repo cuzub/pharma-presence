@@ -1,6 +1,6 @@
-# Présences — Pharmacie
+# Suivi — Pharmacie
 
-Application web de suivi des présences d'une équipe de pharmacie (~10 personnes), qui remplace
+Application web de suivi d'une équipe de pharmacie (~10 personnes), qui remplace
 l'« état préparatoire » Excel envoyé chaque mois au comptable.
 
 **Principe : l'outil enregistre les faits, le comptable interprète.** Aucun calcul de paie

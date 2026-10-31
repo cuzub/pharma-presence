@@ -1,4 +1,4 @@
-# Intention validée — Suivi de présence de l'équipe (pharmacie)
+# Intention validée — Suivi de l'équipe (pharmacie)
 
 Validée le 2026-10-30. Version 2 : révisée après analyse du fichier « etats péparatoires 2025.xlsx ».
 
