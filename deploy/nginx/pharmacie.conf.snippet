@@ -1,0 +1,34 @@
+# Pharmacie, servie sous https://app.pedalog.fr/pharmacie/
+# À insérer dans le bloc « server { listen 443 ssl; }» de pedalog.prod.conf, avant « location / ».
+# Installé par scripts/deployer-rpi.sh (sauvegarde automatique de la configuration précédente).
+#
+# Les upstreams sont résolus à l'exécution (variables + resolver Docker) : nginx démarre même si
+# la pharmacie est arrêtée, et renvoie 502 seulement pour ces chemins.
+
+location = /pharmacie { return 301 /pharmacie/; }
+
+location ~ ^/pharmacie/api/(.*)$ {
+    resolver 127.0.0.11 valid=30s ipv6=off;
+    set $pharma_backend pharma-backend:5000;
+    proxy_pass http://$pharma_backend/api/$1$is_args$args;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_connect_timeout 5s;
+    proxy_read_timeout 60s;
+    proxy_send_timeout 60s;
+}
+
+location ~ ^/pharmacie/(.*)$ {
+    resolver 127.0.0.11 valid=30s ipv6=off;
+    set $pharma_frontend pharma-frontend:8080;
+    proxy_pass http://$pharma_frontend/$1$is_args$args;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_connect_timeout 5s;
+    proxy_read_timeout 30s;
+    proxy_send_timeout 30s;
+}

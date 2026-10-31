@@ -1,0 +1,101 @@
+# Production sur Raspberry Pi. Fichier copié dans ~/pharmacie/ par scripts/deployer-rpi.sh.
+# Les images viennent de Docker Hub (cuzub/pharma). Aucun port publié : l'accès HTTPS passe par
+# le nginx de Pedalog (réseau partagé « pedalog-network »), qui route /pharmacie/ vers ce service.
+# Variables (fichier .env à côté de ce fichier) : voir docs/deploiement.md.
+name: pharmacie
+
+services:
+  pharma-db:
+    image: postgres:16-alpine
+    container_name: pharma-db
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB:-presence}
+      - POSTGRES_USER=${POSTGRES_USER:-presence}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:?POSTGRES_PASSWORD est obligatoire}
+      - POSTGRES_INITDB_ARGS=--auth-host=scram-sha-256
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data
+    networks:
+      - pharma-interne
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  pharma-backend:
+    image: cuzub/pharma:backend-${PHARMA_VERSION:?PHARMA_VERSION est obligatoire}
+    container_name: pharma-backend
+    environment:
+      - FLASK_ENV=production
+      - APP_VERSION=${PHARMA_VERSION}
+      - PREFIXE_APPLICATION=/pharmacie
+      - POSTGRES_HOST=pharma-db
+      - POSTGRES_DB=${POSTGRES_DB:-presence}
+      - POSTGRES_USER=${POSTGRES_USER:-presence}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:?POSTGRES_PASSWORD est obligatoire}
+      - SECRET_KEY=${SECRET_KEY:?SECRET_KEY est obligatoire}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY:?JWT_SECRET_KEY est obligatoire}
+      - SESSION_HOURS=${SESSION_HOURS:-8}
+      - GUNICORN_WORKERS=${GUNICORN_WORKERS:-2}
+    depends_on:
+      pharma-db:
+        condition: service_healthy
+    networks:
+      - pharma-interne
+      - pedalog-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5000/api/health', timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  pharma-frontend:
+    image: cuzub/pharma:frontend-${PHARMA_VERSION:?PHARMA_VERSION est obligatoire}
+    container_name: pharma-frontend
+    networks:
+      - pedalog-network
+    restart: unless-stopped
+
+  # Sauvegarde quotidienne chiffrée (GPG AES-256), conservée BACKUP_RETENTION_DAYS jours.
+  pharma-db-backup:
+    image: postgres:16-alpine
+    container_name: pharma-db-backup
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB:-presence}
+      - POSTGRES_USER=${POSTGRES_USER:-presence}
+      - PGPASSWORD=${POSTGRES_PASSWORD:?POSTGRES_PASSWORD est obligatoire}
+      - BACKUP_ENCRYPTION_PASSPHRASE=${BACKUP_ENCRYPTION_PASSPHRASE:?BACKUP_ENCRYPTION_PASSPHRASE est obligatoire}
+      - BACKUP_INTERVAL_SECONDS=${BACKUP_INTERVAL_SECONDS:-86400}
+      - BACKUP_RETENTION_DAYS=${BACKUP_RETENTION_DAYS:-30}
+    volumes:
+      - ./data/backups:/backups
+    networks:
+      - pharma-interne
+    command: >
+      sh -c '
+        apk add --no-cache gnupg >/dev/null &&
+        while true; do
+          fichier="/backups/presence_$$(date +%Y%m%d_%H%M%S).dump.gpg";
+          echo "Sauvegarde chiffrée : $${fichier}";
+          pg_dump -h pharma-db -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}" -Fc |
+            gpg --batch --yes --pinentry-mode loopback --symmetric --cipher-algo AES256 --passphrase "$${BACKUP_ENCRYPTION_PASSPHRASE}" --output "$${fichier}" &&
+          chmod 600 "$${fichier}" &&
+          find /backups -name "presence_*.dump.gpg" -type f -mtime +"$${BACKUP_RETENTION_DAYS}" -delete;
+          sleep "$${BACKUP_INTERVAL_SECONDS}";
+        done
+      '
+    depends_on:
+      pharma-db:
+        condition: service_healthy
+    restart: unless-stopped
+
+networks:
+  pharma-interne:
+    name: pharmacie-interne
+  pedalog-network:
+    external: true
