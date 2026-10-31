@@ -50,7 +50,6 @@
             </td>
             <td class="text-end text-nowrap">
               <button type="button" class="btn btn-sm btn-secondary" aria-label="Heures +/-" v-infobulle="'Créditer ou débiter des heures +/-'" @click="heuresEmploye = e">
- v-infobulle="'Créditer ou débiter des heures +/-'" @click="heuresEmploye = e">
                 <i class="bi bi-clock-history"></i>
               </button>
               <template v-if="!e.date_sortie">
