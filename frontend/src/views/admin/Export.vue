@@ -12,11 +12,15 @@
         <div class="carte">
           <h2 class="h6">Télécharger</h2>
           <p v-if="controles?.bloquants.length" class="small text-danger">Corrigez les points bloquants pour pouvoir exporter.</p>
-          <div class="d-grid">
+          <div class="d-grid gap-2">
             <button type="button" class="btn btn-primary" :disabled="!exportPossible" @click="exporter('etat-preparatoire.xlsx', `etat-preparatoire-${mois}.xlsx`)">
               <i class="bi bi-file-earmark-excel"></i> État préparatoire Excel (3 onglets)
             </button>
+            <button type="button" class="btn btn-outline-primary" :disabled="!exportPossible" @click="envoyerParMail">
+              <i class="bi bi-envelope"></i> Envoyer par mail
+            </button>
           </div>
+          <p class="form-text mb-0">Crée un brouillon de mail avec l'Excel en pièce jointe (fichier .eml à ouvrir dans votre messagerie). Destinataire, titre et texte se configurent dans Paramètres.</p>
         </div>
       </div>
 
@@ -68,7 +72,8 @@ import { computed, ref, watch } from 'vue'
 import MoisNavigateur from '../../components/MoisNavigateur.vue'
 import { useMoisUrl } from '../../composables/useMoisUrl'
 import api, { messageErreur, telecharger } from '../../services/api'
-import { formatFr, formatNombre } from '../../utils/dates'
+import { formatFr, formatNombre, libelleMois } from '../../utils/dates'
+import { construireEml } from '../../utils/eml'
 
 const mois = useMoisUrl()
 const controles = ref(null)
@@ -109,6 +114,41 @@ const exporter = async (fichier, nom) => {
   } catch (error) {
     erreur.value = await messageErreur(error, 'Export impossible')
     charger()
+  }
+}
+
+const DEFAUT_TITRE = 'Export {mois}'
+const DEFAUT_TEXTE = "Bonjour,\n\nVeuillez trouver ci-joint l'état préparatoire de {mois}.\n\nCordialement"
+const TYPE_XLSX = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+
+const envoyerParMail = async () => {
+  erreur.value = ''
+  try {
+    const { data: parametres } = await api.get('/parametres/mail')
+    if (!parametres.destinataire) {
+      erreur.value = 'Renseignez le destinataire dans Paramètres, section « Envoi de l\'export par mail ».'
+      return
+    }
+    const { data: xlsx } = await api.get(`/exports/${mois.value}/etat-preparatoire.xlsx`, { responseType: 'arraybuffer' })
+    const libelle = libelleMois(mois.value)
+    const remplacer = (texte) => texte.replaceAll('{mois}', libelle)
+    const eml = construireEml({
+      destinataire: parametres.destinataire,
+      sujet: remplacer(parametres.titre || DEFAUT_TITRE),
+      texte: remplacer(parametres.texte || DEFAUT_TEXTE),
+      nomPieceJointe: `etat-preparatoire-${mois.value}.xlsx`,
+      typePieceJointe: TYPE_XLSX,
+      pieceJointe: new Uint8Array(xlsx),
+    })
+    const lien = document.createElement('a')
+    lien.href = URL.createObjectURL(new Blob([eml], { type: 'message/rfc822' }))
+    lien.download = `brouillon-export-${mois.value}.eml`
+    document.body.appendChild(lien)
+    lien.click()
+    lien.remove()
+    URL.revokeObjectURL(lien.href)
+  } catch (error) {
+    erreur.value = await messageErreur(error, 'Envoi par mail impossible')
   }
 }
 

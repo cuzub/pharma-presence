@@ -73,13 +73,14 @@ def create_app(config_name=None):
     from app.routes.employes import employes_bp
     from app.routes.journal import journal_bp
     from app.routes.mois import mois_bp
+    from app.routes.parametres import parametres_bp
     from app.routes.regularisations import regularisations_bp
     from app.routes.saisie import saisie_bp
     from app.routes.statistiques import statistiques_bp
 
     for blueprint in (
         auth_bp, employes_bp, absences_bp, deplacements_bp, saisie_bp, mois_bp, journal_bp, statistiques_bp,
-        regularisations_bp,
+        regularisations_bp, parametres_bp,
     ):
         app.register_blueprint(blueprint)
     _enregistrer_erreurs(app)

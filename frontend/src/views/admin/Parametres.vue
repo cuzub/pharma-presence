@@ -118,6 +118,30 @@
             <li v-if="!fermeturesAVenir.length" class="list-group-item text-muted small px-0">Aucune fermeture à venir.</li>
           </ul>
         </div>
+
+        <div class="carte">
+          <h2 class="h6">Envoi de l'export par mail</h2>
+          <p class="form-text">
+            Depuis la vue Export, un brouillon de mail est créé avec l'état préparatoire en pièce jointe. Vous le relisez puis l'envoyez depuis votre messagerie.
+            Dans le titre et le texte, <code>{mois}</code> est remplacé par le mois exporté (ex : Octobre 2026).
+          </p>
+          <form class="mb-0" @submit.prevent="enregistrerMail">
+            <div class="mb-2">
+              <label for="mail-destinataire" class="form-label small mb-1">Destinataire</label>
+              <input id="mail-destinataire" v-model.trim="mail.destinataire" type="email" class="form-control form-control-sm" maxlength="254" placeholder="comptable@exemple.fr" />
+            </div>
+            <div class="mb-2">
+              <label for="mail-titre" class="form-label small mb-1">Titre</label>
+              <input id="mail-titre" v-model.trim="mail.titre" class="form-control form-control-sm" maxlength="200" placeholder="Export {mois}" />
+            </div>
+            <div class="mb-2">
+              <label for="mail-texte" class="form-label small mb-1">Texte</label>
+              <textarea id="mail-texte" v-model="mail.texte" class="form-control form-control-sm" rows="4" maxlength="5000" placeholder="Bonjour, veuillez trouver ci-joint l'état préparatoire de {mois}."></textarea>
+            </div>
+            <button type="submit" class="btn btn-sm btn-primary">Enregistrer</button>
+            <span v-if="mailEnregistre" class="small text-success ms-2">Enregistré</span>
+          </form>
+        </div>
       </div>
     </div>
   </div>
@@ -137,6 +161,8 @@ const erreur = ref('')
 const nouveauMotif = reactive({ code: '', libelle: '', couleur: '#6c757d', bloque_saisie: true })
 const nouveauMotifDeplacement = reactive({ libelle: '', km: '' })
 const nouvelleFermeture = reactive({ date: '', libelle: '' })
+const mail = reactive({ destinataire: '', titre: '', texte: '' })
+const mailEnregistre = ref(false)
 
 const fermeturesAVenir = computed(() => {
   const limite = ajouterJours(aujourdhuiIso(), -31)
@@ -185,7 +211,29 @@ const ajouterFermeture = async () => {
 
 const supprimerFermeture = (f) => action(() => api.delete(`/jours-fermeture/${f.id}`))
 
-onMounted(charger)
+const chargerMail = async () => {
+  try {
+    Object.assign(mail, (await api.get('/parametres/mail')).data)
+  } catch (error) {
+    erreur.value = await messageErreur(error)
+  }
+}
+
+const enregistrerMail = async () => {
+  erreur.value = ''
+  mailEnregistre.value = false
+  try {
+    Object.assign(mail, (await api.put('/parametres/mail', { ...mail })).data)
+    mailEnregistre.value = true
+  } catch (error) {
+    erreur.value = await messageErreur(error)
+  }
+}
+
+onMounted(() => {
+  charger()
+  chargerMail()
+})
 </script>
 
 <style scoped>

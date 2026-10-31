@@ -384,3 +384,19 @@ class JournalModification(db.Model):
             'avant': self.avant,
             'apres': self.apres,
         }
+
+
+class ParametresMail(Horodatage, db.Model):
+    """Modèle du mail d'envoi de l'export. Table à une seule ligne (id = 1)."""
+
+    __tablename__ = 'parametres_mail'
+
+    id = db.Column(db.Integer, primary_key=True)
+    destinataire = db.Column(db.String(254), nullable=False, default='')
+    titre = db.Column(db.String(200), nullable=False, default='')
+    texte = db.Column(db.Text, nullable=False, default='')
+
+    __table_args__ = (db.CheckConstraint('id = 1', name='ck_parametres_mail_singleton'),)
+
+    def to_dict(self):
+        return {'destinataire': self.destinataire, 'titre': self.titre, 'texte': self.texte}

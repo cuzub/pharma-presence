@@ -25,8 +25,8 @@ indemnités kilométriques). Voir [docs/intent/suivi-presence-pharmacie.md](docs
   distance libre). Déclaratifs : pas de validation, la pharmacienne peut tout corriger.
 - Employés : arrivée (création du compte avec mot de passe provisoire), avenant, départ (compte
   désactivé, données conservées), retour, nouveau mot de passe provisoire.
-- Export comptable mensuel : contrôles avant export, fichier Excel (Récapitulatif, Absences,
-  Déplacements) et CSV (format Excel FR). Sans heures +/- ni entrées / sorties.
+- Export comptable mensuel : fichier Excel (Récapitulatif, Absences, Déplacements), envoi possible
+  par mail (brouillon `.eml` avec pièce jointe, destinataire et texte configurables). Sans heures +/- ni entrées / sorties.
 - Historique : journal immuable des créations / modifications / suppressions (déplacements, heures,
   régularisations, absences) avec auteur et avant → après, filtrable par employé, mois, auteur et type.
 - Statistiques : heures en plus / en moins par année, en net, avec un graphique (une barre par

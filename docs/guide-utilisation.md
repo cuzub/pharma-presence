@@ -109,12 +109,16 @@ Menu **Employés** :
 
 Menu **Export** :
 1. Vérifiez l'aperçu, ou le *Tableau* d'un coup d'œil.
-2. Téléchargez l'**État préparatoire Excel** et envoyez-le au comptable.
+2. Téléchargez l'**État préparatoire Excel** et envoyez-le au comptable, ou cliquez sur
+   **Envoyer par mail** : un brouillon de mail (fichier `.eml`) est créé avec l'Excel en pièce
+   jointe. Ouvrez-le dans votre messagerie, relisez-le et envoyez-le.
+
+Le destinataire, le titre et le texte du mail se configurent dans **Paramètres** → *Envoi de
+l'export par mail*. `{mois}` y est remplacé par le mois exporté (ex : Octobre 2026).
 
 Le fichier Excel contient 3 onglets : *Récapitulatif* (une ligne par employé : contrat, périodes
-d'absence, km), *Absences* et *Déplacements* (justificatif des kilomètres). Le CSV récapitulatif
-reprend les mêmes colonnes. Les heures +/- et les entrées / sorties ne figurent pas dans l'export
-(elles restent visibles dans le *Tableau* du mois).
+d'absence, km), *Absences* et *Déplacements* (justificatif des kilomètres). Les heures +/- et les
+entrées / sorties ne figurent pas dans l'export (elles restent visibles dans le *Tableau* du mois).
 
 ## Pour les employés
 
