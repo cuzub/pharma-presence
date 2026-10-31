@@ -49,24 +49,25 @@
               {{ formatMinutes(e.solde_minutes) || '0' }}
             </td>
             <td class="text-end text-nowrap">
-              <button type="button" class="btn btn-sm btn-outline-secondary" aria-label="Heures +/-" v-infobulle="'Créditer ou débiter des heures +/-'" @click="heuresEmploye = e">
+              <button type="button" class="btn btn-sm btn-secondary" aria-label="Heures +/-" v-infobulle="'Créditer ou débiter des heures +/-'" @click="heuresEmploye = e">
+ v-infobulle="'Créditer ou débiter des heures +/-'" @click="heuresEmploye = e">
                 <i class="bi bi-clock-history"></i>
               </button>
               <template v-if="!e.date_sortie">
-                <button type="button" class="btn btn-sm btn-outline-secondary ms-1" aria-label="Mot de passe oublié" v-infobulle="'Générer un nouveau mot de passe provisoire'" :disabled="!e.actif" @click="ouvrirAction('mdp', e)">
+                <button type="button" class="btn btn-sm btn-secondary ms-1" aria-label="Mot de passe oublié" v-infobulle="'Générer un nouveau mot de passe provisoire'" :disabled="!e.actif" @click="ouvrirAction('mdp', e)">
                   <i class="bi bi-key"></i>
                 </button>
-                <button type="button" class="btn btn-sm btn-outline-secondary ms-1" aria-label="Avenant" v-infobulle="'Changer les heures / mois à partir d\'une date'" @click="ouvrirAction('avenant', e)">
+                <button type="button" class="btn btn-sm btn-secondary ms-1" aria-label="Avenant" v-infobulle="'Changer les heures / mois à partir d\'une date'" @click="ouvrirAction('avenant', e)">
                   <i class="bi bi-pencil-square"></i>
                 </button>
               </template>
-              <button type="button" class="btn btn-sm btn-outline-primary ms-1" aria-label="Gérer" v-infobulle="'Modifier l\'identité et les contrats'" @click="ficheId = e.id">
+              <button type="button" class="btn btn-sm btn-primary ms-1" aria-label="Gérer" v-infobulle="'Modifier l\'identité et les contrats'" @click="ficheId = e.id">
                 <i class="bi bi-person-gear"></i>
               </button>
-              <button v-if="!e.date_sortie" type="button" class="btn btn-sm btn-outline-danger ms-1" aria-label="Départ" v-infobulle="'Enregistrer le départ et désactiver le compte'" @click="ouvrirAction('depart', e)">
+              <button v-if="!e.date_sortie" type="button" class="btn btn-sm btn-danger ms-1" aria-label="Départ" v-infobulle="'Enregistrer le départ et désactiver le compte'" @click="ouvrirAction('depart', e)">
                 <i class="bi bi-box-arrow-right"></i>
               </button>
-              <button v-else type="button" class="btn btn-sm btn-outline-primary ms-1" aria-label="Retour" v-infobulle="'Enregistrer le retour et réactiver le compte'" @click="ouvrirAction('retour', e)">
+              <button v-else type="button" class="btn btn-sm btn-primary ms-1" aria-label="Retour" v-infobulle="'Enregistrer le retour et réactiver le compte'" @click="ouvrirAction('retour', e)">
                 <i class="bi bi-arrow-return-left"></i>
               </button>
             </td>
