@@ -1,5 +1,5 @@
 <template>
-  <nav class="navbar navbar-expand-lg navbar-dark app-navbar">
+  <nav class="navbar navbar-expand-lg navbar-dark app-navbar sticky-top">
     <div class="container-fluid px-3 px-lg-4">
       <RouterLink class="navbar-brand d-flex align-items-center gap-2" :to="auth.estAdmin ? '/' : '/mon-mois'">
         <i class="bi bi-capsule"></i> Présences
