@@ -19,7 +19,7 @@ html {
 }
 
 :root {
-  --largeur-barre: 15rem;
+  --largeur-barre: 10.5rem;
 }
 
 .app-shell.barre-reduite {
@@ -113,6 +113,13 @@ html {
   white-space: nowrap;
 }
 
+.app-sidebar:not(.app-sidebar--reduite) .app-sidebar-liens .nav-link,
+.app-sidebar:not(.app-sidebar--reduite) .app-sidebar-pied .nav-link {
+  display: flex;
+  width: auto;
+  margin-right: 0.25rem;
+}
+
 .app-sidebar-liens .nav-link:hover,
 .app-sidebar-pied .nav-link:hover {
   color: #fff;
@@ -142,7 +149,6 @@ html {
 .app-sidebar-deconnexion {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
   gap: 0.5rem;
   width: 2rem;
   height: 2rem;
@@ -153,14 +159,17 @@ html {
 }
 
 .app-sidebar:not(.app-sidebar--reduite) .app-sidebar-deconnexion {
-  width: auto;
-  padding: 0 0.6rem;
+  display: flex;
+  width: calc(100% - 0.5rem);
 }
 
 .app-sidebar-deconnexion .bi {
   flex: 0 0 auto;
-  width: 1.25rem;
-  text-align: center;
+  width: 2rem;
+  height: 2rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .app-sidebar--reduite .app-sidebar-texte {
