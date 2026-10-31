@@ -6,9 +6,6 @@ const routes = [
   { path: '/mot-de-passe', name: 'mot-de-passe', component: () => import('./views/ChangerMotDePasse.vue'), meta: { mdpProvisoireAutorise: true } },
 
   { path: '/', name: 'tableau', component: () => import('./views/admin/TableauMois.vue'), meta: { role: 'admin' } },
-  { path: '/calendrier', name: 'calendrier', component: () => import('./views/admin/CalendrierEmploye.vue'), meta: { role: 'admin' } },
-  { path: '/absences', name: 'absences', component: () => import('./views/admin/Absences.vue'), meta: { role: 'admin' } },
-  { path: '/deplacements', name: 'deplacements', component: () => import('./views/admin/Deplacements.vue'), meta: { role: 'admin' } },
   { path: '/employes', name: 'employes', component: () => import('./views/admin/Employes.vue'), meta: { role: 'admin' } },
   { path: '/export', name: 'export', component: () => import('./views/admin/Export.vue'), meta: { role: 'admin' } },
   { path: '/historique', name: 'historique', component: () => import('./views/admin/Historique.vue'), meta: { role: 'admin' } },

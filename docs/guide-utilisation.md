@@ -26,9 +26,10 @@ Par défaut, chaque employé est **présent**. Vous ne saisissez que les excepti
   n'est supprimé sans votre confirmation, et les suppressions figurent dans l'*Historique*. Les
   motifs *Formation* et *Autre* ne bloquent pas la saisie.
 - **Déplacements** : ils sont **déclaratifs** (pas de validation) et comptent tous. Le menu
-  *Déplacements* les liste par mois, avec le crayon pour corriger et la poubelle pour supprimer.
-  Pour en saisir un vous-même : *Calendrier* (ou *Tableau*) → clic sur le jour →
-  *Ajouter un déplacement*. Vous pouvez modifier n'importe quel déplacement, quel que soit le mois.
+  *Tableau* du mois : clic sur la case du jour → *Ajouter un déplacement*. Dans la même fenêtre,
+  le crayon corrige un déplacement et la poubelle le supprime. Vous pouvez modifier n'importe quel
+  déplacement, quel que soit le mois. Les km du jour s'affichent sous les minutes, et le total
+  des km par employé figure dans la colonne *Km*.
 
 ### Motifs de déplacement
 

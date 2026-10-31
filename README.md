@@ -16,8 +16,8 @@ indemnités kilométriques). Voir [docs/intent/suivi-presence-pharmacie.md](docs
 - Absences par période (premier jour d'absence → jour de reprise, ou « en cours ») avec motif ;
   les chevauchements sont refusés. Un motif bloquant interdit les heures et déplacements les jours
   d'absence ; la suppression des saisies en conflit exige une confirmation.
-- Déplacements professionnels : saisis depuis le calendrier (clic sur la date, crayon pour
-  modifier), avec des motifs prédéfinis dont les km se remplissent automatiquement (ou « Autre »,
+- Déplacements professionnels : saisis depuis le Tableau du mois (clic sur la case du jour, crayon
+  pour modifier), avec des motifs prédéfinis dont les km se remplissent automatiquement (ou « Autre »,
   distance libre). Déclaratifs : pas de validation, la pharmacienne peut tout corriger.
 - Employés : arrivée (création du compte avec mot de passe provisoire), avenant, départ (compte
   désactivé, données conservées), retour, nouveau mot de passe provisoire.

@@ -16,7 +16,7 @@ describe('garde du routeur', () => {
 
   it('renvoie vers la connexion sans session', async () => {
     connecter(null)
-    expect(await garde(route('/absences', { role: 'admin' }))).toEqual({ path: '/login', query: { redirect: '/absences' } })
+    expect(await garde(route('/export', { role: 'admin' }))).toEqual({ path: '/login', query: { redirect: '/export' } })
   })
 
   it('impose le changement de mot de passe provisoire', async () => {

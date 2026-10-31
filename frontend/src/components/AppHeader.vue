@@ -36,9 +36,6 @@ const router = useRouter()
 const liens = computed(() => auth.estAdmin
   ? [
       { to: '/', libelle: 'Tableau', icone: 'bi-grid-3x3' },
-      { to: '/calendrier', libelle: 'Calendrier', icone: 'bi-calendar3' },
-      { to: '/absences', libelle: 'Absences', icone: 'bi-calendar-x' },
-      { to: '/deplacements', libelle: 'Déplacements', icone: 'bi-car-front' },
       { to: '/employes', libelle: 'Employés', icone: 'bi-people' },
       { to: '/export', libelle: 'Export', icone: 'bi-file-earmark-spreadsheet' },
       { to: '/historique', libelle: 'Historique', icone: 'bi-clock-history' },

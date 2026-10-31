@@ -96,8 +96,8 @@ test('arrivée d’un employé, heures +/-, déplacements déclaratifs, historiq
 
   // 4. La pharmacienne voit les déplacements (déclaratifs, sans validation), l'historique, puis exporte.
   await connecter(page, ADMIN, ADMIN_MDP)
-  await page.goto(`/deplacements?mois=${mois}`)
-  await expect(page.locator('tr', { hasText: nom })).toHaveCount(2)
+  await page.goto(`/?mois=${mois}`)
+  await expect(page.locator('tr', { hasText: nom }).first()).toContainText('12,5 km')
 
   await page.goto('/historique')
   await page.selectOption('#h-employe', { label: `${nom} Test` })

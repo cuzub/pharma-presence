@@ -59,6 +59,7 @@ L'outil **enregistre les faits, le comptable interprète**. Aucun calcul de paie
   - Un jour couvert par une absence bloquante refuse les heures non nulles et la création ou la modification de déplacement, quel que soit le rôle. L'effacement et la suppression restent permis.
   - Créer ou étendre une absence bloquante qui touche des saisies existantes renvoie la liste des conflits ; la suppression de ces saisies exige une confirmation explicite, et chaque suppression est journalisée.
   - Une absence en cours couvre tous les jours à partir de son début.
+- **Navigation admin simplifiée :** le *Tableau du mois* est l'unique vue de saisie. Il couvre heures, absences (création, modification, suppression) et déplacements (création, modification, suppression, km du jour et total). Les pages *Calendrier*, *Absences* et *Déplacements* sont retirées du menu. La barre de navigation reste visible au défilement.
 - **Hors périmètre :** saisie des heures par les employés, calcul de paie.
 
 ## Export mensuel (CSV + Excel)

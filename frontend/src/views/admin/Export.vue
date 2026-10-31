@@ -18,7 +18,7 @@
             </div>
             <div v-for="b in controles.bloquants" :key="b" class="alert alert-danger py-2 mb-2">
               <i class="bi bi-x-octagon"></i> {{ b }}
-              <RouterLink to="/deplacements" class="alert-link ms-1">Valider</RouterLink>
+              <RouterLink to="/" class="alert-link ms-1">Corriger au tableau</RouterLink>
             </div>
             <div v-for="a in controles.avertissements" :key="a" class="alert alert-warning py-2 mb-2">
               <i class="bi bi-exclamation-triangle"></i> {{ a }}
