@@ -33,7 +33,10 @@ const placer = (el) => {
   bulle.style.width = `${taille.width}px`
   let haut = cible.top - taille.height - 8
   if (haut < 4) haut = cible.bottom + 8
-  const gauche = Math.min(Math.max(4, cible.left + cible.width / 2 - taille.width / 2), window.innerWidth - taille.width - 4)
+  let gauche = cible.left + cible.width / 2 - taille.width / 2
+  // Près du bord droit, la bulle s'ouvre vers la gauche en alignant son bord droit sur la cellule.
+  if (gauche + taille.width > window.innerWidth - 4) gauche = cible.right - taille.width
+  gauche = Math.max(4, gauche)
   bulle.style.top = `${haut}px`
   bulle.style.left = `${gauche}px`
 }
