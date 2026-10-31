@@ -21,7 +21,7 @@ L'outil **enregistre les faits, le comptable interprète**. Aucun calcul de paie
 - **Employé :** nom, prénom, contrat en heures par mois (par exemple 151,67 / 121,33 / 69,33).
 - **Présence :** implicite. Un employé est présent par défaut ; on ne saisit que les exceptions.
 - **Absence :** saisie par période (premier jour d'absence, jour de reprise) avec un motif (CP, maladie, récupération, congé maternité, ...). La date de fin peut rester ouverte, et une période peut couvrir plusieurs mois. L'outil remplit les jours du calendrier, mais **ne compte pas** les jours.
-- **Heures en plus / en moins :** un nombre de minutes signé par employé et par jour (par 5, ±12 h max ; ex. `15`, `-30`), saisi par la pharmacienne, sans classement compl/suppl. Affichage « +1h30 » / « -30min » ; export en minutes, total net.
+- **Heures en plus / en moins :** un nombre de minutes signé par employé et par jour (par 5, ±12 h max ; ex. `15`, `-30`), saisi par la pharmacienne ou par l'employé pour lui-même (fenêtre de saisie identique aux déplacements), sans classement compl/suppl. Affichage « +1h30 » / « -30min » ; export en minutes, total net.
 - **Déplacement :** date, motif, km. Purement déclaratif (pas de validation). Voir « Motifs de déplacement » et « Version 1.2.0 » ci-dessous.
 
 ## Motifs de déplacement (validé le 2026-10-31)
@@ -60,7 +60,9 @@ L'outil **enregistre les faits, le comptable interprète**. Aucun calcul de paie
   - Créer ou étendre une absence bloquante qui touche des saisies existantes renvoie la liste des conflits ; la suppression de ces saisies exige une confirmation explicite, et chaque suppression est journalisée.
   - Une absence en cours couvre tous les jours à partir de son début.
 - **Navigation admin simplifiée :** le *Tableau du mois* est l'unique vue de saisie. Il couvre heures, absences (création, modification, suppression) et déplacements (création, modification, suppression, km du jour et total). Les pages *Calendrier*, *Absences* et *Déplacements* sont retirées du menu. La barre de navigation reste visible au défilement.
-- **Hors périmètre :** saisie des heures par les employés, calcul de paie.
+- **Saisie des heures par l'employé :** dans *Mon mois*, un clic sur une date ouvre la même fenêtre que la pharmacienne (heures +/- et déplacements). Mêmes règles que pour les déplacements : mois en cours, et mois précédent jusqu'au 5 inclus ; une absence bloquante ce jour-là refuse la saisie. Les absences restent saisies par la pharmacienne.
+- **Renommage :** « Présences » devient « Suivi » dans l'interface et la documentation (le menu et les pages couvrent aussi les km, les heures +/- et les absences).
+- **Hors périmètre :** calcul de paie.
 
 ## Export mensuel (CSV + Excel)
 - **Onglet Récapitulatif :** une ligne par employé avec nom, prénom, contrat (h/mois), périodes d'absence (jour d'absence, jour de reprise, motif) et total des km.
@@ -72,6 +74,6 @@ L'outil **enregistre les faits, le comptable interprète**. Aucun calcul de paie
 - Tout calcul de paie : classement des heures (complémentaires, supplémentaires 25 % / 50 %), nombre de jours de CP, montant des indemnités kilométriques.
 - Primes et acomptes (pour le moment).
 - Saisie des jours de présence.
-- Demandes de congés et saisie des heures par les employés.
+- Demandes de congés.
 - Version mobile.
 - Planning prévisionnel.

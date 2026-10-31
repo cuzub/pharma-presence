@@ -32,7 +32,7 @@ def test_employe_n_accede_pas_aux_routes_admin(deux_employes, motifs):
     alice, session_alice, bruno, _ = deux_employes
     assert session_alice.get('/api/employes').status_code == 403
     assert session_alice.get(f"/api/employes/{bruno['id']}").status_code == 403
-    assert session_alice.put('/api/heures', {'employe_id': alice['id'], 'jour': '2025-01-11', 'minutes': 60}).status_code == 403
+    assert session_alice.put('/api/heures', {'employe_id': bruno['id'], 'jour': '2025-01-11', 'minutes': 60}).status_code == 404
     assert session_alice.post('/api/absences', {
         'employe_id': alice['id'], 'motif_id': motifs['CP'], 'date_debut': '2025-02-01',
     }).status_code == 403

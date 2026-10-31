@@ -28,10 +28,10 @@ def app():
 @pytest.fixture(autouse=True)
 def aujourdhui(monkeypatch):
     """Date du jour figée (3 février 2025 : janvier et février sont modifiables par l'employé)."""
-    from app.routes import deplacements
+    from app.services import fenetre
 
     reference = {'date': date(2025, 2, 3)}
-    monkeypatch.setattr(deplacements, 'aujourdhui', lambda: reference['date'])
+    monkeypatch.setattr(fenetre, 'aujourdhui', lambda: reference['date'])
     return reference
 
 

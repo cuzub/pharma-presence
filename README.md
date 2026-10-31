@@ -32,9 +32,9 @@ indemnités kilométriques). Voir [docs/intent/suivi-presence-pharmacie.md](docs
   déplacement (destination + km), jours de fermeture.
 
 **Employé**
-- « Mon mois » : calendrier (absences et heures +/- en lecture seule) et résumé ; clic sur une
-  date pour déclarer un déplacement, crayon pour le modifier ou le supprimer (mois en cours, et
-  mois précédent jusqu'au 5 inclus).
+- « Mon mois » : calendrier (absences en lecture seule) et résumé ; clic sur une date pour saisir
+  ses heures +/- ou déclarer un déplacement, crayon pour le modifier ou le supprimer (mois en cours,
+  et mois précédent jusqu'au 5 inclus).
 
 ## Architecture
 

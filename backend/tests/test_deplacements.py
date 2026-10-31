@@ -4,7 +4,7 @@ from datetime import date
 
 import pytest
 
-from app.routes.deplacements import modifiable_par_employe
+from app.services.fenetre import modifiable_par_employe
 
 
 def _creer_motif(admin, libelle='Domitis', km=2, **extra):

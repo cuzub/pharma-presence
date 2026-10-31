@@ -71,8 +71,15 @@ test('arrivée d’un employé, heures +/-, déplacements déclaratifs, historiq
   await page.goto('/employes')
   await expect(page).toHaveURL(/\/mon-mois/)
 
+  // L'employé saisit ses heures +/- depuis le calendrier (clic sur la date).
+  await page.locator(`[data-jour="${mois}-04"]`).click()
+  await page.fill('#jour-minutes', '45')
+  await page.locator('.modal-body form button[type=submit]').click()
+  await expect(page.locator(`[data-jour="${mois}-04"] .badge`)).toHaveText('+45min')
+
   // Clic sur la date → choix du motif : les km sont remplis automatiquement.
   await page.locator(`[data-jour="${mois}-03"]`).click()
+  await page.getByRole('button', { name: 'Ajouter un déplacement' }).click()
   await page.selectOption('#dep-motif', { label: `${destination} — 7 km` })
   await expect(page.locator('#dep-km')).toHaveValue('7')
   await page.click('button[form=form-deplacement]')
@@ -80,6 +87,7 @@ test('arrivée d’un employé, heures +/-, déplacements déclaratifs, historiq
 
   // Motif « Autre » : distance et précision libres.
   await page.locator(`[data-jour="${mois}-02"]`).click()
+  await page.getByRole('button', { name: 'Ajouter un déplacement' }).click()
   await page.selectOption('#dep-motif', 'autre')
   await page.fill('#dep-precision', 'Test e2e')
   await page.fill('#dep-km', '12')
@@ -87,8 +95,9 @@ test('arrivée d’un employé, heures +/-, déplacements déclaratifs, historiq
   const autre = page.locator(`[data-jour="${mois}-02"] [data-deplacement]`)
   await expect(autre).toContainText('12 km')
 
-  // Correction avec le crayon.
-  await autre.getByRole('button', { name: /Modifier/ }).click()
+  // Correction avec le crayon, depuis le modal du jour.
+  await page.locator(`[data-jour="${mois}-02"]`).click()
+  await page.locator('.modal.d-block').getByRole('button', { name: /Modifier le déplacement/ }).click()
   await page.fill('#dep-km', '12.5')
   await page.click('button[form=form-deplacement]')
   await expect(autre).toContainText('12,5 km')
@@ -103,7 +112,7 @@ test('arrivée d’un employé, heures +/-, déplacements déclaratifs, historiq
   await page.selectOption('#h-employe', { label: `${nom} Test` })
   await page.selectOption('#h-auteur', 'employe')
   const journal = page.locator('tr[data-journal]')
-  await expect(journal).toHaveCount(3)
+  await expect(journal).toHaveCount(4)
   await expect(journal.first()).toContainText('Modification')
   await expect(journal.first()).toContainText('12,5 km')
   await page.selectOption('#h-auteur', 'admin')
@@ -111,10 +120,10 @@ test('arrivée d’un employé, heures +/-, déplacements déclaratifs, historiq
   await expect(journal).toHaveCount(2)
   await expect(journal.first()).toContainText('-30min')
 
-  // Statistiques : cumul mensuel net de l'employé (+90 et -30 ce mois-ci = +1h), puis année précédente.
+  // Statistiques : cumul mensuel net de l'employé (+90, -30 et +45 ce mois-ci = +1h45), puis année précédente.
   await page.goto('/statistiques')
   await expect(page.getByRole('heading', { name: 'Statistiques — heures en plus / en moins' })).toBeVisible()
-  await expect(page.locator('tr', { hasText: nom }).locator('td.col-total')).toHaveText('+1h')
+  await expect(page.locator('tr', { hasText: nom }).locator('td.col-total')).toHaveText('+1h45')
   await page.getByRole('button', { name: 'Année précédente' }).click()
   await expect(page).toHaveURL(new RegExp(`annee=${new Date().getFullYear() - 1}`))
 

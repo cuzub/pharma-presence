@@ -5,8 +5,9 @@ from flask_jwt_extended import current_user
 
 from app.extensions import db
 from app.models import Employe, HeuresEnPlus, JourFermeture, MotifAbsence
-from app.securite import admin_requis, connexion_requise
+from app.securite import admin_requis, connexion_requise, employe_courant_id
 from app.services.absences import verifier_jour_saisissable
+from app.services.fenetre import verifier_fenetre_employe
 from app.services.journal import instantane_heures, journaliser
 from app.utils import ApiError, donnees_json, parse_date, texte
 
@@ -18,15 +19,22 @@ _COULEUR_RE = re.compile(r'^#[0-9a-fA-F]{6}$')
 # --- Heures en plus -------------------------------------------------------
 
 @saisie_bp.route('/heures', methods=['PUT'])
-@admin_requis
+@connexion_requise()
 def enregistrer_heures():
-    """Minutes en plus (> 0) ou en moins (< 0) d'un employé pour un jour (0 ou vide = suppression)."""
+    """Minutes en plus (> 0) ou en moins (< 0) d'un employé pour un jour (0 ou vide = suppression).
+
+    L'employé ne saisit que ses propres heures, dans la même fenêtre que ses déplacements.
+    """
     data = donnees_json()
     employe_id = data.get('employe_id')
     employe = db.session.get(Employe, employe_id)
     if not isinstance(employe_id, int) or employe is None:
         raise ApiError('Employé introuvable')
+    if not current_user.est_admin and employe_id != employe_courant_id():
+        raise ApiError('Employé introuvable', 404)
     jour = parse_date(data.get('jour'), 'jour')
+    if not current_user.est_admin:
+        verifier_fenetre_employe(jour, 'Les heures +/- ne peuvent être saisies ou corrigées')
     existant = HeuresEnPlus.query.filter_by(employe_id=employe_id, jour=jour).first()
     avant = instantane_heures(existant) if existant else None
 

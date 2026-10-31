@@ -136,12 +136,12 @@ export const formatMinutes = (minutes) => {
   return reste ? `${signe}${heures}h${String(reste).padStart(2, '0')}` : `${signe}${heures}h`
 }
 
-// --- Déplacements ------------------------------------------------------------
+// --- Saisies de l'employé (heures +/- et déplacements) ----------------------
 
 // Même règle que le serveur : mois en cours, ou mois précédent jusqu'au 5 inclus.
 export const JOUR_LIMITE_MOIS_PRECEDENT = 5
 
-export const deplacementModifiableParEmploye = (jour, reference = aujourdhuiIso()) => {
+export const saisieModifiableParEmploye = (jour, reference = aujourdhuiIso()) => {
   const moisReference = reference.slice(0, 7)
   if (jour.slice(0, 7) === moisReference) return true
   return Number(reference.slice(8)) <= JOUR_LIMITE_MOIS_PRECEDENT && jour.slice(0, 7) === decalerMois(moisReference, -1)

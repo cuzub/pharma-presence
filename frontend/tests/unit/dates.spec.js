@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
-  absenceBloquanteDuJour, absenceCouvre, ajouterJours, decalerMois, deplacementModifiableParEmploye, estMoisValide, ferie, formatFr, formatMinutes, jourSemaine,
+  absenceBloquanteDuJour, absenceCouvre, ajouterJours, decalerMois, estMoisValide, ferie, formatFr, formatMinutes, jourSemaine, saisieModifiableParEmploye,
   joursDuMois, libelleMois, paques
 } from '../../src/utils/dates'
 
@@ -114,7 +114,7 @@ describe('formatMinutes', () => {
   })
 })
 
-describe('deplacementModifiableParEmploye', () => {
+describe('saisieModifiableParEmploye', () => {
   it.each([
     ['2025-03-05', '2025-02-28', true],
     ['2025-03-06', '2025-02-28', false],
@@ -123,6 +123,6 @@ describe('deplacementModifiableParEmploye', () => {
     ['2025-03-01', '2025-04-01', false],
     ['2025-01-03', '2024-12-15', true]
   ])('le %s, déplacement du %s → %s', (reference, jour, attendu) => {
-    expect(deplacementModifiableParEmploye(jour, reference)).toBe(attendu)
+    expect(saisieModifiableParEmploye(jour, reference)).toBe(attendu)
   })
 })

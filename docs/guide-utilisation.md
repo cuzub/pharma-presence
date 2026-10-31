@@ -94,9 +94,10 @@ reprend les mêmes colonnes. Les heures +/- et les entrées / sorties ne figuren
 
 ## Pour les employés
 
-- **Mon mois** : vos absences et heures en plus / en moins, saisies par la pharmacienne. Une
-  erreur ? Signalez-la-lui.
-- **Déplacements** : dans *Mon mois*, cliquez sur la date du déplacement → choisissez le motif
+- **Mon mois** : vos absences sont saisies par la pharmacienne ; une erreur ? Signalez-la-lui.
+- **Heures en plus / en moins** : dans *Mon mois*, cliquez sur la date → saisissez les minutes
+  (`15`, `-30`) → *Enregistrer*. Mêmes règles de date que pour les déplacements ci-dessous.
+- **Déplacements** : dans *Mon mois*, cliquez sur la date du déplacement → *Ajouter un déplacement* → choisissez le motif
   (les kilomètres se remplissent tout seuls) → *Enregistrer*. Si la destination n'est pas dans la
   liste, choisissez « Autre » et saisissez la précision et les kilomètres. Plusieurs déplacements
   par jour sont possibles.
