@@ -10,13 +10,14 @@
           <p class="form-text">Un motif désactivé n'est plus proposé, mais reste visible sur les absences déjà saisies.</p>
           <table class="table table-sm">
             <thead>
-              <tr><th>Code</th><th>Libellé</th><th>Couleur</th><th>Actif</th><th></th></tr>
+              <tr><th>Code</th><th>Libellé</th><th>Couleur</th><th>Bloque heures et déplacements</th><th>Actif</th><th></th></tr>
             </thead>
             <tbody>
               <tr v-for="m in motifs" :key="m.id">
                 <td><span class="pastille-motif" :style="{ background: m.couleur }">{{ m.code }}</span></td>
                 <td><input v-model.trim="m.libelle" class="form-control form-control-sm" aria-label="Libellé" /></td>
                 <td><input v-model="m.couleur" type="color" class="form-control form-control-sm form-control-color" aria-label="Couleur" /></td>
+                <td class="text-center"><input v-model="m.bloque_saisie" type="checkbox" class="form-check-input" aria-label="Bloque heures et déplacements" /></td>
                 <td><input v-model="m.actif" type="checkbox" class="form-check-input" aria-label="Actif" /></td>
                 <td class="text-end">
                   <button type="button" class="btn btn-sm btn-outline-primary" @click="enregistrerMotif(m)">Enregistrer</button>
@@ -25,17 +26,23 @@
             </tbody>
           </table>
           <form class="row g-2 align-items-end" @submit.prevent="ajouterMotif">
-            <div class="col-3">
+            <div class="col-2">
               <label for="m-code" class="form-label small mb-1">Code</label>
               <input id="m-code" v-model.trim="nouveauMotif.code" class="form-control form-control-sm" maxlength="20" required />
             </div>
-            <div class="col-5">
+            <div class="col-4">
               <label for="m-libelle" class="form-label small mb-1">Libellé</label>
               <input id="m-libelle" v-model.trim="nouveauMotif.libelle" class="form-control form-control-sm" maxlength="80" required />
             </div>
             <div class="col-2">
               <label for="m-couleur" class="form-label small mb-1">Couleur</label>
               <input id="m-couleur" v-model="nouveauMotif.couleur" type="color" class="form-control form-control-sm form-control-color" />
+            </div>
+            <div class="col-2 pb-1">
+              <div class="form-check">
+                <input id="m-bloque" v-model="nouveauMotif.bloque_saisie" type="checkbox" class="form-check-input" />
+                <label for="m-bloque" class="form-check-label small">Bloque heures et déplacements</label>
+              </div>
             </div>
             <div class="col-2">
               <button type="submit" class="btn btn-sm btn-primary w-100">Ajouter</button>
@@ -128,7 +135,7 @@ const motifs = ref([])
 const motifsDeplacement = ref([])
 const fermetures = ref([])
 const erreur = ref('')
-const nouveauMotif = reactive({ code: '', libelle: '', couleur: '#6c757d' })
+const nouveauMotif = reactive({ code: '', libelle: '', couleur: '#6c757d', bloque_saisie: true })
 const nouveauMotifDeplacement = reactive({ libelle: '', km: '' })
 const nouvelleFermeture = reactive({ date: '', libelle: '' })
 
@@ -162,7 +169,7 @@ const action = async (requete) => {
 const enregistrerMotif = (m) => action(() => api.put(`/motifs/${m.id}`, m))
 
 const ajouterMotif = async () => {
-  if (await action(() => api.post('/motifs', nouveauMotif))) Object.assign(nouveauMotif, { code: '', libelle: '', couleur: '#6c757d' })
+  if (await action(() => api.post('/motifs', nouveauMotif))) Object.assign(nouveauMotif, { code: '', libelle: '', couleur: '#6c757d', bloque_saisie: true })
 }
 
 const enregistrerMotifDeplacement = (m) => action(() => api.put(`/deplacements/motifs/${m.id}`, m))

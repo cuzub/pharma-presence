@@ -114,6 +114,10 @@ export const absenceCouvre = (absence, jour) =>
 
 export const absenceDuJour = (absences, jour) => absences.find((a) => absenceCouvre(a, jour)) || null
 
+// Une absence bloque la saisie d'heures et de déplacements si son motif le demande.
+export const absenceBloquanteDuJour = (absences, jour) =>
+  absences.find((a) => a.motif_bloque_saisie && absenceCouvre(a, jour)) || null
+
 export const formatNombre = (valeur) => {
   if (valeur === null || valeur === undefined || valeur === '') return ''
   return Number(valeur).toLocaleString('fr-FR', { maximumFractionDigits: 2 })

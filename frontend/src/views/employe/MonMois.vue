@@ -52,7 +52,7 @@ import MoisNavigateur from '../../components/MoisNavigateur.vue'
 import ResumeMois from '../../components/ResumeMois.vue'
 import { useMoisUrl } from '../../composables/useMoisUrl'
 import api, { messageErreur } from '../../services/api'
-import { JOUR_LIMITE_MOIS_PRECEDENT, deplacementModifiableParEmploye } from '../../utils/dates'
+import { JOUR_LIMITE_MOIS_PRECEDENT, absenceBloquanteDuJour, deplacementModifiableParEmploye } from '../../utils/dates'
 
 const mois = useMoisUrl()
 const donnees = ref(null)
@@ -79,6 +79,10 @@ const nouveauDeplacement = (jour) => {
   info.value = ''
   if (!deplacementModifiableParEmploye(jour)) {
     info.value = `Ce mois est clôturé pour la saisie des déplacements. Pour un oubli, adressez-vous à la pharmacienne.`
+    return
+  }
+  if (absenceBloquanteDuJour(employe.value.absences, jour)) {
+    info.value = `Absent(e) ce jour-là : aucun déplacement ne peut être déclaré.`
     return
   }
   deplacementEdite.value = null

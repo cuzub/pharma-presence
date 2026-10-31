@@ -4,6 +4,9 @@
     <p v-if="ferieDuJour" class="alert alert-warning py-2 small mb-3"><i class="bi bi-flag"></i> Jour férié : {{ ferieDuJour }}</p>
 
     <h6>Heures en plus / en moins</h6>
+    <p v-if="absenceBloquante" class="alert alert-secondary py-2 small mb-2" data-jour-bloque>
+      Absent(e) ({{ absenceBloquante.motif_libelle }}) : saisie impossible ce jour-là.
+    </p>
     <form class="d-flex flex-wrap align-items-end gap-2 mb-1" @submit.prevent="enregistrerHeures">
       <div>
         <label for="jour-minutes" class="form-label small text-muted mb-1">Minutes (par 5 ; négatif = en moins)</label>
@@ -18,12 +21,13 @@
             step="5"
             class="form-control"
             placeholder="ex : 15 ou -30"
+            :disabled="bloque"
           />
           <span class="input-group-text">min</span>
         </div>
       </div>
-      <button type="submit" class="btn btn-primary" :disabled="enCours">Enregistrer</button>
-      <button v-if="minutesInitiales" type="button" class="btn btn-outline-danger" :disabled="enCours" title="Effacer" @click="effacerHeures">
+      <button type="submit" class="btn btn-primary" :disabled="enCours || bloque">Enregistrer</button>
+      <button v-if="minutesInitiales" type="button" class="btn btn-outline-danger" :disabled="enCours || bloque" title="Effacer" @click="effacerHeures">
         <i class="bi bi-eraser"></i>
       </button>
     </form>
@@ -61,7 +65,7 @@
       </li>
     </ul>
     <p v-else class="text-muted small mb-2">Aucun déplacement.</p>
-    <button type="button" class="btn btn-sm btn-outline-primary" @click="$emit('nouveau-deplacement', jour)">
+    <button type="button" class="btn btn-sm btn-outline-primary" :disabled="bloque" @click="$emit('nouveau-deplacement', jour)">
       <i class="bi bi-plus-lg"></i> Ajouter un déplacement
     </button>
   </Modal>
@@ -70,7 +74,7 @@
 <script setup>
 import { computed, nextTick, ref, watch } from 'vue'
 import api, { messageErreur } from '../services/api'
-import { absenceDuJour, ferie, formatFr, formatMinutes, formatNombre } from '../utils/dates'
+import { absenceBloquanteDuJour, absenceDuJour, ferie, formatFr, formatMinutes, formatNombre } from '../utils/dates'
 import Modal from './Modal.vue'
 
 const props = defineProps({
@@ -88,6 +92,8 @@ const champHeures = ref(null)
 const minutesInitiales = computed(() => props.employe?.heures?.[props.jour] || 0)
 const apercu = computed(() => (Number.isInteger(Number(minutes.value)) ? formatMinutes(Number(minutes.value)) : ''))
 const absence = computed(() => (props.employe ? absenceDuJour(props.employe.absences, props.jour) : null))
+const absenceBloquante = computed(() => (props.employe ? absenceBloquanteDuJour(props.employe.absences, props.jour) : null))
+const bloque = computed(() => !!absenceBloquante.value)
 const deplacements = computed(() => (props.employe?.deplacements || []).filter((d) => d.date === props.jour))
 const ferieDuJour = computed(() => (props.jour ? ferie(props.jour) : null))
 const titre = computed(() => props.employe ? `${props.employe.prenom} ${props.employe.nom} — ${formatFr(props.jour)}` : '')

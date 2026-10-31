@@ -140,3 +140,61 @@ test('arrivée d’un employé, heures +/-, déplacements déclaratifs, historiq
   await connecter(page, identifiant, 'mot-de-passe-e2e-solide', { attendreSucces: false })
   await expect(page.getByText('Identifiant ou mot de passe incorrect')).toBeVisible()
 })
+
+test('absence bloquante : conflit signalé, suppression confirmée, saisie refusée ensuite', async ({ page }) => {
+  const nom = `ABS${Date.now().toString(36)}`.toUpperCase()
+  const mois = new Date().toISOString().slice(0, 7)
+  const mm = mois.slice(5, 7)
+
+  await connecter(page, ADMIN, ADMIN_MDP)
+  await page.goto('/employes')
+  await page.getByRole('button', { name: 'Nouvel employé' }).click()
+  await page.fill('#c-nom', nom)
+  await page.fill('#c-prenom', 'Absent')
+  await page.fill('#c-entree', `${mois}-01`)
+  await page.fill('#c-heures', '151.67')
+  await page.click('button[form=form-creation]')
+  await expect(page.getByText('Compte créé')).toBeVisible()
+  await page.keyboard.press('Escape')
+
+  // Des heures sont saisies le 10 ; une absence de congés du 8 au 13 les rendrait incohérentes.
+  await page.goto(`/?mois=${mois}`)
+  const ligne = page.locator('tr', { hasText: nom })
+  await ligne.locator(`td[data-jour="${mois}-10"]`).click()
+  await page.fill('#jour-minutes', '30')
+  await page.locator('.modal-body form button[type=submit]').click()
+  await expect(ligne.locator(`td[data-jour="${mois}-10"]`)).toHaveText('+30min')
+
+  await ligne.locator(`td[data-jour="${mois}-08"]`).click()
+  await page.getByRole('button', { name: 'Déclarer une absence à partir de ce jour' }).click()
+  await page.selectOption('#absence-motif', { label: 'Congés payés' })
+  await page.fill('#absence-reprise', `${mois}-13`)
+  await page.click('button[form=form-absence]')
+
+  // Le serveur refuse tant que la suppression n'est pas confirmée, et liste les saisies concernées.
+  await expect(page.locator('.alert-danger').first()).toContainText(`10/${mm} : +30min`)
+  await page.getByRole('button', { name: "Supprimer ces saisies et enregistrer l'absence" }).click()
+  await expect(page.locator('#form-absence')).toHaveCount(0)
+
+  await expect(ligne.locator(`td[data-jour="${mois}-10"]`)).not.toHaveText('+30min')
+  await expect(ligne.locator(`td[data-jour="${mois}-09"] .code-absence`)).toHaveText('CP')
+
+  // Un jour d'absence bloquante ne peut plus recevoir d'heures ni de déplacement.
+  await ligne.locator(`td[data-jour="${mois}-09"]`).click()
+  await expect(page.locator('[data-jour-bloque]')).toContainText('saisie impossible')
+  await expect(page.locator('#jour-minutes')).toBeDisabled()
+  await expect(page.getByRole('button', { name: 'Ajouter un déplacement' })).toBeDisabled()
+  await page.keyboard.press('Escape')
+  await expect(page.locator('.modal.d-block')).toHaveCount(0)
+  await deconnecter(page)
+})
+
+test('statistiques : isolement d’un employé depuis le tableau', async ({ page }) => {
+  await connecter(page, ADMIN, ADMIN_MDP)
+  await page.goto('/statistiques')
+  await page.locator('tbody tr[role=button]').first().click()
+  await expect(page.locator('[data-vue-isolee]')).toContainText('Vue : ')
+  await expect(page.locator('tbody tr.table-active')).toHaveCount(1)
+  await page.locator('[data-vue-isolee] button').click()
+  await expect(page.locator('[data-vue-isolee]')).toHaveCount(0)
+})

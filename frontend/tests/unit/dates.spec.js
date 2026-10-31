@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
-  absenceCouvre, ajouterJours, decalerMois, deplacementModifiableParEmploye, estMoisValide, ferie, formatFr, formatMinutes, jourSemaine,
+  absenceBloquanteDuJour, absenceCouvre, ajouterJours, decalerMois, deplacementModifiableParEmploye, estMoisValide, ferie, formatFr, formatMinutes, jourSemaine,
   joursDuMois, libelleMois, paques
 } from '../../src/utils/dates'
 
@@ -79,6 +79,24 @@ describe('absenceCouvre', () => {
 
   it('gère les absences en cours', () => {
     expect(absenceCouvre({ date_debut: '2025-02-01', date_reprise: null }, '2030-01-01')).toBe(true)
+  })
+})
+
+describe('absenceBloquanteDuJour', () => {
+  const conge = { motif_libelle: 'Congé', motif_bloque_saisie: true, date_debut: '2025-01-28', date_reprise: '2025-02-03' }
+  const formation = { motif_libelle: 'Formation', motif_bloque_saisie: false, date_debut: '2025-02-10', date_reprise: null }
+
+  it('renvoie l’absence dont le motif bloque la saisie le jour concerné', () => {
+    expect(absenceBloquanteDuJour([conge], '2025-01-30')).toBe(conge)
+  })
+
+  it('ignore les absences dont le motif ne bloque pas la saisie', () => {
+    expect(absenceBloquanteDuJour([formation], '2025-02-11')).toBeNull()
+  })
+
+  it('renvoie null hors de l’absence', () => {
+    expect(absenceBloquanteDuJour([conge], '2025-02-03')).toBeNull()
+    expect(absenceBloquanteDuJour([], '2025-02-03')).toBeNull()
   })
 })
 

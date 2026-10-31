@@ -1,7 +1,15 @@
 <template>
   <Modal :ouvert="ouvert" :titre="absence?.id ? 'Modifier l’absence' : 'Nouvelle absence'" @fermer="$emit('fermer')">
     <form id="form-absence" @submit.prevent="enregistrer">
-      <div v-if="erreur" class="alert alert-danger py-2" role="alert">{{ erreur }}</div>
+      <div v-if="erreur" class="alert alert-danger py-2" role="alert">
+        {{ erreur }}
+        <ul v-if="conflits.length" class="small mb-2 mt-1">
+          <li v-for="c in conflits" :key="`${c.type}-${c.id}`">{{ jourCourt(c.jour) }} : {{ c.libelle }}</li>
+        </ul>
+        <button v-if="conflits.length" type="button" class="btn btn-sm btn-danger" :disabled="enCours" @click="confirmerEtEnregistrer">
+          Supprimer ces saisies et enregistrer l'absence
+        </button>
+      </div>
 
       <div class="mb-3">
         <label for="absence-employe" class="form-label">Employé</label>
@@ -64,7 +72,10 @@ const emit = defineEmits(['fermer', 'enregistre'])
 const referentiel = useReferentielStore()
 const form = reactive({ employe_id: null, motif_id: null, date_debut: '', date_reprise: '', commentaire: '' })
 const erreur = ref('')
+const conflits = ref([])
 const enCours = ref(false)
+
+const jourCourt = (iso) => `${iso.slice(8)}/${iso.slice(5, 7)}`
 
 const motifsProposes = computed(() =>
   referentiel.motifs.filter((m) => m.actif || m.id === props.absence?.motif_id))
@@ -72,6 +83,7 @@ const motifsProposes = computed(() =>
 watch(() => props.ouvert, async (ouvert) => {
   if (!ouvert) return
   erreur.value = ''
+  conflits.value = []
   Object.assign(form, {
     employe_id: props.absence?.employe_id ?? props.employeFixe,
     motif_id: props.absence?.motif_id ?? null,
@@ -82,10 +94,11 @@ watch(() => props.ouvert, async (ouvert) => {
   await Promise.all([referentiel.chargerMotifs(), referentiel.employes.length ? null : referentiel.chargerEmployes()])
 }, { immediate: true })
 
-const enregistrer = async () => {
+const envoyer = async (confirmerSuppression) => {
   erreur.value = ''
+  conflits.value = []
   enCours.value = true
-  const payload = { ...form, date_reprise: form.date_reprise || null }
+  const payload = { ...form, date_reprise: form.date_reprise || null, confirmer_suppression: confirmerSuppression }
   try {
     if (props.absence?.id) {
       await api.put(`/absences/${props.absence.id}`, payload)
@@ -94,11 +107,16 @@ const enregistrer = async () => {
     }
     emit('enregistre')
   } catch (error) {
+    const data = error?.response?.data
+    if (data?.code === 'saisies_en_conflit') conflits.value = data.conflits || []
     erreur.value = await messageErreur(error)
   } finally {
     enCours.value = false
   }
 }
+
+const enregistrer = () => envoyer(false)
+const confirmerEtEnregistrer = () => envoyer(true)
 
 const supprimer = async () => {
   if (!confirm('Supprimer cette absence ?')) return
