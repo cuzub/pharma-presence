@@ -23,7 +23,7 @@ html {
 }
 
 .app-shell.barre-reduite {
-  --largeur-barre: 4.5rem;
+  --largeur-barre: 4rem;
 }
 
 .app-shell.avec-barre > main {
@@ -179,7 +179,7 @@ html {
 /* Sur petit écran, la barre passe par-dessus le contenu au lieu de le pousser. */
 @media (max-width: 767.98px) {
   .app-shell.avec-barre > main {
-    margin-left: 4.5rem;
+    margin-left: 4rem;
   }
 }
 
