@@ -11,14 +11,16 @@
       Ce mois est clôturé pour la saisie. Pour un oubli, adressez-vous à la pharmacienne.
     </p>
     <form class="mb-4" data-saisie-jour @submit.prevent="enregistrer">
+      <h6 v-if="vueEmploye" class="small fw-semibold mb-2">Heures +/-</h6>
       <div class="d-flex flex-wrap align-items-end gap-2">
-        <div>
-          <label for="jour-minutes" class="form-label small text-muted mb-1">
-            {{ vueEmploye ? 'Heures +/-' : 'Minutes (par 5 ; négatif = en moins)' }}
+        <div :class="{ 'champ-heures': vueEmploye }">
+          <label v-if="!vueEmploye" for="jour-minutes" class="form-label small text-muted mb-1">
+            Minutes (par 5 ; négatif = en moins)
           </label>
           <div class="input-group">
             <input
               id="jour-minutes"
+              :aria-label="vueEmploye ? 'Heures +/-' : 'Minutes'"
               ref="champHeures"
               v-model="minutes"
               type="number"
@@ -43,8 +45,7 @@
       </p>
 
       <template v-if="vueEmploye">
-        <hr class="my-3" />
-        <h6 class="small fw-semibold mb-2"><i class="bi bi-car-front"></i> Déplacement professionnel</h6>
+        <h6 class="small fw-semibold mt-3 mb-2">Déplacement professionnel</h6>
         <div class="d-flex flex-wrap align-items-end gap-2">
           <div class="champ-motif">
             <label for="jour-motif" class="form-label small text-muted mb-1">Motif</label>
@@ -74,11 +75,13 @@
             />
             <input v-else id="jour-km" :value="kmAffiches" class="form-control form-control-sm" readonly tabindex="-1" />
           </div>
-          <button type="submit" class="btn btn-primary btn-sm" :disabled="enCours || bloque">Enregistrer</button>
         </div>
         <p v-if="!referentiel.motifsDeplacement.length" class="form-text mb-0">
           Aucun motif enregistré : la pharmacienne peut en créer dans <em>Paramètres</em>.
         </p>
+        <div class="d-flex justify-content-end mt-3">
+          <button type="submit" class="btn btn-primary" :disabled="enCours || bloque">Enregistrer</button>
+        </div>
       </template>
     </form>
 
@@ -258,6 +261,10 @@ const effacerHeures = () => executer(() => sauverHeures(0))
 <style scoped>
 .champ-motif {
   flex: 1 1 12rem;
+}
+
+.champ-heures {
+  width: 14rem;
 }
 
 .champ-km {
