@@ -7,10 +7,12 @@ import App from './App.vue'
 import router from './router'
 import { surErreurSession } from './services/api'
 import { useAuthStore } from './stores/auth'
+import { infobulle } from './directives/infobulle'
 
 const app = createApp(App)
 app.use(createPinia())
 app.use(router)
+app.directive('infobulle', infobulle)
 
 const auth = useAuthStore()
 surErreurSession({

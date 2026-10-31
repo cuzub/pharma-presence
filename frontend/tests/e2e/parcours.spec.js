@@ -64,7 +64,8 @@ test('arrivée d’un employé, heures +/-, déplacements déclaratifs, historiq
   await expect(page.locator('tr', { hasText: nom })).toContainText('-1h')
   await page.goto(`/?mois=${mois}`)
   await expect(ligne.locator(`td[data-jour="${mois}-06"] [data-regularisation]`)).toHaveText('-2h')
-  await expect(ligne.locator(`td[data-jour="${mois}-06"]`)).toHaveAttribute('title', /Heures payées e2e/)
+  await ligne.locator(`td[data-jour="${mois}-06"]`).hover()
+  await expect(page.locator('.infobulle')).toContainText('Heures payées e2e')
   await expect(ligne.locator('td[data-solde]')).toHaveText('-1h')
 
   // La pharmacienne crée un motif de déplacement avec sa distance.

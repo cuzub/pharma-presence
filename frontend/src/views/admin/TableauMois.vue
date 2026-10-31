@@ -17,13 +17,13 @@
                 v-for="jour in jours"
                 :key="jour.iso"
                 :class="['col-jour', jour.classes]"
-                :title="jour.titre"
+                v-infobulle="jour.lignes"
               >
                 <div class="small text-muted">{{ jour.initiale }}</div>
                 <div>{{ jour.numero }}</div>
               </th>
-              <th class="col-total col-hpm" title="Solde cumulé des heures en plus / en moins à la fin du mois (tout l'historique, régularisations comprises)">H +/-</th>
-              <th class="col-total col-km" title="Kilomètres de déplacements">Km</th>
+              <th class="col-total col-hpm" v-infobulle="['Solde H +/- cumulé à la fin du mois', 'Tout l\'historique, régularisations comprises']">H +/-</th>
+              <th class="col-total col-km" v-infobulle="['Kilomètres de déplacements']">Km</th>
             </tr>
           </thead>
           <tbody>
@@ -46,7 +46,7 @@
                 :key="jour.iso"
                 :class="['case', jour.classes, { 'hors-contrat': horsContrat(employe, jour.iso) }]"
                 :style="styleCase(employe, jour.iso)"
-                :title="titreCase(employe, jour)"
+                v-infobulle="titreCase(employe, jour)"
                 role="button"
                 tabindex="0"
                 :data-employe="employe.id"
@@ -65,7 +65,7 @@
               </td>
               <td
                 :class="['col-total', 'col-hpm', 'fw-semibold', employe.solde_minutes < 0 ? 'minutes-moins' : 'minutes-plus']"
-                :title="titreSolde(employe)"
+                v-infobulle="titreSolde(employe)"
                 data-solde
               >
                 {{ formatMinutes(employe.solde_minutes) || '0' }}
@@ -171,7 +171,7 @@ const jours = computed(() => {
       iso,
       numero: Number(iso.slice(8)),
       initiale: JOURS_COURTS[jourSemaine(iso)].slice(0, 2),
-      titre: [formatFr(iso), libelleFerie, fermeture].filter(Boolean).join(' — '),
+      lignes: [formatFr(iso), libelleFerie, fermeture].filter(Boolean),
       classes: {
         dimanche: jourSemaine(iso) === 6,
         ferie: !!libelleFerie,
@@ -193,9 +193,12 @@ const totalRegularisationsDuJour = (employe, iso) =>
 
 const titreSolde = (employe) => {
   const regularisations = (employe.regularisations || []).reduce((somme, r) => somme + r.minutes, 0)
-  const morceaux = [`Solde cumulé fin de mois : ${formatMinutes(employe.solde_minutes) || '0'}`, `Net du mois : ${formatMinutes(employe.total_minutes) || '0'}`]
-  if (regularisations) morceaux.push(`dont régularisations : ${formatMinutes(regularisations)}`)
-  return morceaux.join(' — ')
+  const lignes = [
+    `Solde cumulé fin de mois : ${formatMinutes(employe.solde_minutes) || '0'}`,
+    `Net du mois : ${formatMinutes(employe.total_minutes) || '0'}`
+  ]
+  if (regularisations) lignes.push(`dont régularisations : ${formatMinutes(regularisations)}`)
+  return lignes
 }
 
 const horsContrat = (employe, iso) =>
@@ -208,13 +211,15 @@ const styleCase = (employe, iso) => {
 
 const titreCase = (employe, jour) => {
   const a = absence(employe, jour.iso)
-  const morceaux = [`${employe.prenom} ${employe.nom}`, jour.titre]
-  if (a) morceaux.push(`${a.motif_libelle}${a.date_reprise ? ` (reprise le ${formatFr(a.date_reprise)})` : ' (en cours)'}`)
-  if (employe.heures[jour.iso]) morceaux.push(formatMinutes(employe.heures[jour.iso]))
+  const lignes = [`${employe.prenom} ${employe.nom}`, ...jour.lignes]
+  if (a) lignes.push(`${a.motif_libelle}${a.date_reprise ? ` (reprise le ${formatFr(a.date_reprise)})` : ' (en cours)'}`)
+  if (employe.heures[jour.iso]) lignes.push(`Heures : ${formatMinutes(employe.heures[jour.iso])}`)
   const deplacements = deplacementsDuJour(employe, jour.iso)
-  if (deplacements.length) morceaux.push(`Déplacements : ${deplacements.map((d) => `${d.motif} ${formatNombre(d.km)} km`).join(', ')}`)
-  morceaux.push(...regularisationsDuJour(employe, jour.iso).map(titreRegularisation))
-  return morceaux.join(' — ')
+  if (deplacements.length) {
+    lignes.push('Déplacements :', ...deplacements.map((d) => `• ${d.motif} — ${formatNombre(d.km)} km`))
+  }
+  lignes.push(...regularisationsDuJour(employe, jour.iso).map(titreRegularisation))
+  return lignes
 }
 
 const texteContrat = (employe) =>
