@@ -11,7 +11,7 @@
       Absent(e) ({{ absenceBloquante.motif_libelle }}) : saisie impossible ce jour-là.
     </p>
     <p v-else-if="verrouilleEmploye" class="alert alert-secondary py-2 small mb-2" data-jour-bloque>
-      Ce mois est clôturé pour la saisie. Pour un oubli, adressez-vous à la pharmacienne.
+      Ce mois est clôturé pour la saisie. Pour un oubli, adressez-vous à Elise.
     </p>
     <p v-else-if="blocageEmploye" class="alert alert-secondary py-2 small mb-2" data-jour-bloque>
       {{ MOTIFS_BLOCAGE[blocageEmploye] }}
@@ -81,7 +81,7 @@
         </div>
       </div>
       <p v-if="!referentiel.motifsDeplacement.length" class="form-text mb-0">
-        Aucun motif enregistré : la pharmacienne peut en créer dans <em>Paramètres</em>.
+        Aucun motif enregistré : Elise peut en créer dans <em>Paramètres</em>.
       </p>
       <div class="d-flex justify-content-end mt-3">
         <button type="submit" class="btn btn-primary" :disabled="enCours || bloque">Enregistrer</button>
@@ -97,7 +97,7 @@
         </li>
       </ul>
       <p class="form-text mb-0">
-        {{ vueEmploye ? 'Saisies par la pharmacienne.' : 'À modifier depuis Employés → Heures +/-.' }}
+        {{ vueEmploye ? 'Saisies par Elise.' : 'À modifier depuis Employés → Heures +/-.' }}
       </p>
     </div>
 

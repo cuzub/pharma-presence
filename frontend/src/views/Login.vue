@@ -22,7 +22,7 @@
         <span v-if="enCours" class="spinner-border spinner-border-sm me-1"></span>
         Se connecter
       </button>
-      <p class="text-muted small text-center mt-3 mb-0">Mot de passe oublié ? Demandez-en un nouveau à la pharmacienne.</p>
+      <p class="text-muted small text-center mt-3 mb-0">Mot de passe oublié ? Demandez-en un nouveau à Elise.</p>
     </form>
   </div>
 </template>

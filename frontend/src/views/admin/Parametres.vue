@@ -10,8 +10,8 @@
         <div class="carte h-100">
           <div class="d-flex justify-content-between align-items-center mb-2">
             <h2 class="h6 mb-0">Motifs d'absence</h2>
-            <button type="button" class="btn btn-sm btn-outline-primary" @click="ouvrir('absences')">
-              <i class="bi bi-pencil"></i> Modifier
+            <button type="button" class="btn btn-sm btn-outline-primary" aria-label="Modifier les motifs d'absence" v-infobulle="'Modifier les motifs d\'absence'" @click="ouvrir('absences')">
+              <i class="bi bi-pencil"></i>
             </button>
           </div>
           <ul class="list-unstyled small mb-0">
@@ -29,8 +29,8 @@
         <div class="carte h-100">
           <div class="d-flex justify-content-between align-items-center mb-2">
             <h2 class="h6 mb-0">Motifs de déplacement</h2>
-            <button type="button" class="btn btn-sm btn-outline-primary" @click="ouvrir('deplacements')">
-              <i class="bi bi-pencil"></i> Modifier
+            <button type="button" class="btn btn-sm btn-outline-primary" aria-label="Modifier les motifs de déplacement" v-infobulle="'Modifier les motifs de déplacement'" @click="ouvrir('deplacements')">
+              <i class="bi bi-pencil"></i>
             </button>
           </div>
           <ul class="list-unstyled small mb-0">
@@ -50,8 +50,8 @@
         <div class="carte h-100">
           <div class="d-flex justify-content-between align-items-center mb-2">
             <h2 class="h6 mb-0">Jours de fermeture de la pharmacie</h2>
-            <button type="button" class="btn btn-sm btn-outline-primary" @click="ouvrir('fermetures')">
-              <i class="bi bi-pencil"></i> Modifier
+            <button type="button" class="btn btn-sm btn-outline-primary" aria-label="Modifier les jours de fermeture" v-infobulle="'Modifier les jours de fermeture'" @click="ouvrir('fermetures')">
+              <i class="bi bi-pencil"></i>
             </button>
           </div>
           <ul class="list-unstyled small mb-0">
@@ -71,8 +71,8 @@
         <div class="carte h-100">
           <div class="d-flex justify-content-between align-items-center mb-2">
             <h2 class="h6 mb-0">Envoi de l'export par mail</h2>
-            <button type="button" class="btn btn-sm btn-outline-primary" @click="ouvrir('mail')">
-              <i class="bi bi-pencil"></i> Modifier
+            <button type="button" class="btn btn-sm btn-outline-primary" aria-label="Modifier l'envoi par mail" v-infobulle="'Modifier le destinataire et le texte du mail'" @click="ouvrir('mail')">
+              <i class="bi bi-pencil"></i>
             </button>
           </div>
           <dl class="small mb-0">

@@ -75,7 +75,7 @@ test('arrivée d’un employé, heures +/-, déplacements déclaratifs, historiq
   // La pharmacienne crée un motif de déplacement avec sa distance.
   const destination = `Dest${suffixe}`
   await page.goto('/parametres')
-  await page.locator('.carte', { hasText: 'Motifs de déplacement' }).getByRole('button', { name: 'Modifier' }).click()
+  await page.locator('.carte', { hasText: 'Motifs de déplacement' }).getByRole('button', { name: 'Modifier les motifs de déplacement' }).click()
   await page.fill('#md-libelle', destination)
   await page.fill('#md-km', '7')
   await page.locator('form', { has: page.locator('#md-libelle') }).getByRole('button', { name: 'Ajouter' }).click()
