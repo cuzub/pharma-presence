@@ -226,8 +226,8 @@ const titreKm = (employe) => {
   const deplacements = [...(employe.deplacements || [])].sort((a, b) => a.date.localeCompare(b.date))
   if (!deplacements.length) return ['Aucun déplacement ce mois-ci']
   return [
-    `Total du mois : ${formatNombre(employe.total_km)} km`,
-    ...deplacements.map((d) => `${formatFr(d.date)} — ${d.motif} — ${formatNombre(d.km)} km`)
+    `Total du mois : ${formatNombre(employe.total_km)}\u00a0km`,
+    ...deplacements.map((d) => `${formatFr(d.date)} — ${d.motif} — ${formatNombre(d.km)}\u00a0km`)
   ]
 }
 

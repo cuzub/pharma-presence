@@ -25,7 +25,12 @@ const remplir = (lignes) => {
 
 const placer = (el) => {
   const cible = el.getBoundingClientRect()
+  // Mesure à partir de l'origine, puis fige la largeur : sinon la bulle, proche du bord droit, est comprimée et les lignes se coupent.
+  bulle.style.width = ''
+  bulle.style.left = '0px'
+  bulle.style.top = '0px'
   const taille = bulle.getBoundingClientRect()
+  bulle.style.width = `${taille.width}px`
   let haut = cible.top - taille.height - 8
   if (haut < 4) haut = cible.bottom + 8
   const gauche = Math.min(Math.max(4, cible.left + cible.width / 2 - taille.width / 2), window.innerWidth - taille.width - 4)
