@@ -45,7 +45,7 @@
     <div v-if="erreur" class="alert alert-danger">{{ erreur }}</div>
 
     <div class="carte p-0">
-      <table class="table table-sm mb-0 align-middle">
+      <table class="table table-hover mb-0">
         <thead>
           <tr>
             <th>Date</th>

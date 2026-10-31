@@ -10,7 +10,7 @@
     <div class="carte p-0">
       <h2 class="h6 p-3 mb-0">Aperçu du récapitulatif</h2>
       <div class="table-responsive">
-        <table class="table table-sm mb-0 apercu">
+        <table class="table table-hover mb-0 apercu">
           <colgroup>
             <col style="width: 16%" />
             <col style="width: 14%" />
@@ -137,7 +137,6 @@ watch(mois, charger, { immediate: true })
 
 <style scoped>
 .apercu {
-  font-size: 0.85rem;
   table-layout: fixed;
   width: 100%;
 }

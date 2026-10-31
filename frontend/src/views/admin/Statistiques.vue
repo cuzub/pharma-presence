@@ -19,7 +19,7 @@
     </div>
 
     <div class="carte p-0 table-responsive">
-      <table class="table table-sm mb-0 align-middle">
+      <table class="table table-hover mb-0">
         <thead>
           <tr>
             <th>Employé</th>
