@@ -26,7 +26,7 @@
         <p class="text-muted small mt-2">
           <i class="bi bi-clock"></i> Pour saisir vos heures +/- ou un déplacement professionnel, cliquez sur la date.
           Possible pour le mois en cours, et pour le mois précédent jusqu'au {{ JOUR_LIMITE_MOIS_PRECEDENT }} inclus.
-          Les absences sont saisies par la pharmacienne : si quelque chose vous semble inexact, parlez-lui en.
+          Les absences sont saisies par Elise : si quelque chose vous semble inexact, parlez-lui en.
         </p>
       </div>
       <div class="col-xl-3 d-flex flex-column gap-3">
