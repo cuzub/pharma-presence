@@ -4,7 +4,7 @@ from tests.conftest import EMPLOYE_MDP, EMPLOYE_MDP_PROVISOIRE, Session
 def test_login_pose_un_cookie_httponly(admin):
     reponse = admin.login('pharmacienne', 'admin-mot-de-passe-test')
     cookies = reponse.headers.getlist('Set-Cookie')
-    session_cookie = next(c for c in cookies if c.startswith('access_token_cookie='))
+    session_cookie = next(c for c in cookies if c.startswith('pharma_access_token='))
     assert 'HttpOnly' in session_cookie
     assert 'SameSite=Strict' in session_cookie
     assert 'access_token' not in reponse.get_json()

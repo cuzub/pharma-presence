@@ -81,7 +81,7 @@ def create_app(config_name=None):
     @app.route('/api/health')
     @limiter.exempt
     def health():
-        return {'status': 'OK'}, 200
+        return {'status': 'OK', 'version': os.environ.get('APP_VERSION', 'dev')}, 200
 
     @app.after_request
     def _entetes_securite(response):

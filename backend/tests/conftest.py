@@ -46,7 +46,7 @@ class Session:
         return self.client.post('/api/auth/login', json={'identifiant': identifiant, 'mot_de_passe': mot_de_passe})
 
     def _csrf(self):
-        cookie = self.client.get_cookie('csrf_access_token')
+        cookie = self.client.get_cookie('pharma_csrf_access_token')
         return {'X-CSRF-TOKEN': cookie.value} if cookie else {}
 
     def get(self, url, **kwargs):

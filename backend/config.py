@@ -27,6 +27,7 @@ def _database_uri(default):
     return default
 
 
+PREFIXE_APPLICATION = os.environ.get('PREFIXE_APPLICATION', '').rstrip('/')
 INSECURE_SECRET = 'dev-secret-change-me'
 INSECURE_JWT_SECRET = 'dev-jwt-secret-change-me-in-production-please'
 
@@ -44,7 +45,12 @@ class Config:
     JWT_COOKIE_SECURE = _env_bool('JWT_COOKIE_SECURE', True)
     JWT_COOKIE_SAMESITE = 'Strict'
     JWT_COOKIE_CSRF_PROTECT = True
-    JWT_ACCESS_COOKIE_PATH = '/api/'
+    # Préfixe d'URL quand l'app est servie sous un sous-chemin (ex : /pharmacie). Vide en développement.
+    # Les noms de cookies sont propres à l'app : le CSRF par défaut (« / ») entrerait en collision avec Pedalog.
+    JWT_ACCESS_COOKIE_NAME = 'pharma_access_token'
+    JWT_ACCESS_COOKIE_PATH = f'{PREFIXE_APPLICATION}/api/'
+    JWT_ACCESS_CSRF_COOKIE_NAME = 'pharma_csrf_access_token'
+    JWT_ACCESS_CSRF_COOKIE_PATH = f'{PREFIXE_APPLICATION}/'
     JWT_SESSION_COOKIE = True
 
     MOT_DE_PASSE_LONGUEUR_MIN = 12

@@ -5,11 +5,14 @@ COPY requirements-prod.txt .
 RUN /opt/venv/bin/pip install --no-cache-dir -r requirements-prod.txt
 
 FROM python:3.13-slim
+ARG APP_VERSION=dev
 ENV PATH="/opt/venv/bin:$PATH" \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     FLASK_APP=run.py \
-    FLASK_ENV=production
+    FLASK_ENV=production \
+    APP_VERSION=${APP_VERSION}
+LABEL org.opencontainers.image.version=${APP_VERSION}
 WORKDIR /app
 COPY --from=builder /opt/venv /opt/venv
 COPY . .

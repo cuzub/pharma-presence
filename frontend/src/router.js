@@ -40,7 +40,7 @@ export const garde = async (to) => {
   return true
 }
 
-const router = createRouter({ history: createWebHistory(), routes })
+const router = createRouter({ history: createWebHistory(import.meta.env.BASE_URL), routes })
 router.beforeEach(garde)
 
 export default router

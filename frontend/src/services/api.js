@@ -6,7 +6,7 @@ const lireCookie = (nom) => {
 }
 
 const api = axios.create({
-  baseURL: '/api',
+  baseURL: `${import.meta.env.BASE_URL}api`,
   withCredentials: true,
   headers: { 'Content-Type': 'application/json' }
 })
@@ -15,7 +15,7 @@ const api = axios.create({
 api.interceptors.request.use((config) => {
   const methode = (config.method || 'get').toLowerCase()
   if (!['get', 'head', 'options'].includes(methode)) {
-    const csrf = lireCookie('csrf_access_token')
+    const csrf = lireCookie('pharma_csrf_access_token')
     if (csrf) config.headers['X-CSRF-TOKEN'] = csrf
   }
   return config

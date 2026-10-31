@@ -137,7 +137,7 @@ const erreurCreation = ref('')
 const identifiantModifie = ref(false)
 const identifiantsCrees = ref(null)
 const creation = reactive({})
-const adresseApplication = window.location.origin
+const adresseApplication = window.location.origin + import.meta.env.BASE_URL.replace(/\/$/, '')
 
 const charger = async () => {
   erreur.value = ''
