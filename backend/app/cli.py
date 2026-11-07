@@ -12,7 +12,7 @@ from app.models import (
 )
 
 _TABLES_DEMO = [
-    'journal_modifications', 'regularisations_heures', 'heures_en_plus', 'deplacements', 'motifs_deplacement',
+    'parametres_ik', 'journal_modifications', 'regularisations_heures', 'heures_en_plus', 'deplacements', 'motifs_deplacement',
     'absences', 'contrats', 'employes', 'jours_fermeture',
 ]
 
@@ -30,13 +30,15 @@ def _mot_de_passe_aleatoire():
 def enregistrer_commandes(app):
     @app.cli.command('creer-admin')
     @click.argument('identifiant')
-    def creer_admin(identifiant):
+    @click.option('--nom', default=None, help='Nom affiché (ex : Elise), utilisé dans le tableau et l\'export IK.')
+    def creer_admin(identifiant, nom):
         """Crée le compte de la pharmacienne avec un mot de passe provisoire."""
         identifiant = identifiant.strip().lower()
         if Utilisateur.query.filter_by(identifiant=identifiant).first():
             raise click.ClickException('Cet identifiant existe déjà.')
         mot_de_passe = _mot_de_passe_aleatoire()
         admin = Utilisateur(identifiant=identifiant, role=Utilisateur.ROLE_ADMIN, actif=True)
+        admin.nom_affiche = nom.strip() if nom and nom.strip() else None
         admin.definir_mot_de_passe(mot_de_passe, provisoire=True)
         db.session.add(admin)
         db.session.commit()
@@ -82,7 +84,7 @@ def _creer_demo():
     aujourdhui = date.today()
     debut_historique = date(aujourdhui.year - 1, 1, 1)
 
-    admin = Utilisateur(identifiant='admin', role=Utilisateur.ROLE_ADMIN)
+    admin = Utilisateur(identifiant='admin', role=Utilisateur.ROLE_ADMIN, nom_affiche='Elise')
     admin.definir_mot_de_passe('admin-demo-1234', provisoire=False)
     db.session.add(admin)
     motifs = {m.code: m for m in MotifAbsence.query.all()}
@@ -137,4 +139,15 @@ def _creer_demo():
         RegularisationHeures(employe_id=employes['Fanny'].id, jour=debut_historique, minutes=300, commentaire="Solde de départ (avant l'outil)"),
         RegularisationHeures(employe_id=employes['Emma'].id, jour=aujourdhui.replace(day=1) + timedelta(days=18), minutes=-420, commentaire='Récupération'),
     ])
+
+    # Trajets de l'admin (IK), une dizaine sur deux ans.
+    db.session.flush()
+    jour = debut_historique
+    while jour <= aujourdhui:
+        if jour.weekday() != 6 and hasard.random() < 0.015:
+            destination = hasard.choice(destinations)
+            db.session.add(Deplacement(
+                utilisateur_id=admin.id, date=jour, motif=destination.libelle, km=destination.km,
+            ))
+        jour += timedelta(days=1)
     db.session.commit()
