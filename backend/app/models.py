@@ -36,6 +36,8 @@ class Utilisateur(Horodatage, db.Model):
     # Incrémentée à chaque changement de mot de passe / désactivation : invalide les sessions ouvertes.
     version_session = db.Column(db.Integer, nullable=False, default=1)
     derniere_connexion = db.Column(db.DateTime(timezone=True), nullable=True)
+    # Nom affiché sur la ligne IK de l'admin (à défaut : l'identifiant).
+    nom_affiche = db.Column(db.String(100), nullable=True)
 
     employe = db.relationship(
         'Employe', back_populates='utilisateur', uselist=False, foreign_keys='Employe.utilisateur_id'
@@ -48,6 +50,11 @@ class Utilisateur(Horodatage, db.Model):
     @property
     def est_admin(self):
         return self.role == self.ROLE_ADMIN
+
+    @property
+    def libelle(self):
+        """Nom affiché sur la ligne IK de l'admin (à défaut : l'identifiant)."""
+        return self.nom_affiche or self.identifiant
 
     def definir_mot_de_passe(self, mot_de_passe, provisoire):
         self.password_hash = generate_password_hash(mot_de_passe)
@@ -67,8 +74,8 @@ class Utilisateur(Horodatage, db.Model):
             'employe_id': self.employe.id if self.employe else None,
             'nom': self.employe.nom if self.employe else None,
             'prenom': self.employe.prenom if self.employe else None,
+            'nom_affiche': self.nom_affiche,
         }
-
 
 class Employe(Horodatage, db.Model):
     __tablename__ = 'employes'
@@ -301,7 +308,9 @@ class Deplacement(Horodatage, db.Model):
     __tablename__ = 'deplacements'
 
     id = db.Column(db.Integer, primary_key=True)
-    employe_id = db.Column(db.Integer, db.ForeignKey('employes.id', ondelete='CASCADE'), nullable=False, index=True)
+    # Exactement un des deux titulaires : un employé, ou un admin (IK, sans fiche Employe).
+    employe_id = db.Column(db.Integer, db.ForeignKey('employes.id', ondelete='CASCADE'), nullable=True, index=True)
+    utilisateur_id = db.Column(db.Integer, db.ForeignKey('utilisateurs.id', ondelete='CASCADE'), nullable=True, index=True)
     date = db.Column(db.Date, nullable=False)
     # Vide pour « Autre ». Le libellé et les km sont recopiés à la saisie : modifier le motif ne change pas l'historique.
     motif_deplacement_id = db.Column(db.Integer, db.ForeignKey('motifs_deplacement.id'), nullable=True)
@@ -309,16 +318,19 @@ class Deplacement(Horodatage, db.Model):
     km = db.Column(db.Numeric(7, 1), nullable=False)
 
     employe = db.relationship('Employe')
+    utilisateur = db.relationship('Utilisateur', foreign_keys=[utilisateur_id])
     motif_deplacement = db.relationship('MotifDeplacement')
 
     __table_args__ = (
         db.CheckConstraint('km > 0', name='ck_deplacements_km'),
+        db.CheckConstraint('(employe_id IS NULL) <> (utilisateur_id IS NULL)', name='ck_deplacements_titulaire'),
     )
 
     def to_dict(self):
         return {
             'id': self.id,
             'employe_id': self.employe_id,
+            'utilisateur_id': self.utilisateur_id,
             'employe_nom': self.employe.nom if self.employe else None,
             'employe_prenom': self.employe.prenom if self.employe else None,
             'date': _iso(self.date),
@@ -355,6 +367,7 @@ class JournalModification(db.Model):
     auteur_identifiant = db.Column(db.String(80), nullable=False)
     auteur_role = db.Column(db.String(10), nullable=False)
     employe_id = db.Column(db.Integer, db.ForeignKey('employes.id', ondelete='SET NULL'), nullable=True, index=True)
+    admin_concerne_id = db.Column(db.Integer, db.ForeignKey('utilisateurs.id', ondelete='SET NULL'), nullable=True)
     type = db.Column(db.String(20), nullable=False)
     action = db.Column(db.String(12), nullable=False)
     objet_id = db.Column(db.Integer, nullable=True)
@@ -362,6 +375,7 @@ class JournalModification(db.Model):
     apres = db.Column(db.JSON, nullable=True)
 
     employe = db.relationship('Employe')
+    admin_concerne = db.relationship('Utilisateur', foreign_keys=[admin_concerne_id])
 
     __table_args__ = (
         db.CheckConstraint("type IN ('deplacement', 'heures', 'absence', 'regularisation')", name='ck_journal_type'),
@@ -378,6 +392,7 @@ class JournalModification(db.Model):
             'employe_id': self.employe_id,
             'employe_nom': self.employe.nom if self.employe else None,
             'employe_prenom': self.employe.prenom if self.employe else None,
+            'admin_concerne_nom': self.admin_concerne.libelle if self.admin_concerne else None,
             'type': self.type,
             'action': self.action,
             'objet_id': self.objet_id,
@@ -400,3 +415,17 @@ class ParametresMail(Horodatage, db.Model):
 
     def to_dict(self):
         return {'destinataire': self.destinataire, 'titre': self.titre, 'texte': self.texte}
+
+
+class ParametresIK(Horodatage, db.Model):
+    """Coefficient des indemnités kilométriques (€/km). Table à une seule ligne (id = 1)."""
+
+    __tablename__ = 'parametres_ik'
+
+    id = db.Column(db.Integer, primary_key=True)
+    coefficient = db.Column(db.Numeric(6, 3), nullable=True)
+
+    __table_args__ = (db.CheckConstraint('id = 1', name='ck_parametres_ik_singleton'),)
+
+    def to_dict(self):
+        return {'coefficient': float(self.coefficient) if self.coefficient is not None else None}
