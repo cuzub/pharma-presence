@@ -68,7 +68,7 @@
             <td class="text-nowrap">
               {{ l.auteur_identifiant }}
             </td>
-            <td class="text-nowrap">{{ l.employe_nom ? `${l.employe_nom} ${l.employe_prenom}` : '—' }}</td>
+            <td class="text-nowrap">{{ l.employe_nom ? `${l.employe_nom} ${l.employe_prenom}` : l.admin_concerne_nom ? `${l.admin_concerne_nom} (IK)` : '—' }}</td>
             <td class="text-nowrap"><i :class="['bi', TYPES[l.type].icone]"></i> {{ TYPES[l.type].libelle }}</td>
             <td><span :class="['badge', ACTIONS[l.action].classe]">{{ ACTIONS[l.action].libelle }}</span></td>
             <td class="small">

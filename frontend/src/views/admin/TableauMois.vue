@@ -74,6 +74,34 @@
                 {{ employe.total_km ? formatNombre(employe.total_km) : '' }}
               </td>
             </tr>
+            <tr v-if="donnees.admins?.length" class="separateur-ik">
+              <th class="col-employe" scope="row">Déplacements des admins (IK)</th>
+              <td :colspan="jours.length + 2"></td>
+            </tr>
+            <tr v-for="admin in donnees.admins" :key="'admin-' + admin.id">
+              <th class="col-employe" scope="row">
+                <div class="fw-semibold text-nowrap">{{ admin.nom }}</div>
+                <div class="small text-muted text-nowrap">{{ admin.est_moi ? 'Mes déplacements (IK)' : 'Lecture seule' }}</div>
+              </th>
+              <td
+                v-for="jour in jours"
+                :key="jour.iso"
+                :class="['case', jour.classes, { 'lecture-seule': !admin.est_moi }]"
+                v-infobulle="titreCaseAdmin(admin, jour)"
+                :role="admin.est_moi ? 'button' : null"
+                :tabindex="admin.est_moi ? 0 : null"
+                :data-admin="admin.id"
+                :data-jour="jour.iso"
+                @click="admin.est_moi && ouvrirAdmin(admin, jour.iso)"
+                @keydown.enter="admin.est_moi && ouvrirAdmin(admin, jour.iso)"
+              >
+                <div v-if="kmDuJour(admin, jour.iso)" class="km-jour">{{ formatNombre(kmDuJour(admin, jour.iso)) }} km</div>
+              </td>
+              <td class="col-total col-hpm"></td>
+              <td class="col-total col-km" v-infobulle="titreKm(admin)">
+                {{ admin.total_km ? formatNombre(admin.total_km) : '' }}
+              </td>
+            </tr>
           </tbody>
         </table>
       </div>
@@ -90,6 +118,7 @@
       <span><span class="legende hors-contrat"></span> Hors contrat</span>
       <span><span class="badge regularisation">±h</span> Régularisation (Employés → Heures +/-)</span>
       <span class="text-muted">H +/- : solde cumulé à la fin du mois.</span>
+      <span class="text-muted">Dernières lignes : déplacements des admins (IK), hors État préparatoire.</span>
       <span class="text-muted">Cliquez sur une case pour saisir des heures en plus / en moins ou un déplacement.</span>
     </div>
 
@@ -100,11 +129,19 @@
       @fermer="saisie.etat.jourOuvert = false"
       @modifie="saisie.apresModification"
     />
+    <JourModal
+      ligne-admin
+      :ouvert="saisieAdmin.ouvert"
+      :employe="ligneAdminModal"
+      :jour="saisieAdmin.jour"
+      @fermer="saisieAdmin.ouvert = false"
+      @modifie="apresSaisieAdmin"
+    />
   </div>
 </template>
 
 <script setup>
-import { computed, nextTick, ref, watch } from 'vue'
+import { computed, nextTick, reactive, ref, watch } from 'vue'
 import JourModal from '../../components/JourModal.vue'
 import MoisNavigateur from '../../components/MoisNavigateur.vue'
 import { useMoisUrl } from '../../composables/useMoisUrl'
@@ -115,7 +152,7 @@ import { JOURS_COURTS, absenceDuJour, aujourdhuiIso, ferie, formatFr, formatMinu
 
 const referentiel = useReferentielStore()
 const mois = useMoisUrl()
-const donnees = ref({ employes: [], jours_fermeture: [] })
+const donnees = ref({ employes: [], admins: [], jours_fermeture: [] })
 const chargement = ref(true)
 const erreur = ref('')
 
@@ -232,6 +269,22 @@ const titreCase = (employe, jour) => {
 
 const texteContrat = (employe) =>
   employe.contrats.map((c) => `${formatNombre(c.heures_mensuelles)} h/mois`).join(' → ') || 'Sans contrat ce mois-ci'
+
+// État de saisie séparé : les ids admin sont des ids d'utilisateur, qui peuvent coïncider avec ceux des employés.
+const saisieAdmin = reactive({ ouvert: false, adminId: null, jour: '' })
+const ouvrirAdmin = (admin, jour) => Object.assign(saisieAdmin, { ouvert: true, adminId: admin.id, jour })
+const ligneAdminModal = computed(() => {
+  const admin = donnees.value.admins?.find((a) => a.id === saisieAdmin.adminId)
+  return admin ? { ...admin, prenom: '', contrats: [], absences: [], heures: {}, regularisations: [] } : null
+})
+const apresSaisieAdmin = async () => {
+  saisieAdmin.ouvert = false
+  await charger()
+}
+const titreCaseAdmin = (admin, jour) => {
+  const deplacements = deplacementsDuJour(admin, jour.iso)
+  return [admin.nom, ...jour.lignes, ...deplacements.map((d) => `• ${d.motif} — ${formatNombre(d.km)} km`)]
+}
 </script>
 
 <style scoped>
@@ -373,6 +426,22 @@ thead .aujourdhui {
 thead .col-km,
 thead .col-hpm {
   z-index: 3;
+}
+
+.case.lecture-seule {
+  cursor: default;
+}
+
+.case.lecture-seule:hover {
+  outline: none;
+}
+
+.separateur-ik th,
+.separateur-ik td {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  color: #6c757d;
+  background: #f8f9fa;
 }
 
 .legende {

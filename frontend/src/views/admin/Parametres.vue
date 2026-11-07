@@ -85,6 +85,26 @@
           </dl>
         </div>
       </div>
+
+      <div>
+        <div class="carte h-100">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <h2 class="h6 mb-0">Indemnités kilométriques</h2>
+            <button type="button" class="btn btn-sm btn-outline-primary" aria-label="Modifier les indemnités kilométriques" v-infobulle="'Modifier le coefficient IK et le nom affiché'" @click="ouvrir('ik')">
+              <i class="bi bi-pencil"></i>
+            </button>
+          </div>
+          <dl class="small mb-0">
+            <dt>Coefficient</dt>
+            <dd class="mb-2">
+              <span v-if="ik.coefficient">{{ formatCoefficient(ik.coefficient) }}</span>
+              <span v-else class="text-danger">Non renseigné</span>
+            </dd>
+            <dt>Nom sur ma ligne</dt>
+            <dd class="mb-0">{{ ik.nom_affiche || 'Identifiant par défaut' }}</dd>
+          </dl>
+        </div>
+      </div>
     </div>
 
     <Modal :ouvert="ouvert === 'absences'" titre="Motifs d'absence" taille="lg" @fermer="fermer">
@@ -222,6 +242,26 @@
         <span v-if="mailEnregistre" class="small text-success ms-2">Enregistré</span>
       </form>
     </Modal>
+
+    <Modal :ouvert="ouvert === 'ik'" titre="Indemnités kilométriques" @fermer="fermer">
+      <p class="form-text">
+        Le coefficient (€/km) multiplie les kilomètres de chaque mois dans l'export <em>Télécharger mes IK</em> (menu Export).
+        Il s'applique à toute l'année exportée. Le nom s'affiche sur votre ligne du Tableau du mois.
+      </p>
+      <div v-if="erreur" class="alert alert-danger py-2 small">{{ erreur }}</div>
+      <form class="mb-0" @submit.prevent="enregistrerIk">
+        <div class="mb-2">
+          <label for="ik-coefficient" class="form-label small mb-1">Coefficient IK (€/km)</label>
+          <input id="ik-coefficient" v-model.trim="ik.coefficient" type="text" inputmode="decimal" class="form-control form-control-sm" placeholder="0,636" required />
+        </div>
+        <div class="mb-2">
+          <label for="ik-nom" class="form-label small mb-1">Nom sur ma ligne</label>
+          <input id="ik-nom" v-model.trim="ik.nom_affiche" class="form-control form-control-sm" maxlength="100" placeholder="ex : Elise" />
+        </div>
+        <button type="submit" class="btn btn-sm btn-primary">Enregistrer</button>
+        <span v-if="ikEnregistre" class="small text-success ms-2">Enregistré</span>
+      </form>
+    </Modal>
   </div>
 </template>
 
@@ -229,6 +269,7 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import Modal from '../../components/Modal.vue'
 import api, { messageErreur } from '../../services/api'
+import { useAuthStore } from '../../stores/auth'
 import { useReferentielStore } from '../../stores/referentiel'
 import { ajouterJours, aujourdhuiIso, formatFr } from '../../utils/dates'
 
@@ -245,6 +286,9 @@ const nouveauMotifDeplacement = reactive({ libelle: '', km: '' })
 const nouvelleFermeture = reactive({ date: '', libelle: '' })
 const mail = reactive({ destinataire: '', titre: '', texte: '' })
 const mailEnregistre = ref(false)
+const ik = reactive({ coefficient: '', nom_affiche: '' })
+const ikEnregistre = ref(false)
+const formatCoefficient = (c) => (c ? `${c} €/km` : '')
 
 const fermeturesAVenir = computed(() => {
   const limite = ajouterJours(aujourdhuiIso(), -31)
@@ -278,6 +322,7 @@ const action = async (requete) => {
 const ouvrir = (nom) => {
   erreur.value = ''
   mailEnregistre.value = false
+  ikEnregistre.value = false
   ouvert.value = nom
 }
 
@@ -325,9 +370,35 @@ const enregistrerMail = async () => {
   }
 }
 
+const appliquerIk = (data) => {
+  ik.coefficient = data.coefficient == null ? '' : String(data.coefficient).replace('.', ',')
+  ik.nom_affiche = data.nom_affiche
+}
+
+const chargerIk = async () => {
+  try {
+    appliquerIk((await api.get('/parametres/ik')).data)
+  } catch (error) {
+    erreur.value = await messageErreur(error)
+  }
+}
+
+const enregistrerIk = async () => {
+  erreur.value = ''
+  ikEnregistre.value = false
+  try {
+    appliquerIk((await api.put('/parametres/ik', { coefficient: ik.coefficient, nom_affiche: ik.nom_affiche })).data)
+    ikEnregistre.value = true
+    await useAuthStore().chargerSession()
+  } catch (error) {
+    erreur.value = await messageErreur(error)
+  }
+}
+
 onMounted(() => {
   charger()
   chargerMail()
+  chargerIk()
 })
 </script>
 

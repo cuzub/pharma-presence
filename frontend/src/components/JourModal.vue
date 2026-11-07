@@ -3,51 +3,53 @@
     <div v-if="erreur" class="alert alert-danger py-2" role="alert">{{ erreur }}</div>
     <p v-if="ferieDuJour" class="alert alert-warning py-2 small mb-3"><i class="bi bi-flag"></i> Jour férié : {{ ferieDuJour }}</p>
 
-    <h6 v-if="!vueEmploye">Heures en plus / en moins</h6>
-    <p v-if="horsContrat" class="alert alert-secondary py-2 small mb-2" data-jour-bloque>
+    <h6 v-if="!vueEmploye && !ligneAdmin">Heures en plus / en moins</h6>
+    <p v-if="!ligneAdmin && horsContrat" class="alert alert-secondary py-2 small mb-2" data-jour-bloque>
       Pas de contrat ce jour-là : saisie impossible.
     </p>
-    <p v-else-if="absenceBloquante" class="alert alert-secondary py-2 small mb-2" data-jour-bloque>
+    <p v-else-if="!ligneAdmin && absenceBloquante" class="alert alert-secondary py-2 small mb-2" data-jour-bloque>
       Absent(e) ({{ absenceBloquante.motif_libelle }}) : saisie impossible ce jour-là.
     </p>
-    <p v-else-if="verrouilleEmploye" class="alert alert-secondary py-2 small mb-2" data-jour-bloque>
+    <p v-else-if="!ligneAdmin && verrouilleEmploye" class="alert alert-secondary py-2 small mb-2" data-jour-bloque>
       Ce mois est clôturé pour la saisie. Pour un oubli, adressez-vous à Elise.
     </p>
-    <p v-else-if="blocageEmploye" class="alert alert-secondary py-2 small mb-2" data-jour-bloque>
+    <p v-else-if="!ligneAdmin && blocageEmploye" class="alert alert-secondary py-2 small mb-2" data-jour-bloque>
       {{ MOTIFS_BLOCAGE[blocageEmploye] }}
     </p>
     <form data-saisie-jour @submit.prevent="enregistrer">
-      <h6 v-if="vueEmploye" class="small fw-semibold mb-2">Heures +/-</h6>
-      <div class="d-flex flex-wrap align-items-end gap-2">
-        <div :class="{ 'champ-heures': vueEmploye }">
-          <label v-if="!vueEmploye" for="jour-minutes" class="form-label small text-muted mb-1">
-            Minutes (par 5 ; négatif = en moins)
-          </label>
-          <div class="input-group">
-            <input
-              id="jour-minutes"
-              :aria-label="vueEmploye ? 'Heures +/-' : 'Minutes'"
-              ref="champHeures"
-              v-model="minutes"
-              type="number"
-              min="-720"
-              max="720"
-              step="5"
-              class="form-control"
-              placeholder="ex : 15 ou -30"
-              :disabled="bloque"
-            />
-            <span class="input-group-text">min</span>
+      <template v-if="!ligneAdmin">
+        <h6 v-if="vueEmploye" class="small fw-semibold mb-2">Heures +/-</h6>
+        <div class="d-flex flex-wrap align-items-end gap-2">
+          <div :class="{ 'champ-heures': vueEmploye }">
+            <label v-if="!vueEmploye" for="jour-minutes" class="form-label small text-muted mb-1">
+              Minutes (par 5 ; négatif = en moins)
+            </label>
+            <div class="input-group">
+              <input
+                id="jour-minutes"
+                :aria-label="vueEmploye ? 'Heures +/-' : 'Minutes'"
+                ref="champHeures"
+                v-model="minutes"
+                type="number"
+                min="-720"
+                max="720"
+                step="5"
+                class="form-control"
+                placeholder="ex : 15 ou -30"
+                :disabled="bloque"
+              />
+              <span class="input-group-text">min</span>
+            </div>
           </div>
+          <button v-if="minutesInitiales && !vueEmploye" type="button" class="btn btn-outline-danger" :disabled="enCours || bloque" title="Effacer" @click="effacerHeures">
+            <i class="bi bi-eraser"></i>
+          </button>
         </div>
-        <button v-if="minutesInitiales && !vueEmploye" type="button" class="btn btn-outline-danger" :disabled="enCours || bloque" title="Effacer" @click="effacerHeures">
-          <i class="bi bi-eraser"></i>
-        </button>
-      </div>
-      <p class="form-text mb-0">
-        <span v-if="apercu" :class="Number(minutes) < 0 ? 'minutes-moins' : 'minutes-plus'">Soit {{ apercu }}. </span>
-        Ex. : 15 = 15 min en plus, -30 = 30 min en moins, 90 = 1h30 en plus.
-      </p>
+        <p class="form-text mb-0">
+          <span v-if="apercu" :class="Number(minutes) < 0 ? 'minutes-moins' : 'minutes-plus'">Soit {{ apercu }}. </span>
+          Ex. : 15 = 15 min en plus, -30 = 30 min en moins, 90 = 1h30 en plus.
+        </p>
+      </template>
 
       <h6 class="small fw-semibold mt-3 mb-2">Déplacement professionnel</h6>
       <div class="d-flex flex-wrap align-items-end gap-2">
@@ -88,7 +90,7 @@
       </div>
     </form>
 
-    <div v-if="regularisations.length" :class="{ 'mb-4': !vueEmploye }" data-regularisations-jour>
+    <div v-if="!ligneAdmin && regularisations.length" :class="{ 'mb-4': !vueEmploye }" data-regularisations-jour>
       <h6 class="regularisation"><i class="bi bi-arrow-left-right"></i> Régularisations du jour</h6>
       <ul class="list-group list-group-flush mb-1">
         <li v-for="r in regularisations" :key="r.id" class="list-group-item d-flex gap-2 px-0 py-1">
@@ -117,7 +119,9 @@ const props = defineProps({
   jour: { type: String, default: '' },
   // Vue de l'employé : saisie limitée à la fenêtre de clôture et aux jours ouverts.
   vueEmploye: { type: Boolean, default: false },
-  joursFermeture: { type: Array, default: () => [] }
+  joursFermeture: { type: Array, default: () => [] },
+  // Ligne IK d'un admin : déplacement seul, ni heures, ni contrat, ni absence.
+  ligneAdmin: { type: Boolean, default: false }
 })
 const emit = defineEmits(['fermer', 'modifie'])
 
@@ -142,13 +146,17 @@ const MOTIFS_BLOCAGE = {
   ferie: 'Jour férié : saisie impossible.',
   fermeture: 'Jour de fermeture de la pharmacie : saisie impossible.'
 }
-const horsContrat = computed(() => !!props.employe && !!props.jour
+const horsContrat = computed(() => !props.ligneAdmin && !!props.employe && !!props.jour
   && !(props.employe.contrats || []).some((c) => c.date_debut <= props.jour && (!c.date_fin || c.date_fin >= props.jour)))
 const bloque = computed(() => !!absenceBloquante.value || verrouilleEmploye.value || horsContrat.value || !!blocageEmploye.value)
 const deplacements = computed(() => (props.employe?.deplacements || []).filter((d) => d.date === props.jour))
 const regularisations = computed(() => (props.employe?.regularisations || []).filter((r) => r.jour === props.jour))
 const ferieDuJour = computed(() => (props.jour ? ferie(props.jour) : null))
-const titre = computed(() => props.employe ? `${props.employe.prenom} ${props.employe.nom} — ${formatFr(props.jour)}` : '')
+const titre = computed(() => {
+  if (!props.employe) return ''
+  if (props.ligneAdmin) return `${props.employe.nom} — Déplacement — ${formatFr(props.jour)}`
+  return `${props.employe.prenom} ${props.employe.nom} — ${formatFr(props.jour)}`
+})
 
 // Vue employé : un seul déplacement par jour, saisi dans le même formulaire que les heures.
 const deplacementJour = computed(() => deplacements.value[0] || null)
@@ -181,7 +189,7 @@ watch(() => props.ouvert, async (ouvert) => {
   minutes.value = minutesInitiales.value || ''
   initialiserDeplacement()
   await nextTick()
-  champHeures.value?.focus()
+  if (!props.ligneAdmin) champHeures.value?.focus()
 })
 
 const sauverHeures = (valeur) => api.put('/heures', { employe_id: props.employe.id, jour: props.jour, minutes: valeur })
@@ -203,7 +211,7 @@ const enregistrerDeplacement = () => {
     motif_deplacement_id: autre ? null : motifChoix.value,
     motif: autre ? motifPrecision.value : null,
     km: autre ? km.value : null,
-    ...(props.vueEmploye ? {} : { employe_id: props.employe.id })
+    ...(props.ligneAdmin ? { utilisateur_id: props.employe.id } : props.vueEmploye ? {} : { employe_id: props.employe.id })
   }
   return d ? api.put(`/deplacements/${d.id}`, corps) : api.post('/deplacements', corps)
 }
@@ -226,7 +234,7 @@ const enregistrer = () => {
     && !confirm(`Supprimer le déplacement du ${formatFr(props.jour)} (${deplacementJour.value.motif}) ?`)) return
   executer(async () => {
     const valeur = minutes.value === '' ? 0 : Number(minutes.value)
-    if (!props.vueEmploye || valeur !== minutesInitiales.value) await sauverHeures(valeur)
+    if (!props.ligneAdmin && (!props.vueEmploye || valeur !== minutesInitiales.value)) await sauverHeures(valeur)
     if (deplacementModifie()) await enregistrerDeplacement()
   })
 }

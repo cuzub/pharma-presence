@@ -12,7 +12,7 @@ export const useAuthStore = defineStore('auth', () => {
   const nomAffiche = computed(() => {
     const u = utilisateur.value
     if (!u) return ''
-    return u.prenom ? `${u.prenom} ${u.nom}` : u.identifiant
+    return u.prenom ? `${u.prenom} ${u.nom}` : (u.nom_affiche || u.identifiant)
   })
 
   const chargerSession = async () => {

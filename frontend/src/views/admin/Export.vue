@@ -61,6 +61,25 @@
         </button>
       </div>
     </div>
+
+    <div class="carte mt-4">
+      <h2 class="h6">Indemnités kilométriques (IK)</h2>
+      <p class="small text-muted mb-2">
+        Vos déplacements de l'année, mois par mois, avec le montant (km × coefficient IK).
+        À envoyer une fois par an au comptable. Ils ne figurent pas dans l'État préparatoire.
+      </p>
+      <div class="d-flex flex-wrap align-items-end gap-2">
+        <div>
+          <label for="ik-annee" class="form-label small mb-1">Année</label>
+          <select id="ik-annee" v-model.number="anneeIk" class="form-select form-select-sm">
+            <option v-for="a in anneesIk" :key="a" :value="a">{{ a }}</option>
+          </select>
+        </div>
+        <button type="button" class="btn btn-outline-primary" @click="exporterIk">
+          <i class="bi bi-file-earmark-excel"></i> Télécharger mes IK
+        </button>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -69,13 +88,24 @@ import { computed, ref, watch } from 'vue'
 import MoisNavigateur from '../../components/MoisNavigateur.vue'
 import { useMoisUrl } from '../../composables/useMoisUrl'
 import api, { messageErreur, telecharger } from '../../services/api'
-import { formatFr, formatNombre, libelleMois } from '../../utils/dates'
+import { anneeCourante, formatFr, formatNombre, libelleMois } from '../../utils/dates'
 
 const mois = useMoisUrl()
 const controles = ref(null)
 const donnees = ref({ employes: [] })
 const chargement = ref(true)
 const erreur = ref('')
+const anneeIk = ref(anneeCourante())
+const anneesIk = Array.from({ length: 6 }, (_, i) => anneeCourante() - i)
+
+const exporterIk = async () => {
+  erreur.value = ''
+  try {
+    await telecharger(`/exports/ik/${anneeIk.value}.xlsx`, `indemnites-km-${anneeIk.value}.xlsx`)
+  } catch (error) {
+    erreur.value = await messageErreur(error, 'Export IK impossible')
+  }
+}
 
 const exportPossible = computed(() => !chargement.value && controles.value && !controles.value.bloquants.length)
 
