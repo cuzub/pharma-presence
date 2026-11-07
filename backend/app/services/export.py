@@ -2,13 +2,15 @@
 
 import csv
 import io
-from datetime import datetime
+from datetime import date, datetime
+from decimal import ROUND_HALF_UP, Decimal
 
 from openpyxl import Workbook
 from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.utils import get_column_letter
 
-from app.services.mois import ENTETES_RECAP, format_nombre_fr, libelle_mois, lignes_recap
+from app.models import Deplacement
+from app.services.mois import ENTETES_RECAP, MOIS_FR, format_nombre_fr, libelle_mois, lignes_recap
 
 _ENTETE_FONT = Font(bold=True, color='FFFFFF')
 _ENTETE_FILL = PatternFill('solid', fgColor='2E7D32')
@@ -46,6 +48,48 @@ def _neutraliser_formules(wb):
 def _largeurs(ws, largeurs):
     for index, largeur in enumerate(largeurs, start=1):
         ws.column_dimensions[get_column_letter(index)].width = largeur
+
+
+_CENTIME = Decimal('0.01')
+
+
+def km_par_mois(utilisateur_id, annee):
+    """Somme des km de l'admin pour chaque mois de l'année (liste de 12 Decimal)."""
+    totaux = [Decimal('0')] * 12
+    deplacements = Deplacement.query.filter(
+        Deplacement.utilisateur_id == utilisateur_id,
+        Deplacement.date.between(date(annee, 1, 1), date(annee, 12, 31)),
+    ).all()
+    for d in deplacements:
+        totaux[d.date.month - 1] += d.km
+    return totaux
+
+
+def _format_coefficient(coefficient):
+    return f'{coefficient:.3f}'.rstrip('0').rstrip('.').replace('.', ',')
+
+
+def generer_excel_ik(utilisateur, annee, coefficient):
+    km = km_par_mois(utilisateur.id, annee)
+    montants = [(k * coefficient).quantize(_CENTIME, rounding=ROUND_HALF_UP) for k in km]
+    wb = Workbook()
+    ws = _feuille(wb, f'IK {annee}', f'Indemnités kilométriques — {utilisateur.libelle} — {annee}',
+                  ['Mois', 'Kilomètres', 'Montant (€)'], premiere=True)
+    ws['A3'] = f'Coefficient IK : {_format_coefficient(coefficient)} €/km'
+    ws.freeze_panes = 'A5'
+    for index in range(12):
+        ws.append([f'{MOIS_FR[index].capitalize()} {annee}', float(km[index]), float(montants[index])])
+    ws.append(['Total', float(sum(km)), float(sum(montants))])
+    for cellule in ws[ws.max_row]:
+        cellule.font = Font(bold=True)
+    for ligne in ws.iter_rows(min_row=5, max_row=ws.max_row):
+        ligne[1].number_format = '0.0'
+        ligne[2].number_format = '#,##0.00 €'
+    _largeurs(ws, [20, 14, 16])
+    _neutraliser_formules(wb)
+    flux = io.BytesIO()
+    wb.save(flux)
+    return flux.getvalue()
 
 
 def generer_excel(debut, fin, lignes):

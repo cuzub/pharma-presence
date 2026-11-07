@@ -21,6 +21,8 @@ def _get(deplacement_id):
     deplacement = db.session.get(Deplacement, deplacement_id)
     if deplacement is None or (not current_user.est_admin and deplacement.employe_id != employe_courant_id()):
         raise ApiError('Déplacement introuvable', 404)
+    if deplacement.utilisateur_id is not None and deplacement.utilisateur_id != current_user.id:
+        raise ApiError('Vous ne pouvez modifier que vos propres déplacements', 403, 'acces_refuse')
     return deplacement
 
 
@@ -36,7 +38,8 @@ def _remplir(deplacement, data):
     deplacement.date = parse_date(data.get('date'), 'date')
     if not current_user.est_admin:
         _verifier_fenetre(deplacement.date)
-    verifier_jour_saisissable(db.session.get(Employe, deplacement.employe_id), deplacement.date)
+    if deplacement.employe_id is not None:
+        verifier_jour_saisissable(db.session.get(Employe, deplacement.employe_id), deplacement.date)
     motif_id = data.get('motif_deplacement_id')
     if motif_id in (None, ''):
         deplacement.motif_deplacement_id = None
@@ -60,16 +63,22 @@ def _remplir(deplacement, data):
 
 
 def _verifier_unicite_du_jour(deplacement):
-    autres = Deplacement.query.filter(Deplacement.employe_id == deplacement.employe_id, Deplacement.date == deplacement.date)
+    if deplacement.utilisateur_id is not None:
+        autres = Deplacement.query.filter(Deplacement.utilisateur_id == deplacement.utilisateur_id, Deplacement.date == deplacement.date)
+        message = 'Un déplacement est déjà enregistré ce jour-là'
+    else:
+        autres = Deplacement.query.filter(Deplacement.employe_id == deplacement.employe_id, Deplacement.date == deplacement.date)
+        message = 'Un déplacement est déjà enregistré ce jour-là pour cet employé'
     if deplacement.id is not None:
         autres = autres.filter(Deplacement.id != deplacement.id)
     if autres.first() is not None:
-        raise ApiError('Un déplacement est déjà enregistré ce jour-là pour cet employé', 409)
+        raise ApiError(message, 409)
 
 
 @deplacements_bp.route('', methods=['GET'])
 @connexion_requise()
 def lister():
+    # Jointure interne : les déplacements des admins (IK) sont exclus.
     query = Deplacement.query.join(Employe)
     if current_user.est_admin:
         employe_id = request.args.get('employe_id', type=int)
@@ -90,16 +99,23 @@ def creer():
     data = donnees_json()
     deplacement = Deplacement()
     if current_user.est_admin:
-        employe_id = data.get('employe_id')
-        if not isinstance(employe_id, int) or db.session.get(Employe, employe_id) is None:
-            raise ApiError('Employé introuvable')
-        deplacement.employe_id = employe_id
+        utilisateur_id = data.get('utilisateur_id')
+        if utilisateur_id is not None:
+            if utilisateur_id != current_user.id:
+                raise ApiError('Vous ne pouvez saisir que vos propres déplacements', 403, 'acces_refuse')
+            deplacement.utilisateur_id = current_user.id
+        else:
+            employe_id = data.get('employe_id')
+            if not isinstance(employe_id, int) or db.session.get(Employe, employe_id) is None:
+                raise ApiError('Employé introuvable')
+            deplacement.employe_id = employe_id
     else:
         deplacement.employe_id = employe_courant_id()
     _remplir(deplacement, data)
     db.session.add(deplacement)
     db.session.flush()
-    journaliser('deplacement', 'creation', deplacement.employe_id, deplacement.id, apres=instantane_deplacement(deplacement))
+    journaliser('deplacement', 'creation', deplacement.employe_id, deplacement.id,
+                apres=instantane_deplacement(deplacement), admin_concerne_id=deplacement.utilisateur_id)
     db.session.commit()
     return jsonify(deplacement.to_dict()), 201
 
@@ -112,7 +128,8 @@ def modifier(deplacement_id):
         _verifier_fenetre(deplacement.date)
     avant = instantane_deplacement(deplacement)
     _remplir(deplacement, donnees_json())
-    journaliser('deplacement', 'modification', deplacement.employe_id, deplacement.id, avant, instantane_deplacement(deplacement))
+    journaliser('deplacement', 'modification', deplacement.employe_id, deplacement.id, avant, instantane_deplacement(deplacement),
+                admin_concerne_id=deplacement.utilisateur_id)
     db.session.commit()
     return jsonify(deplacement.to_dict()), 200
 
@@ -123,7 +140,8 @@ def supprimer(deplacement_id):
     deplacement = _get(deplacement_id)
     if not current_user.est_admin:
         _verifier_fenetre(deplacement.date)
-    journaliser('deplacement', 'suppression', deplacement.employe_id, deplacement.id, avant=instantane_deplacement(deplacement))
+    journaliser('deplacement', 'suppression', deplacement.employe_id, deplacement.id, avant=instantane_deplacement(deplacement),
+                admin_concerne_id=deplacement.utilisateur_id)
     db.session.delete(deplacement)
     db.session.commit()
     return '', 204

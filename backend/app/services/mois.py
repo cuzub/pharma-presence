@@ -5,7 +5,7 @@ from datetime import timedelta
 
 from sqlalchemy import or_
 
-from app.models import Absence, Deplacement, Employe, HeuresEnPlus, JourFermeture, RegularisationHeures
+from app.models import Absence, Deplacement, Employe, HeuresEnPlus, JourFermeture, RegularisationHeures, Utilisateur
 from app.services.solde import soldes_jusqua
 from app.utils import format_date_fr
 
@@ -78,7 +78,7 @@ def donnees_mois(debut, fin, employe_id=None, pour_export=False):
     )
     heures_q = HeuresEnPlus.query.filter(HeuresEnPlus.jour.between(debut, fin))
     regularisations_q = RegularisationHeures.query.filter(RegularisationHeures.jour.between(debut, fin))
-    deplacements_q = Deplacement.query.filter(Deplacement.date.between(debut, fin))
+    deplacements_q = Deplacement.query.filter(Deplacement.employe_id.isnot(None), Deplacement.date.between(debut, fin))
     employes_q = Employe.query
     if employe_id is not None:
         absences_q = absences_q.filter(Absence.employe_id == employe_id)
@@ -127,7 +127,25 @@ def donnees_mois(debut, fin, employe_id=None, pour_export=False):
     return resultat
 
 
-def serialiser_mois(debut, fin, lignes):
+def lignes_admins(debut, fin, utilisateur_courant):
+    """Lignes IK du tableau du mois : admins actifs, et admins désactivés ayant des déplacements ce mois-ci."""
+    deplacements = defaultdict(list)
+    requete = Deplacement.query.filter(Deplacement.utilisateur_id.isnot(None), Deplacement.date.between(debut, fin))
+    for deplacement in requete.order_by(Deplacement.date).all():
+        deplacements[deplacement.utilisateur_id].append(deplacement)
+    admins = Utilisateur.query.filter(Utilisateur.role == Utilisateur.ROLE_ADMIN).all()
+    admins = [a for a in admins if a.actif or a.id in deplacements]
+    admins.sort(key=lambda a: a.libelle.lower())
+    return [{
+        'id': a.id,
+        'nom': a.libelle,
+        'est_moi': a.id == utilisateur_courant.id,
+        'deplacements': [d.to_dict() for d in deplacements[a.id]],
+        'total_km': sum(float(d.km) for d in deplacements[a.id]),
+    } for a in admins]
+
+
+def serialiser_mois(debut, fin, lignes, admins=None):
     fermetures = JourFermeture.query.filter(JourFermeture.date.between(debut, fin)).order_by(JourFermeture.date).all()
     employes = []
     for ligne in lignes:
@@ -154,6 +172,7 @@ def serialiser_mois(debut, fin, lignes):
         'fin': fin.isoformat(),
         'jours_fermeture': [j.to_dict() for j in fermetures],
         'employes': employes,
+        'admins': admins or [],
     }
 
 

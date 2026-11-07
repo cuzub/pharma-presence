@@ -1,9 +1,11 @@
 from flask import Blueprint, Response, jsonify
 from flask_jwt_extended import current_user
 
+from app.extensions import db
 from app.securite import admin_requis, connexion_requise, employe_courant_id
-from app.services.export import generer_csv_recap, generer_excel
-from app.services.mois import controles, donnees_mois, serialiser_mois
+from app.models import ParametresIK
+from app.services.export import generer_csv_recap, generer_excel, generer_excel_ik
+from app.services.mois import controles, donnees_mois, lignes_admins, serialiser_mois
 from app.utils import ApiError, bornes_mois
 
 mois_bp = Blueprint('mois', __name__, url_prefix='/api')
@@ -18,7 +20,8 @@ def mois_detail(mois):
     debut, fin = bornes_mois(mois)
     employe_id = None if current_user.est_admin else employe_courant_id()
     lignes = donnees_mois(debut, fin, employe_id)
-    return jsonify(serialiser_mois(debut, fin, lignes)), 200
+    admins = lignes_admins(debut, fin, current_user) if current_user.est_admin else []
+    return jsonify(serialiser_mois(debut, fin, lignes, admins)), 200
 
 
 @mois_bp.route('/exports/<mois>/controles', methods=['GET'])
@@ -52,6 +55,22 @@ def _fichier(contenu, nom, mimetype):
 def export_excel(mois):
     debut, fin, lignes = _lignes_exportables(mois)
     return _fichier(generer_excel(debut, fin, lignes), f'etat-preparatoire-{mois}.xlsx', _XLSX)
+
+
+@mois_bp.route('/exports/ik/<int:annee>.xlsx', methods=['GET'])
+@admin_requis
+def export_ik(annee):
+    if not 2000 <= annee <= 2100:
+        raise ApiError('Année invalide')
+    parametres = db.session.get(ParametresIK, 1)
+    if parametres is None or parametres.coefficient is None:
+        raise ApiError(
+            "Renseignez le coefficient IK dans Paramètres avant d'exporter",
+            409,
+            'coefficient_ik_manquant',
+        )
+    contenu = generer_excel_ik(current_user, annee, parametres.coefficient)
+    return _fichier(contenu, f'indemnites-km-{annee}.xlsx', _XLSX)
 
 
 @mois_bp.route('/exports/<mois>/recap.csv', methods=['GET'])

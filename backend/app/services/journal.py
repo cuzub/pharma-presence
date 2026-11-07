@@ -31,7 +31,7 @@ def instantane_absence(absence):
     }
 
 
-def journaliser(type_, action, employe_id, objet_id, avant=None, apres=None):
+def journaliser(type_, action, employe_id, objet_id, avant=None, apres=None, admin_concerne_id=None):
     """Ajoute une ligne au journal dans la transaction en cours (validée avec la modification elle-même)."""
     if action == 'modification' and avant == apres:
         return
@@ -40,6 +40,7 @@ def journaliser(type_, action, employe_id, objet_id, avant=None, apres=None):
         auteur_identifiant=current_user.identifiant,
         auteur_role=current_user.role,
         employe_id=employe_id,
+        admin_concerne_id=admin_concerne_id,
         type=type_,
         action=action,
         objet_id=objet_id,
