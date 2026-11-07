@@ -105,6 +105,19 @@ Menu **Employés** :
 - *Gérer* → **Retour de l'employé** : pour un ancien employé qui revient (ex. étudiant l'été).
 - *Gérer* → **Mot de passe oublié** : génère un nouveau mot de passe provisoire.
 
+### Vos indemnités kilométriques (IK)
+
+Vos déplacements professionnels se saisissent sur **votre propre ligne**, en bas du *Tableau* du
+mois. Cette ligne ne sert qu'à vos IK : elle n'apparaît ni dans l'État préparatoire, ni dans les
+récapitulatifs des employés.
+
+- **Saisie** : cliquez sur une case de votre ligne, comme pour un employé, pour ajouter un
+  déplacement (motif, km). Les lignes des autres admins sont en lecture seule.
+- **Coefficient et nom** : réglez-les dans **Paramètres** → *Indemnités kilométriques*. Le nom
+  affiché est celui qui apparaît sur votre ligne et dans l'export.
+- **Export annuel** : menu **Export**, carte *Indemnités kilométriques* ; choisissez l'année et
+  téléchargez le fichier Excel (km et montant par mois, totaux).
+
 ### En fin de mois : l'export pour le comptable
 
 Menu **Export** :
@@ -119,7 +132,8 @@ l'export par mail*. `{mois}` y est remplacé par le mois exporté (ex : Octobre 
 
 Le fichier Excel contient 3 onglets : *Récapitulatif* (une ligne par employé : contrat, périodes
 d'absence, km), *Absences* et *Déplacements* (justificatif des kilomètres). Les heures +/- et les
-entrées / sorties ne figurent pas dans l'export (elles restent visibles dans le *Tableau* du mois).
+entrées / sorties ne figurent pas dans l'export (elles restent visibles dans le *Tableau* du mois). Les
+déplacements des admins (indemnités kilométriques) n'y figurent pas non plus : ils ont leur propre export annuel.
 
 ## Pour les employés
 

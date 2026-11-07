@@ -32,8 +32,11 @@ indemnités kilométriques). Voir [docs/intent/suivi-presence-pharmacie.md](docs
 - Statistiques : heures en plus / en moins par année, en net, avec un graphique (une barre par
   employé et par mois, côte à côte), un tableau du net mensuel, les totaux annuels et d'équipe ; employés partis inclus.
   Clic sur un employé (légende ou tableau) pour l'isoler.
+- Indemnités kilométriques : chaque admin a sa ligne (en dernier) dans le Tableau du mois pour ses
+  propres déplacements (hors État préparatoire) ; export Excel annuel « Télécharger mes IK » (km et
+  montant par mois, totaux) ; coefficient IK dans Paramètres.
 - Paramètres : motifs d'absence (avec l'option « Bloque heures et déplacements »), motifs de
-  déplacement (destination + km), jours de fermeture.
+  déplacement (destination + km), jours de fermeture, coefficient IK.
 
 **Employé**
 - « Mon mois » : calendrier (absences et régularisations en lecture seule) et résumé (net du mois,

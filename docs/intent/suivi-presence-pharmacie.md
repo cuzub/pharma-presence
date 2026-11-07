@@ -87,3 +87,5 @@ L'outil **enregistre les faits, le comptable interprète**. Aucun calcul de paie
 - Demandes de congés.
 - Version mobile.
 - Planning prévisionnel.
+
+IK des admins : voir [ik-admin.md](ik-admin.md).

@@ -21,7 +21,8 @@ $COMPOSE up -d --build            # nginx démarre en mode d'amorçage (HTTP, sa
 scripts/obtenir-certificat.sh     # obtient le certificat Let's Encrypt et passe nginx en HTTPS
 
 # Compte de la pharmacienne : un mot de passe provisoire est affiché, à changer à la 1re connexion
-$COMPOSE exec backend flask creer-admin pharmacienne
+# (--nom est facultatif : il définit le nom affiché sur la ligne IK, sinon l'identifiant est utilisé)
+$COMPOSE exec backend flask creer-admin pharmacienne --nom Elise
 ```
 
 > ⚠️ Conservez `BACKUP_ENCRYPTION_PASSPHRASE` en lieu sûr (gestionnaire de mots de passe,
