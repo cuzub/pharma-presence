@@ -44,7 +44,12 @@
       </div>
     </div>
 
-    <div class="mt-3">
+    <div class="carte mt-4">
+      <h2 class="h6">État préparatoire</h2>
+      <p class="small text-muted mb-2">
+        Le fichier Excel du mois à transmettre au comptable : une ligne par employé avec son contrat,
+        ses kilomètres et ses absences. Le mail pré-rempli se configure dans Paramètres.
+      </p>
       <p v-if="controles?.bloquants.length" class="small text-danger">Corrigez les points bloquants pour pouvoir exporter.</p>
       <div class="d-flex flex-wrap gap-2">
         <button type="button" class="btn btn-primary" :disabled="!exportPossible" @click="exporter('etat-preparatoire.xlsx', `etat-preparatoire-${mois}.xlsx`)">
