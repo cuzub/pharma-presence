@@ -19,7 +19,7 @@ _FORMAT_NOMBRE = '0.00'
 _DEBUTS_FORMULE = ('=', '+', '-', '@', '\t', '\r')
 
 
-def _feuille(wb, titre, sous_titre, entetes, premiere=False):
+def _feuille(wb, titre, sous_titre, entetes, premiere=False, gel='C5'):
     ws = wb.active if premiere else wb.create_sheet()
     ws.title = titre
     ws.append([sous_titre])
@@ -32,7 +32,7 @@ def _feuille(wb, titre, sous_titre, entetes, premiere=False):
         cellule.font = _ENTETE_FONT
         cellule.fill = _ENTETE_FILL
         cellule.alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
-    ws.freeze_panes = 'C5'
+    ws.freeze_panes = gel
     return ws
 
 
@@ -74,9 +74,8 @@ def generer_excel_ik(utilisateur, annee, coefficient):
     montants = [(k * coefficient).quantize(_CENTIME, rounding=ROUND_HALF_UP) for k in km]
     wb = Workbook()
     ws = _feuille(wb, f'IK {annee}', f'Indemnités kilométriques — {utilisateur.libelle} — {annee}',
-                  ['Mois', 'Kilomètres', 'Montant (€)'], premiere=True)
+                  ['Mois', 'Kilomètres', 'Montant (€)'], premiere=True, gel='A5')
     ws['A3'] = f'Coefficient IK : {_format_coefficient(coefficient)} €/km'
-    ws.freeze_panes = 'A5'
     for index in range(12):
         ws.append([f'{MOIS_FR[index].capitalize()} {annee}', float(km[index]), float(montants[index])])
     ws.append(['Total', float(sum(km)), float(sum(montants))])

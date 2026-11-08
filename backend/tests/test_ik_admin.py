@@ -1,6 +1,8 @@
 """Indemnités kilométriques de l'admin : saisie cloisonnée, journal, exclusions et export annuel."""
 
 import io
+import re
+import zipfile
 
 import pytest
 from openpyxl import load_workbook
@@ -190,6 +192,8 @@ def test_export_ik_calcule_les_montants_par_mois(admin, creer_employe, moi):
     assert lignes['Décembre 2025'][1] == pytest.approx(0.64)
     assert lignes['Total'][0] == pytest.approx(38.5)
     assert lignes['Total'][1] == pytest.approx(24.49)
+    vue = re.search(rb'<sheetViews>.*?</sheetViews>', zipfile.ZipFile(io.BytesIO(reponse.data)).read('xl/worksheets/sheet1.xml')).group(0)
+    assert vue.count(b'<selection') == 1, 'volets figés déclarés plusieurs fois : Excel répare le fichier'
 
 
 def test_export_ik_validation_et_droits(admin, creer_employe):
