@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="historique">
     <div class="page-titre">
       <h1 class="h4 mb-0">Historique des modifications</h1>
     </div>
@@ -44,45 +44,47 @@
 
     <div v-if="erreur" class="alert alert-danger">{{ erreur }}</div>
 
-    <div class="carte p-0">
-      <table class="table table-hover mb-0">
-        <thead>
-          <tr>
-            <th>Date</th>
-            <th>Auteur</th>
-            <th>Employé concerné</th>
-            <th>Type</th>
-            <th>Action</th>
-            <th>Détail</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-if="chargement">
-            <td colspan="6" class="text-center text-muted py-4">Chargement…</td>
-          </tr>
-          <tr v-else-if="!resultat.lignes.length">
-            <td colspan="6" class="text-center text-muted py-4">Aucune modification enregistrée.</td>
-          </tr>
-          <tr v-for="l in resultat.lignes" v-else :key="l.id" data-journal>
-            <td class="text-nowrap small">{{ formatHorodatage(l.cree_le) }}</td>
-            <td class="text-nowrap">
-              {{ l.auteur_identifiant }}
-            </td>
-            <td class="text-nowrap">{{ l.employe_nom ? `${l.employe_nom} ${l.employe_prenom}` : l.admin_concerne_nom ? `${l.admin_concerne_nom} (IK)` : '—' }}</td>
-            <td class="text-nowrap"><i :class="['bi', TYPES[l.type].icone]"></i> {{ TYPES[l.type].libelle }}</td>
-            <td><span :class="['badge', ACTIONS[l.action].classe]">{{ ACTIONS[l.action].libelle }}</span></td>
-            <td class="small">
-              <template v-if="l.action === 'modification'">
-                <span class="text-muted text-decoration-line-through">{{ resume(l.type, l.avant) }}</span>
-                <i class="bi bi-arrow-right mx-1"></i>
-                <span>{{ resume(l.type, l.apres) }}</span>
-              </template>
-              <span v-else-if="l.action === 'suppression'" class="text-muted text-decoration-line-through">{{ resume(l.type, l.avant) }}</span>
-              <span v-else>{{ resume(l.type, l.apres) }}</span>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+    <div class="carte journal-carte p-0">
+      <div class="table-responsive journal-defilement">
+        <table class="table table-hover mb-0">
+            <thead>
+            <tr>
+              <th>Date</th>
+              <th>Auteur</th>
+              <th>Employé concerné</th>
+              <th>Type</th>
+              <th>Action</th>
+              <th>Détail</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-if="chargement">
+              <td colspan="6" class="text-center text-muted py-4">Chargement…</td>
+            </tr>
+            <tr v-else-if="!resultat.lignes.length">
+              <td colspan="6" class="text-center text-muted py-4">Aucune modification enregistrée.</td>
+            </tr>
+            <tr v-for="l in resultat.lignes" v-else :key="l.id" data-journal>
+              <td class="text-nowrap small">{{ formatHorodatage(l.cree_le) }}</td>
+              <td class="text-nowrap">
+                {{ l.auteur_identifiant }}
+              </td>
+              <td class="text-nowrap">{{ l.employe_nom ? `${l.employe_nom} ${l.employe_prenom}` : l.admin_concerne_nom ? `${l.admin_concerne_nom} (IK)` : '—' }}</td>
+              <td class="text-nowrap"><i :class="['bi', TYPES[l.type].icone]"></i> {{ TYPES[l.type].libelle }}</td>
+              <td><span :class="['badge', ACTIONS[l.action].classe]">{{ ACTIONS[l.action].libelle }}</span></td>
+              <td class="small">
+                <template v-if="l.action === 'modification'">
+                  <span class="text-muted text-decoration-line-through">{{ resume(l.type, l.avant) }}</span>
+                  <i class="bi bi-arrow-right mx-1"></i>
+                  <span>{{ resume(l.type, l.apres) }}</span>
+                </template>
+                <span v-else-if="l.action === 'suppression'" class="text-muted text-decoration-line-through">{{ resume(l.type, l.avant) }}</span>
+                <span v-else>{{ resume(l.type, l.apres) }}</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
 
     <nav v-if="resultat.total > PAR_PAGE" class="d-flex justify-content-between align-items-center mt-2 small">
@@ -171,3 +173,39 @@ watch(page, charger, { immediate: true })
 
 referentiel.chargerEmployes().catch(() => {})
 </script>
+
+<style scoped>
+/* La vue remplit la hauteur de l'écran (moins le padding de <main>) : seul le tableau défile. */
+.historique {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 2rem);
+}
+
+.historique > * {
+  flex: 0 0 auto;
+}
+
+.journal-carte {
+  flex: 1 1 auto !important;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.journal-defilement {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+}
+
+/* En-tête figé pendant le défilement du tableau. */
+.journal-defilement thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background-color: #fff;
+  box-shadow: inset 0 -1px 0 #dee2e6;
+}
+</style>

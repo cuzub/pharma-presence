@@ -19,7 +19,7 @@ _TABLES_DEMO = [
 # Équipe fictive : nom, prénom, contrat (h/mois), tendance des heures +/- (minutes typiques par saisie).
 _EQUIPE_DEMO = [
     ('MARTIN', 'Alice', 151.67, 30), ('DURAND', 'Bruno', 151.67, 60), ('PETIT', 'Chloé', 121.33, -15),
-    ('LEROY', 'David', 69.33, 15), ('MOREAU', 'Emma', 151.67, 45), ('GARNIER', 'Fanny', 121.33, -30),
+    ('LEROY', 'David', 69.33, 15), ('MOREAU', 'Emma', 151.67, 45),
 ]
 
 
