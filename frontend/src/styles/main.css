@@ -131,6 +131,15 @@ html {
   background: var(--pharma-vert-fonce);
 }
 
+/* Un libellé trop long pour la barre (« Guide d'utilisation ») passe à la ligne au lieu d'être coupé. */
+.app-sidebar-liens .nav-link {
+  height: auto;
+  min-height: 2rem;
+  padding-block: 0.25rem;
+  line-height: 1.2;
+  white-space: normal;
+}
+
 .app-sidebar-liens .bi,
 .app-sidebar-pied .bi {
   flex: 0 0 auto;
