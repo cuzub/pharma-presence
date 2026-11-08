@@ -136,7 +136,7 @@ def _creer_demo():
     fin_mois_precedent = aujourdhui.replace(day=1) - timedelta(days=1)
     db.session.add_all([
         RegularisationHeures(employe_id=employes['Bruno'].id, jour=fin_mois_precedent, minutes=-600, commentaire='Heures payées sur la paie'),
-        RegularisationHeures(employe_id=employes['Fanny'].id, jour=debut_historique, minutes=300, commentaire="Solde de départ (avant l'outil)"),
+        RegularisationHeures(employe_id=employes['Chloé'].id, jour=debut_historique, minutes=300, commentaire="Solde de départ (avant l'outil)"),
         RegularisationHeures(employe_id=employes['Emma'].id, jour=aujourdhui.replace(day=1) + timedelta(days=18), minutes=-420, commentaire='Récupération'),
     ])
 
