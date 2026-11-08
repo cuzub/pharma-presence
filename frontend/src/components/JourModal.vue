@@ -41,7 +41,7 @@
               <span class="input-group-text">min</span>
             </div>
           </div>
-          <button v-if="minutesInitiales && !vueEmploye" type="button" class="btn btn-outline-danger" :disabled="enCours || bloque" title="Effacer" @click="effacerHeures">
+          <button v-if="minutes !== '' && !vueEmploye" type="button" class="btn btn-outline-danger" :disabled="bloque" title="Vider le champ (à enregistrer)" data-effacer-heures @click="viderHeures">
             <i class="bi bi-eraser"></i>
           </button>
         </div>
@@ -81,6 +81,9 @@
           />
           <input v-else id="jour-km" :value="kmAffiches" class="form-control form-control-sm" readonly tabindex="-1" />
         </div>
+        <button v-if="motifChoix !== ''" type="button" class="btn btn-outline-danger btn-sm" :disabled="bloque" title="Vider le déplacement (à enregistrer)" data-effacer-deplacement @click="viderDeplacement">
+          <i class="bi bi-eraser"></i>
+        </button>
       </div>
       <p v-if="!referentiel.motifsDeplacement.length" class="form-text mb-0">
         Aucun motif enregistré : Elise peut en créer dans <em>Paramètres</em>.
@@ -229,17 +232,21 @@ const executer = async (action) => {
   }
 }
 
-const enregistrer = () => {
-  if (motifChoix.value === '' && deplacementJour.value
-    && !confirm(`Supprimer le déplacement du ${formatFr(props.jour)} (${deplacementJour.value.motif}) ?`)) return
-  executer(async () => {
-    const valeur = minutes.value === '' ? 0 : Number(minutes.value)
-    if (!props.ligneAdmin && (!props.vueEmploye || valeur !== minutesInitiales.value)) await sauverHeures(valeur)
-    if (deplacementModifie()) await enregistrerDeplacement()
-  })
-}
+const enregistrer = () => executer(async () => {
+  const valeur = minutes.value === '' ? 0 : Number(minutes.value)
+  if (!props.ligneAdmin && (!props.vueEmploye || valeur !== minutesInitiales.value)) await sauverHeures(valeur)
+  if (deplacementModifie()) await enregistrerDeplacement()
+})
 
-const effacerHeures = () => executer(() => sauverHeures(0))
+// Remise à zéro du formulaire uniquement : la suppression se fait à l'enregistrement.
+const viderHeures = () => {
+  minutes.value = ''
+}
+const viderDeplacement = () => {
+  motifChoix.value = ''
+  motifPrecision.value = ''
+  km.value = ''
+}
 </script>
 
 <style scoped>

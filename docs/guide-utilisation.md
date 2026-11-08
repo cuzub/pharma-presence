@@ -8,7 +8,8 @@ Par défaut, chaque employé est **présent**. Vous ne saisissez que les excepti
 
 - **Heures en plus / en moins** : *Tableau* → clic sur la case de l'employé et du jour → saisissez
   des **minutes**, par tranche de 5 : `15` = 15 min en plus, `-30` = 30 min en moins, `90` = 1h30
-  en plus (12 h maximum par jour) → *Enregistrer*. Pour effacer, mettez `0` ou cliquez sur la gomme.
+  en plus (12 h maximum par jour) → *Enregistrer*. Pour effacer, cliquez sur la gomme (elle vide le
+  champ) puis *Enregistrer*.
   À l'écran : « +1h30 » en vert, « -30min » en orange ; le net du mois est calculé (les minutes en
   moins compensent les minutes en plus).
 - **Tableau du mois** : sous les minutes de chaque case, le nombre de **km du jour** (somme des
