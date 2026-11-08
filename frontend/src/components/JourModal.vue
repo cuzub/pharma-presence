@@ -41,7 +41,7 @@
               <span class="input-group-text">min</span>
             </div>
           </div>
-          <button v-if="minutes !== ''" type="button" class="btn btn-outline-danger" :disabled="bloque" title="Vider le champ (à enregistrer)" data-effacer-heures @click="viderHeures">
+          <button v-if="minutes !== ''" type="button" class="btn btn-outline-danger btn-sm" :disabled="bloque" title="Vider le champ (à enregistrer)" data-effacer-heures @click="viderHeures">
             <i class="bi bi-eraser"></i>
           </button>
         </div>
