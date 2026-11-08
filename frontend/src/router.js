@@ -16,6 +16,8 @@ const routes = [
   // Ancienne page : les déplacements se saisissent désormais dans le calendrier.
   { path: '/mes-deplacements', redirect: '/mon-mois' },
 
+  { path: '/guide', name: 'guide', component: () => import('./views/Guide.vue') },
+
   { path: '/:pathMatch(.*)*', redirect: '/' }
 ]
 

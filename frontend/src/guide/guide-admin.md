@@ -1,10 +1,10 @@
 # Guide d'utilisation
 
-## Pour la pharmacienne
-
-### Chaque jour (ou quand c'est nécessaire)
+## Chaque jour (ou quand c'est nécessaire)
 
 Par défaut, chaque employé est **présent**. Vous ne saisissez que les exceptions.
+
+![Tableau du mois avec des heures +/-, des congés payés, un jour férié et des déplacements (données fictives)](images/admin-tableau.png)
 
 - **Heures en plus / en moins** : *Tableau* → clic sur la case de l'employé et du jour → saisissez
   des **minutes**, par tranche de 5 : `15` = 15 min en plus, `-30` = 30 min en moins, `90` = 1h30
@@ -35,7 +35,7 @@ Par défaut, chaque employé est **présent**. Vous ne saisissez que les excepti
   déplacement, quel que soit le mois. Les km du jour s'affichent sous les minutes, et le total
   des km par employé figure dans la colonne *Km*.
 
-### Régulariser les heures +/- (crédit ou débit)
+## Régulariser les heures +/- (crédit ou débit)
 
 Menu **Employés** : la colonne *Solde H +/-* donne le compteur de chacun à ce jour. Le bouton
 **Heures +/-** de la ligne ouvre une fenêtre dédiée :
@@ -50,12 +50,14 @@ Menu **Employés** : la colonne *Solde H +/-* donne le compteur de chacun à ce 
 Dessous, l'**historique des régularisations** : le crayon recharge une opération dans le formulaire
 pour la corriger, la poubelle la supprime (tout est tracé dans l'*Historique*).
 
+![Fenêtre Heures +/- avec le solde et l'historique des régularisations (données fictives)](images/admin-regularisation.png)
+
 Une régularisation apparaît en **violet** à sa date dans le *Tableau du mois* et dans le calendrier
 de l'employé (commentaire au survol), et compte dans le solde (colonne *H +/-*) et dans les
 *Statistiques*. Elle n'est liée à aucune absence : quand un employé prend une récupération, saisissez
 l'absence *et*, à part, le débit correspondant. Elle ne figure pas dans l'export pour le comptable.
 
-### Motifs de déplacement
+## Motifs de déplacement
 
 Menu **Paramètres** → *Motifs de déplacement* : créez vos destinations habituelles avec leur
 distance (ex. Domitis 2 km, Orgères 5 km, LCL 30 km). Lors de la saisie d'un déplacement, il suffit
@@ -66,20 +68,22 @@ Changer la distance d'un motif ne modifie **pas** les déplacements déjà saisi
 distance du moment). Un motif qui ne sert plus se **désactive** (case *Actif*) : il n'est plus
 proposé, mais reste visible sur les anciens déplacements.
 
-### Historique des modifications
+## Historique des modifications
 
 Menu **Historique** : chaque création, modification ou suppression d'un déplacement, d'heures en
 plus / en moins, d'une régularisation ou d'une absence est enregistrée avec la date et l'heure, **qui** l'a faite (vous ou
 l'employé), l'employé concerné et le détail **avant → après**. Filtrez par employé, mois, auteur ou
 type. Cet historique ne peut être ni modifié ni effacé (il commence à la version 1.2.0).
 
-### Statistiques
+## Statistiques
 
-Menu **Statistiques** (réservé à la pharmacienne) : le cumul des heures en plus / en moins de
+Menu **Statistiques** : le cumul des heures en plus / en moins de
 l'année, par employé et par mois, régularisations comprises (un crédit compte « en plus », un débit
 « en moins »). Par défaut, c'est l'année en cours ; les flèches ‹ › passent à
 l'année précédente ou suivante, et le bouton calendrier à leur gauche revient à l'année en cours
 (de même, dans le *Tableau* et l'*Export*, il revient au mois en cours).
+
+![Graphique des heures en plus et en moins par employé et par mois (données fictives)](images/admin-statistiques.png)
 
 - **Le graphique** montre, pour chaque mois, une barre par employé, côte à côte : le net du mois,
   au-dessus de l'axe s'il est en plus, en dessous s'il est en moins. Chaque employé a sa couleur.
@@ -93,9 +97,12 @@ l'année précédente ou suivante, et le bouton calendrier à leur gauche revien
   Un nouveau clic sur la même ligne (ou dans la légende) rétablit toute l'équipe.
 - Les employés partis dans l'année restent affichés, avec la mention « parti ».
 
-### Arrivée, changement de contrat, départ
+## Arrivée, changement de contrat, départ
 
 Menu **Employés** :
+
+![Liste des employés avec leur solde et leurs actions (données fictives)](images/admin-employes.png)
+
 - *Nouvel employé* : nom, prénom, date d'entrée, contrat (heures/mois). L'identifiant et un mot de
   passe provisoire sont proposés : transmettez-les à l'employé, il choisira son propre mot de passe à
   la première connexion.
@@ -106,7 +113,7 @@ Menu **Employés** :
 - *Gérer* → **Retour de l'employé** : pour un ancien employé qui revient (ex. étudiant l'été).
 - *Gérer* → **Mot de passe oublié** : génère un nouveau mot de passe provisoire.
 
-### Vos indemnités kilométriques (IK)
+## Vos indemnités kilométriques (IK)
 
 Vos déplacements professionnels se saisissent sur **votre propre ligne**, en bas du *Tableau* du
 mois. Cette ligne ne sert qu'à vos IK : elle n'apparaît ni dans l'État préparatoire, ni dans les
@@ -119,9 +126,12 @@ récapitulatifs des employés.
 - **Export annuel** : menu **Export**, carte *Indemnités kilométriques* ; choisissez l'année et
   téléchargez le fichier Excel (km et montant par mois, totaux).
 
-### En fin de mois : l'export pour le comptable
+## En fin de mois : l'export pour le comptable
 
 Menu **Export** :
+
+![Page Export avec l'aperçu de l'état préparatoire (données fictives)](images/admin-export.png)
+
 1. Vérifiez l'aperçu, ou le *Tableau* d'un coup d'œil.
 2. Téléchargez l'**État préparatoire Excel** et envoyez-le au comptable, ou cliquez sur
    **Envoyer par mail** : votre messagerie s'ouvre avec un nouveau mail pré-rempli (destinataire,
@@ -135,20 +145,3 @@ Le fichier Excel contient 3 onglets : *Récapitulatif* (une ligne par employé :
 d'absence, km), *Absences* et *Déplacements* (justificatif des kilomètres). Les heures +/- et les
 entrées / sorties ne figurent pas dans l'export (elles restent visibles dans le *Tableau* du mois). Les
 déplacements des admins (indemnités kilométriques) n'y figurent pas non plus : ils ont leur propre export annuel.
-
-## Pour les employés
-
-- **Mon mois** : vos absences sont saisies par la pharmacienne ; une erreur ? Signalez-la-lui.
-  Les **régularisations** (heures payées, récupérations…) qu'elle enregistre apparaissent en violet
-  à leur date. Le résumé donne le net du mois et votre **solde cumulé** d'heures +/-.
-- **Heures en plus / en moins** : dans *Mon mois*, cliquez sur la date → saisissez les minutes
-  (`15`, `-30`) → *Enregistrer*. Mêmes règles de date que pour les déplacements ci-dessous.
-- **Déplacements** : dans *Mon mois*, cliquez sur la date du déplacement → *Ajouter un déplacement* → choisissez le motif
-  (les kilomètres se remplissent tout seuls) → *Enregistrer*. Si la destination n'est pas dans la
-  liste, choisissez « Autre » et saisissez la précision et les kilomètres. Plusieurs déplacements
-  par jour sont possibles.
-  Pour corriger ou supprimer un déplacement, cliquez sur le **crayon**.
-  Vous pouvez saisir, corriger ou supprimer vos déplacements du **mois en cours**, et ceux du
-  **mois précédent jusqu'au 5 inclus**. Après, le mois est clôturé : pour un oubli, adressez-vous à
-  la pharmacienne.
-- Pour changer votre mot de passe : cliquez sur votre nom en haut à droite.

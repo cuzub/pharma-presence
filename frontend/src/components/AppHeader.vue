@@ -59,10 +59,12 @@ const liens = computed(() => auth.estAdmin
       { to: '/export', libelle: 'Export', icone: 'bi-file-earmark-spreadsheet' },
       { to: '/historique', libelle: 'Historique', icone: 'bi-clock-history' },
       { to: '/statistiques', libelle: 'Statistiques', icone: 'bi-bar-chart' },
-      { to: '/parametres', libelle: 'Paramètres', icone: 'bi-gear' }
+      { to: '/parametres', libelle: 'Paramètres', icone: 'bi-gear' },
+      { to: '/guide', libelle: "Guide d'utilisation", icone: 'bi-book' }
     ]
   : [
-      { to: '/mon-mois', libelle: 'Mon mois', icone: 'bi-calendar3' }
+      { to: '/mon-mois', libelle: 'Mon mois', icone: 'bi-calendar3' },
+      { to: '/guide', libelle: "Guide d'utilisation", icone: 'bi-book' }
     ])
 
 const deconnecter = async () => {

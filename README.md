@@ -110,4 +110,4 @@ relire la migration générée, puis `flask db upgrade`.
 
 ## Production
 
-Voir [docs/deploiement.md](docs/deploiement.md) et le [guide d'utilisation](docs/guide-utilisation.md).
+Voir [docs/deploiement.md](docs/deploiement.md). Les guides d'utilisation ([admin](frontend/src/guide/guide-admin.md) et [employé](frontend/src/guide/guide-employe.md)) sont aussi accessibles dans l'application, via le menu « Guide d'utilisation », selon le compte connecté.
