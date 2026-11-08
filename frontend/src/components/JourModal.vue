@@ -24,7 +24,7 @@
             <label v-if="!vueEmploye" for="jour-minutes" class="form-label small text-muted mb-1">
               Minutes (par 5 ; négatif = en moins)
             </label>
-            <div class="input-group">
+            <div class="input-group input-group-sm">
               <input
                 id="jour-minutes"
                 :aria-label="vueEmploye ? 'Heures +/-' : 'Minutes'"
@@ -41,7 +41,7 @@
               <span class="input-group-text">min</span>
             </div>
           </div>
-          <button v-if="minutes !== '' && !vueEmploye" type="button" class="btn btn-outline-danger" :disabled="bloque" title="Vider le champ (à enregistrer)" data-effacer-heures @click="viderHeures">
+          <button v-if="minutes !== ''" type="button" class="btn btn-outline-danger" :disabled="bloque" title="Vider le champ (à enregistrer)" data-effacer-heures @click="viderHeures">
             <i class="bi bi-eraser"></i>
           </button>
         </div>
@@ -67,19 +67,22 @@
         </div>
         <div class="champ-km">
           <label for="jour-km" class="form-label small text-muted mb-1">Km</label>
-          <input
-            v-if="motifChoix === AUTRE"
-            id="jour-km"
-            v-model="km"
-            type="number"
-            min="0.1"
-            max="5000"
-            step="0.1"
-            class="form-control form-control-sm"
-            required
-            :disabled="bloque"
-          />
-          <input v-else id="jour-km" :value="kmAffiches" class="form-control form-control-sm" readonly tabindex="-1" />
+          <div class="input-group input-group-sm">
+            <input
+              v-if="motifChoix === AUTRE"
+              id="jour-km"
+              v-model="km"
+              type="number"
+              min="0.1"
+              max="5000"
+              step="0.1"
+              class="form-control"
+              required
+              :disabled="bloque"
+            />
+            <input v-else id="jour-km" :value="kmAffiches" class="form-control" readonly tabindex="-1" />
+            <span class="input-group-text">km</span>
+          </div>
         </div>
         <button v-if="motifChoix !== ''" type="button" class="btn btn-outline-danger btn-sm" :disabled="bloque" title="Vider le déplacement (à enregistrer)" data-effacer-deplacement @click="viderDeplacement">
           <i class="bi bi-eraser"></i>
