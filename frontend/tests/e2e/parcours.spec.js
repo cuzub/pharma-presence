@@ -112,6 +112,20 @@ test('arrivée d’un employé, heures +/-, déplacements déclaratifs, historiq
   await page.click('[data-saisie-jour] button[type=submit]')
   await expect(page.locator(`[data-jour="${mois}-03"] [data-deplacement]`)).toContainText('7 km')
 
+  // Plusieurs déplacements le même jour : « + » ajoute une ligne, « − » la retire.
+  const deplacements03 = page.locator(`[data-jour="${mois}-03"] [data-deplacement]`)
+  await page.locator(`[data-jour="${mois}-03"]`).click()
+  await page.click('[data-ajouter-deplacement]')
+  await page.selectOption('#jour-motif-1', 'autre')
+  await page.fill('#jour-precision-1', 'Second trajet')
+  await page.fill('#jour-km-1', '3')
+  await page.click('[data-saisie-jour] button[type=submit]')
+  await expect(deplacements03).toHaveCount(2)
+  await page.locator(`[data-jour="${mois}-03"]`).click()
+  await page.locator('[data-ligne-deplacement]', { has: page.locator('#jour-motif-1') }).locator('[data-retirer-deplacement]').click()
+  await page.click('[data-saisie-jour] button[type=submit]')
+  await expect(deplacements03).toHaveCount(1)
+
   // Motif « Autre » : distance et précision libres.
   await page.locator(`[data-jour="${mois}-02"]`).click()
   await page.selectOption('#jour-motif', 'autre')
@@ -138,7 +152,8 @@ test('arrivée d’un employé, heures +/-, déplacements déclaratifs, historiq
   await page.selectOption('#h-employe', { label: `${nom} Test` })
   await page.selectOption('#h-auteur', 'employe')
   const journal = page.locator('tr[data-journal]')
-  await expect(journal).toHaveCount(4)
+  // Heures, 3 créations de déplacement, 1 suppression, 1 correction.
+  await expect(journal).toHaveCount(6)
   await expect(journal.first()).toContainText('Modification')
   await expect(journal.first()).toContainText('12,5 km')
   await page.selectOption('#h-auteur', 'admin')

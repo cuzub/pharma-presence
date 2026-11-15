@@ -14,7 +14,7 @@ solde d'heures.
 - **Déplacements** : dans *Mon mois*, cliquez sur la date du déplacement → *Ajouter un déplacement* → choisissez le motif
   (les kilomètres se remplissent tout seuls) → *Enregistrer*. Si la destination n'est pas dans la
   liste, choisissez « Autre » et saisissez la précision et les kilomètres. Plusieurs déplacements
-  par jour sont possibles.
+  par jour sont possibles : le bouton **+** ajoute une ligne, le bouton **−** la retire (à enregistrer).
   Pour corriger ou supprimer un déplacement, cliquez sur le **crayon**.
   Vous pouvez saisir, corriger ou supprimer vos déplacements du **mois en cours**, et ceux du
   **mois précédent jusqu'au 5 inclus**. Après, le mois est clôturé : pour un oubli, adressez-vous à

@@ -51,27 +51,27 @@
         </p>
       </template>
 
-      <h6 class="small fw-semibold mt-3 mb-2">Déplacement professionnel</h6>
-      <div class="d-flex flex-wrap align-items-end gap-2">
+      <h6 class="small fw-semibold mt-3 mb-2">Déplacements professionnels</h6>
+      <div v-for="(ligne, i) in lignes" :key="ligne.cle" class="d-flex flex-wrap align-items-end gap-2 mb-2" data-ligne-deplacement>
         <div class="champ-motif">
-          <label for="jour-motif" class="form-label small text-muted mb-1">Motif</label>
-          <select id="jour-motif" v-model="motifChoix" class="form-select form-select-sm" :disabled="bloque">
+          <label :for="idChamp('jour-motif', i)" class="form-label small text-muted mb-1" :class="{ 'visually-hidden': i > 0 }">Motif</label>
+          <select :id="idChamp('jour-motif', i)" v-model="ligne.motifChoix" class="form-select form-select-sm" :disabled="bloque">
             <option value="">Aucun</option>
             <option v-for="m in motifsProposes" :key="m.id" :value="m.id">{{ m.libelle }} — {{ formatNombre(m.km) }} km</option>
             <option :value="AUTRE">Autre (distance libre)</option>
           </select>
         </div>
-        <div v-if="motifChoix === AUTRE" class="champ-motif">
-          <label for="jour-precision" class="form-label small text-muted mb-1">Précision</label>
-          <input id="jour-precision" v-model="motifPrecision" class="form-control form-control-sm" maxlength="255" required placeholder="ex : Pharmacie de Chartres" :disabled="bloque" />
+        <div v-if="ligne.motifChoix === AUTRE" class="champ-motif">
+          <label :for="idChamp('jour-precision', i)" class="form-label small text-muted mb-1" :class="{ 'visually-hidden': i > 0 }">Précision</label>
+          <input :id="idChamp('jour-precision', i)" v-model="ligne.motifPrecision" class="form-control form-control-sm" maxlength="255" required placeholder="ex : Pharmacie de Chartres" :disabled="bloque" />
         </div>
         <div class="champ-km">
-          <label for="jour-km" class="form-label small text-muted mb-1">Km</label>
+          <label :for="idChamp('jour-km', i)" class="form-label small text-muted mb-1" :class="{ 'visually-hidden': i > 0 }">Km</label>
           <div class="input-group input-group-sm">
             <input
-              v-if="motifChoix === AUTRE"
-              id="jour-km"
-              v-model="km"
+              v-if="ligne.motifChoix === AUTRE"
+              :id="idChamp('jour-km', i)"
+              v-model="ligne.km"
               type="number"
               min="0.1"
               max="5000"
@@ -80,14 +80,17 @@
               required
               :disabled="bloque"
             />
-            <input v-else id="jour-km" :value="kmAffiches" class="form-control" readonly tabindex="-1" />
+            <input v-else :id="idChamp('jour-km', i)" :value="kmAffiches(ligne)" class="form-control" readonly tabindex="-1" />
             <span class="input-group-text">km</span>
           </div>
         </div>
-        <button v-if="motifChoix !== ''" type="button" class="btn btn-outline-danger btn-sm" :disabled="bloque" title="Vider le déplacement (à enregistrer)" data-effacer-deplacement @click="viderDeplacement">
-          <i class="bi bi-eraser"></i>
+        <button type="button" class="btn btn-outline-danger btn-sm" :disabled="bloque" title="Retirer ce déplacement (à enregistrer)" aria-label="Retirer ce déplacement" data-retirer-deplacement @click="retirerLigne(i)">
+          <i class="bi bi-dash-lg"></i>
         </button>
       </div>
+      <button type="button" class="btn btn-outline-primary btn-sm" :disabled="bloque" title="Ajouter un déplacement" data-ajouter-deplacement @click="ajouterLigne">
+        <i class="bi bi-plus-lg"></i> Ajouter un déplacement
+      </button>
       <p v-if="!referentiel.motifsDeplacement.length" class="form-text mb-0">
         Aucun motif enregistré : Elise peut en créer dans <em>Paramètres</em>.
       </p>
@@ -137,9 +140,9 @@ const enCours = ref(false)
 const champHeures = ref(null)
 const referentiel = useReferentielStore()
 const AUTRE = 'autre'
-const motifChoix = ref('')
-const motifPrecision = ref('')
-const km = ref('')
+const lignes = ref([])
+const aSupprimer = ref([])
+let prochaineCle = 0
 
 const minutesInitiales = computed(() => props.employe?.heures?.[props.jour] || 0)
 const apercu = computed(() => (Number.isInteger(Number(minutes.value)) ? formatMinutes(Number(minutes.value)) : ''))
@@ -160,28 +163,41 @@ const regularisations = computed(() => (props.employe?.regularisations || []).fi
 const ferieDuJour = computed(() => (props.jour ? ferie(props.jour) : null))
 const titre = computed(() => {
   if (!props.employe) return ''
-  if (props.ligneAdmin) return `${props.employe.nom} — Déplacement — ${formatFr(props.jour)}`
+  if (props.ligneAdmin) return `${props.employe.nom} — Déplacements — ${formatFr(props.jour)}`
   return `${props.employe.prenom} ${props.employe.nom} — ${formatFr(props.jour)}`
 })
 
-// Vue employé : un seul déplacement par jour, saisi dans le même formulaire que les heures.
-const deplacementJour = computed(() => deplacements.value[0] || null)
-const motifsProposes = computed(() =>
-  referentiel.motifsDeplacement.filter((m) => m.actif || m.id === deplacementJour.value?.motif_deplacement_id))
-const kmAffiches = computed(() => {
-  if (motifChoix.value === '') return ''
-  const d = deplacementJour.value
-  // Motif inchangé : on affiche les km enregistrés à l'origine (l'historique ne bouge pas).
-  if (d && motifChoix.value === d.motif_deplacement_id) return formatNombre(d.km)
-  const motif = referentiel.motifsDeplacement.find((m) => m.id === motifChoix.value)
-  return motif ? formatNombre(motif.km) : ''
+const motifsProposes = computed(() => {
+  const utilises = new Set(deplacements.value.map((d) => d.motif_deplacement_id))
+  return referentiel.motifsDeplacement.filter((m) => m.actif || utilises.has(m.id))
 })
+// La première ligne garde les identifiants historiques des champs.
+const idChamp = (base, i) => (i ? `${base}-${i}` : base)
+const kmAffiches = (ligne) => {
+  if (ligne.motifChoix === '') return ''
+  const d = ligne.original
+  // Motif inchangé : on affiche les km enregistrés à l'origine (l'historique ne bouge pas).
+  if (d && ligne.motifChoix === d.motif_deplacement_id) return formatNombre(d.km)
+  const motif = referentiel.motifsDeplacement.find((m) => m.id === ligne.motifChoix)
+  return motif ? formatNombre(motif.km) : ''
+}
+
+const nouvelleLigne = (d = null) => ({
+  cle: prochaineCle++,
+  original: d,
+  motifChoix: d ? (d.motif_deplacement_id ?? AUTRE) : '',
+  motifPrecision: d && !d.motif_deplacement_id ? d.motif : '',
+  km: d && !d.motif_deplacement_id ? d.km : ''
+})
+const ajouterLigne = () => lignes.value.push(nouvelleLigne())
+const retirerLigne = (i) => {
+  const [ligne] = lignes.value.splice(i, 1)
+  if (ligne.original) aSupprimer.value.push(ligne.original)
+}
 
 const initialiserDeplacement = async () => {
-  const d = deplacementJour.value
-  motifChoix.value = d ? (d.motif_deplacement_id ?? AUTRE) : ''
-  motifPrecision.value = d && !d.motif_deplacement_id ? d.motif : ''
-  km.value = d && !d.motif_deplacement_id ? d.km : ''
+  lignes.value = deplacements.value.length ? deplacements.value.map(nouvelleLigne) : [nouvelleLigne()]
+  aSupprimer.value = []
   try {
     await referentiel.chargerMotifsDeplacement(true)
   } catch (error) {
@@ -200,26 +216,41 @@ watch(() => props.ouvert, async (ouvert) => {
 
 const sauverHeures = (valeur) => api.put('/heures', { employe_id: props.employe.id, jour: props.jour, minutes: valeur })
 
-const deplacementModifie = () => {
-  const d = deplacementJour.value
-  if (!d) return motifChoix.value !== ''
-  if (motifChoix.value === '') return true
-  if (motifChoix.value !== AUTRE) return motifChoix.value !== d.motif_deplacement_id
-  return !!d.motif_deplacement_id || motifPrecision.value !== d.motif || Number(km.value) !== Number(d.km)
+const ligneModifiee = (ligne) => {
+  const d = ligne.original
+  if (!d) return true
+  if (ligne.motifChoix !== AUTRE) return ligne.motifChoix !== d.motif_deplacement_id
+  return !!d.motif_deplacement_id || ligne.motifPrecision !== d.motif || Number(ligne.km) !== Number(d.km)
 }
 
-const enregistrerDeplacement = () => {
-  const d = deplacementJour.value
-  if (motifChoix.value === '') return api.delete(`/deplacements/${d.id}`)
-  const autre = motifChoix.value === AUTRE
-  const corps = {
-    date: props.jour,
-    motif_deplacement_id: autre ? null : motifChoix.value,
-    motif: autre ? motifPrecision.value : null,
-    km: autre ? km.value : null,
-    ...(props.ligneAdmin ? { utilisateur_id: props.employe.id } : props.vueEmploye ? {} : { employe_id: props.employe.id })
+// Chaque requête réussie met l'état à jour : une nouvelle tentative après erreur ne crée pas de doublon.
+const enregistrerDeplacements = async () => {
+  while (aSupprimer.value.length) {
+    await api.delete(`/deplacements/${aSupprimer.value[0].id}`)
+    aSupprimer.value.shift()
   }
-  return d ? api.put(`/deplacements/${d.id}`, corps) : api.post('/deplacements', corps)
+  for (const ligne of lignes.value) {
+    if (ligne.motifChoix === '') {
+      if (ligne.original) {
+        await api.delete(`/deplacements/${ligne.original.id}`)
+        ligne.original = null
+      }
+      continue
+    }
+    if (!ligneModifiee(ligne)) continue
+    const autre = ligne.motifChoix === AUTRE
+    const corps = {
+      date: props.jour,
+      motif_deplacement_id: autre ? null : ligne.motifChoix,
+      motif: autre ? ligne.motifPrecision : null,
+      km: autre ? ligne.km : null,
+      ...(props.ligneAdmin ? { utilisateur_id: props.employe.id } : props.vueEmploye ? {} : { employe_id: props.employe.id })
+    }
+    const { data } = ligne.original
+      ? await api.put(`/deplacements/${ligne.original.id}`, corps)
+      : await api.post('/deplacements', corps)
+    ligne.original = data
+  }
 }
 
 const executer = async (action) => {
@@ -238,17 +269,12 @@ const executer = async (action) => {
 const enregistrer = () => executer(async () => {
   const valeur = minutes.value === '' ? 0 : Number(minutes.value)
   if (!props.ligneAdmin && (!props.vueEmploye || valeur !== minutesInitiales.value)) await sauverHeures(valeur)
-  if (deplacementModifie()) await enregistrerDeplacement()
+  await enregistrerDeplacements()
 })
 
 // Remise à zéro du formulaire uniquement : la suppression se fait à l'enregistrement.
 const viderHeures = () => {
   minutes.value = ''
-}
-const viderDeplacement = () => {
-  motifChoix.value = ''
-  motifPrecision.value = ''
-  km.value = ''
 }
 </script>
 

@@ -31,7 +31,8 @@ Par défaut, chaque employé est **présent**. Vous ne saisissez que les excepti
   motifs *Formation* et *Autre* ne bloquent pas la saisie.
 - **Déplacements** : ils sont **déclaratifs** (pas de validation) et comptent tous. Le menu
   *Tableau* du mois : clic sur la case du jour → *Ajouter un déplacement*. Dans la même fenêtre,
-  le crayon corrige un déplacement et la poubelle le supprime. Vous pouvez modifier n'importe quel
+  le bouton **+** ajoute un déplacement (plusieurs par jour possibles) et le bouton **−** le retire
+  (à enregistrer). Vous pouvez modifier n'importe quel
   déplacement, quel que soit le mois. Les km du jour s'affichent sous les minutes, et le total
   des km par employé figure dans la colonne *Km*.
 
@@ -120,7 +121,8 @@ mois. Cette ligne ne sert qu'à vos IK : elle n'apparaît ni dans l'État prépa
 récapitulatifs des employés.
 
 - **Saisie** : cliquez sur une case de votre ligne, comme pour un employé, pour ajouter un
-  déplacement (motif, km). Les lignes des autres admins sont en lecture seule.
+  ou plusieurs déplacements (motif, km ; bouton **+** pour un trajet de plus). Les lignes des autres
+  admins sont en lecture seule.
 - **Coefficient et nom** : réglez-les dans **Paramètres** → *Indemnités kilométriques*. Le nom
   affiché est celui qui apparaît sur votre ligne et dans l'export.
 - **Export annuel** : menu **Export**, carte *Indemnités kilométriques* ; choisissez l'année et

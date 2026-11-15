@@ -53,9 +53,9 @@ def test_admin_cree_son_propre_trajet_sans_employe(admin, moi):
     assert ligne['total_km'] == 12
 
 
-def test_un_seul_trajet_admin_par_jour(admin, moi):
+def test_plusieurs_trajets_admin_par_jour(admin, moi):
     assert _trajet_admin(admin, moi, '2025-02-12').status_code == 201
-    assert _trajet_admin(admin, moi, '2025-02-12', km=5).status_code == 409
+    assert _trajet_admin(admin, moi, '2025-02-12', km=5).status_code == 201
 
 
 def test_admin_ne_peut_pas_saisir_pour_un_autre_admin(admin, autre_admin, moi):
