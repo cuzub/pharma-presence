@@ -49,6 +49,18 @@
           <span v-if="apercu" :class="Number(minutes) < 0 ? 'minutes-moins' : 'minutes-plus'">Soit {{ apercu }}. </span>
           Ex. : 15 = 15 min en plus, -30 = 30 min en moins, 90 = 1h30 en plus.
         </p>
+        <div v-if="regularisations.length" class="mt-3" data-regularisations-jour>
+          <h6 class="regularisation"><i class="bi bi-arrow-left-right"></i> Régularisations du jour</h6>
+          <ul class="list-group list-group-flush mb-1">
+            <li v-for="r in regularisations" :key="r.id" class="list-group-item d-flex gap-2 px-0 py-1">
+              <span class="badge regularisation align-self-center">{{ formatMinutes(r.minutes) }}</span>
+              <span class="small">{{ r.commentaire || 'Sans commentaire' }}</span>
+            </li>
+          </ul>
+          <p class="form-text mb-0">
+            {{ vueEmploye ? 'Saisies par Elise.' : 'À modifier depuis Employés → Heures +/-.' }}
+          </p>
+        </div>
       </template>
 
       <h6 class="small fw-semibold mt-3 mb-2">Déplacements professionnels</h6>
@@ -94,32 +106,48 @@
       <p v-if="!referentiel.motifsDeplacement.length" class="form-text mb-0">
         Aucun motif enregistré : Elise peut en créer dans <em>Paramètres</em>.
       </p>
+
+      <p v-if="vueEmploye && lignesPlanning.length" class="small text-muted mt-3 mb-0" data-horaires-prevus>
+        <i class="bi bi-calendar-week"></i> Planning : {{ lignesPlanning.join(' · ') }}
+      </p>
+      <fieldset v-if="!vueEmploye" class="mt-3 pt-3 border-top" data-horaires-jour :disabled="bloque">
+      <h6 class="small fw-semibold mb-1">
+        Horaires de présence (planning)
+        <span v-if="entreePlanning?.exception" class="badge text-bg-dark ms-1">Exceptionnel</span>
+      </h6>
+      <p class="form-text mt-0 mb-2">
+        Pour un événement exceptionnel ce jour-là (matin {{ PLAGES.matin.join('–') }}, après-midi {{ PLAGES.apres_midi.join('–') }}).
+        Laisser vide = pas présent(e) sur la demi-journée.
+      </p>
+      <div v-for="demi in demisDuJour" :key="demi" class="d-flex flex-wrap align-items-center gap-2 mb-2">
+        <span class="small champ-demi">{{ LIBELLES_DEMI_JOURNEE[demi] }}</span>
+        <input v-model="horaires[demi][0]" type="time" step="300" :min="PLAGES[demi][0]" :max="PLAGES[demi][1]" class="form-control form-control-sm champ-heure" :aria-label="`${LIBELLES_DEMI_JOURNEE[demi]} : début`" />
+        <span class="small">à</span>
+        <input v-model="horaires[demi][1]" type="time" step="300" :min="PLAGES[demi][0]" :max="PLAGES[demi][1]" class="form-control form-control-sm champ-heure" :aria-label="`${LIBELLES_DEMI_JOURNEE[demi]} : fin`" />
+        <button type="button" class="btn btn-outline-secondary btn-sm" title="Vider (pas présent)" :aria-label="`Vider le ${LIBELLES_DEMI_JOURNEE[demi]}`" @click="horaires[demi] = ['', '']">
+          <i class="bi bi-eraser"></i>
+        </button>
+      </div>
+      <div v-if="entreePlanning?.exception" class="d-flex justify-content-end">
+        <button type="button" class="btn btn-outline-secondary btn-sm" :disabled="enCours" data-planning-habituel @click="revenirAuPlanning">
+          Revenir au planning habituel
+        </button>
+      </div>
+      </fieldset>
+
       <div class="d-flex justify-content-end mt-3">
         <button type="submit" class="btn btn-primary" :disabled="enCours || bloque">Enregistrer</button>
       </div>
     </form>
-
-    <div v-if="!ligneAdmin && regularisations.length" :class="{ 'mb-4': !vueEmploye }" data-regularisations-jour>
-      <h6 class="regularisation"><i class="bi bi-arrow-left-right"></i> Régularisations du jour</h6>
-      <ul class="list-group list-group-flush mb-1">
-        <li v-for="r in regularisations" :key="r.id" class="list-group-item d-flex gap-2 px-0 py-1">
-          <span class="badge regularisation align-self-center">{{ formatMinutes(r.minutes) }}</span>
-          <span class="small">{{ r.commentaire || 'Sans commentaire' }}</span>
-        </li>
-      </ul>
-      <p class="form-text mb-0">
-        {{ vueEmploye ? 'Saisies par Elise.' : 'À modifier depuis Employés → Heures +/-.' }}
-      </p>
-    </div>
-
   </Modal>
 </template>
 
 <script setup>
-import { computed, nextTick, ref, watch } from 'vue'
+import { computed, nextTick, reactive, ref, watch } from 'vue'
 import api, { messageErreur } from '../services/api'
 import { useReferentielStore } from '../stores/referentiel'
 import { absenceBloquanteDuJour, blocageJourEmploye, ferie, formatFr, formatMinutes, formatNombre, saisieModifiableParEmploye } from '../utils/dates'
+import { DEMI_JOURNEES, LIBELLES_DEMI_JOURNEE, PLAGES, demiJourneesDuJour, lignesHoraires } from '../utils/planning'
 import Modal from './Modal.vue'
 
 const props = defineProps({
@@ -163,7 +191,7 @@ const regularisations = computed(() => (props.employe?.regularisations || []).fi
 const ferieDuJour = computed(() => (props.jour ? ferie(props.jour) : null))
 const titre = computed(() => {
   if (!props.employe) return ''
-  if (props.ligneAdmin) return `${props.employe.nom} — Déplacements — ${formatFr(props.jour)}`
+  if (props.ligneAdmin) return `${props.employe.nom} — Planning et déplacements — ${formatFr(props.jour)}`
   return `${props.employe.prenom} ${props.employe.nom} — ${formatFr(props.jour)}`
 })
 
@@ -209,6 +237,7 @@ watch(() => props.ouvert, async (ouvert) => {
   if (!ouvert) return
   erreur.value = ''
   minutes.value = minutesInitiales.value || ''
+  initialiserHoraires()
   initialiserDeplacement()
   await nextTick()
   if (!props.ligneAdmin) champHeures.value?.focus()
@@ -270,12 +299,43 @@ const enregistrer = () => executer(async () => {
   const valeur = minutes.value === '' ? 0 : Number(minutes.value)
   if (!props.ligneAdmin && (!props.vueEmploye || valeur !== minutesInitiales.value)) await sauverHeures(valeur)
   await enregistrerDeplacements()
+  if (!props.vueEmploye && horairesModifies()) await enregistrerHoraires()
 })
 
 // Remise à zéro du formulaire uniquement : la suppression se fait à l'enregistrement.
 const viderHeures = () => {
   minutes.value = ''
 }
+
+// --- Horaires du jour (exception au planning) --------------------------------
+const entreePlanning = computed(() => props.employe?.planning?.[props.jour] || null)
+const lignesPlanning = computed(() => lignesHoraires(entreePlanning.value))
+const demisDuJour = computed(() => (props.jour ? demiJourneesDuJour(props.jour) : []))
+const horaires = reactive({ matin: ['', ''], apres_midi: ['', ''] })
+let horairesInitiaux = ''
+const instantaneHoraires = () => JSON.stringify(DEMI_JOURNEES.map((demi) => horaires[demi]))
+const initialiserHoraires = () => {
+  for (const demi of DEMI_JOURNEES) horaires[demi] = [...(entreePlanning.value?.[demi] || ['', ''])]
+  horairesInitiaux = instantaneHoraires()
+}
+// Sans modification, on n'enregistre rien : cela créerait une exception au planning habituel.
+const horairesModifies = () => instantaneHoraires() !== horairesInitiaux
+const titulairePlanning = () => (props.ligneAdmin ? { utilisateur_id: props.employe.id } : { employe_id: props.employe.id })
+const demiJourneeSaisie = (demi) => (horaires[demi].some(Boolean) ? horaires[demi] : null)
+
+const enregistrerHoraires = async () => {
+  await api.put('/planning/exceptions', {
+    ...titulairePlanning(),
+    jour: props.jour,
+    matin: demiJourneeSaisie('matin'),
+    apres_midi: demisDuJour.value.includes('apres_midi') ? demiJourneeSaisie('apres_midi') : null
+  })
+  horairesInitiaux = instantaneHoraires()
+}
+
+const revenirAuPlanning = () => executer(() => api.delete('/planning/exceptions', {
+  params: { ...titulairePlanning(), jour: props.jour }
+}))
 </script>
 
 <style scoped>
@@ -288,6 +348,14 @@ const viderHeures = () => {
 }
 
 .champ-km {
+  width: 7rem;
+}
+
+.champ-demi {
+  width: 5.5rem;
+}
+
+.champ-heure {
   width: 7rem;
 }
 </style>

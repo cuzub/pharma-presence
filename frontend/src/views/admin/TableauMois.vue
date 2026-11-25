@@ -13,56 +13,68 @@
           <thead>
             <tr>
               <th class="col-employe">Employé</th>
-              <th
-                v-for="jour in jours"
-                :key="jour.iso"
-                :class="['col-jour', jour.classes]"
-                v-infobulle="jour.lignes"
-              >
-                <div class="small text-muted">{{ jour.initiale }}</div>
-                <div>{{ jour.numero }}</div>
-              </th>
+              <template v-for="col in colonnes" :key="col.cle">
+                <th
+                  v-if="col.semaine"
+                  class="col-semaine"
+                  v-infobulle="[`Semaine ${col.numero} (semaine ${col.numero % 2 ? 1 : 2} du planning)`, 'Heures prévues au planning, du lundi au samedi', 'Absences non déduites']"
+                >
+                  <div class="small text-muted">S{{ col.numero }}</div>
+                  <div>Total</div>
+                </th>
+                <th v-else :class="['col-jour', col.classes]" v-infobulle="col.lignes">
+                  <div class="small text-muted">{{ col.initiale }}</div>
+                  <div>{{ col.numero }}</div>
+                </th>
+              </template>
               <th class="col-total col-hpm" v-infobulle="['Solde H +/- cumulé à la fin du mois', 'Tout l\'historique, régularisations comprises']">H +/-</th>
               <th class="col-total col-km" v-infobulle="['Kilomètres de déplacements']">Km</th>
             </tr>
           </thead>
           <tbody>
             <tr v-if="chargement">
-              <td :colspan="jours.length + 3" class="text-center text-muted py-4">Chargement…</td>
+              <td :colspan="colonnes.length + 3" class="text-center text-muted py-4">Chargement…</td>
             </tr>
             <tr v-else-if="!donnees.employes.length">
-              <td :colspan="jours.length + 3" class="text-center text-muted py-4">
+              <td :colspan="colonnes.length + 3" class="text-center text-muted py-4">
                 Aucun employé sous contrat ce mois-ci. <RouterLink to="/employes">Ajouter un employé</RouterLink>
               </td>
             </tr>
             <tr v-for="employe in donnees.employes" :key="employe.id">
               <th class="col-employe" scope="row">
-                <div class="fw-semibold text-nowrap">{{ employe.nom }} {{ employe.prenom }}</div>
+                <div class="fw-semibold text-nowrap"><span class="pastille-couleur" :style="{ background: employe.couleur }"></span>{{ employe.nom }} {{ employe.prenom }}</div>
                 <div class="small text-muted text-nowrap">{{ texteContrat(employe) }}</div>
                 <div v-for="m in employe.mouvements" :key="m" class="small text-primary text-nowrap">{{ m }}</div>
               </th>
-              <td
-                v-for="jour in jours"
-                :key="jour.iso"
-                :class="['case', jour.classes, { 'hors-contrat': horsContrat(employe, jour.iso) }]"
-                :style="styleCase(employe, jour.iso)"
-                v-infobulle="titreCase(employe, jour)"
-                role="button"
-                tabindex="0"
-                :data-employe="employe.id"
-                :data-jour="jour.iso"
-                @click="saisie.ouvrirJour(employe.id, jour.iso)"
-                @keydown.enter="saisie.ouvrirJour(employe.id, jour.iso)"
-              >
-                <div>
-                  <span v-if="absence(employe, jour.iso)" class="code-absence">{{ absence(employe, jour.iso).motif_code }}</span>
-                  <span v-else-if="employe.heures[jour.iso]" :class="['heures', employe.heures[jour.iso] < 0 ? 'minutes-moins' : 'minutes-plus']">{{ formatMinutes(employe.heures[jour.iso]) }}</span>
-                </div>
-                <div v-if="kmDuJour(employe, jour.iso)" class="km-jour">{{ formatNombre(kmDuJour(employe, jour.iso)) }} km</div>
-                <div v-if="regularisationsDuJour(employe, jour.iso).length" class="badge regularisation regul-jour" data-regularisation>
-                  {{ formatMinutes(totalRegularisationsDuJour(employe, jour.iso)) }}
-                </div>
-              </td>
+              <template v-for="col in colonnes" :key="col.cle">
+                <td v-if="col.semaine" class="col-semaine" data-total-semaine>{{ totalSemaine(employe, col) }}</td>
+                <td
+                  v-else
+                  :class="['case', col.classes, { 'hors-contrat': horsContrat(employe, col.iso), absent: !!absence(employe, col.iso) }]"
+                  v-infobulle="titreCase(employe, col)"
+                  role="button"
+                  tabindex="0"
+                  :data-employe="employe.id"
+                  :data-jour="col.iso"
+                  @click="saisie.ouvrirJour(employe.id, col.iso)"
+                  @keydown.enter="saisie.ouvrirJour(employe.id, col.iso)"
+                >
+                  <div v-if="!absence(employe, col.iso) && !horsContrat(employe, col.iso)" :class="['planning-jour', { exception: employe.planning[col.iso]?.exception }]" data-planning>
+                    <span v-for="demi in col.demis" :key="demi" class="demi" :style="styleDemi(employe, col, demi)"></span>
+                  </div>
+                  <div v-else-if="absence(employe, col.iso)" class="planning-jour" data-absence>
+                    <span class="demi barre-absence"></span>
+                  </div>
+                  <div>
+                    <span v-if="absence(employe, col.iso)" class="code-absence">{{ absence(employe, col.iso).motif_code }}</span>
+                    <span v-else-if="employe.heures[col.iso]" :class="['heures', employe.heures[col.iso] < 0 ? 'minutes-moins' : 'minutes-plus']">{{ formatMinutes(employe.heures[col.iso]) }}</span>
+                  </div>
+                  <div v-if="kmDuJour(employe, col.iso)" class="km-jour">{{ formatNombre(kmDuJour(employe, col.iso)) }} km</div>
+                  <div v-if="regularisationsDuJour(employe, col.iso).length" class="badge regularisation regul-jour" data-regularisation>
+                    {{ formatMinutes(totalRegularisationsDuJour(employe, col.iso)) }}
+                  </div>
+                </td>
+              </template>
               <td
                 :class="['col-total', 'col-hpm', 'fw-semibold', employe.solde_minutes < 0 ? 'minutes-moins' : 'minutes-plus']"
                 v-infobulle="titreSolde(employe)"
@@ -75,32 +87,50 @@
               </td>
             </tr>
             <tr v-if="donnees.admins?.length" class="separateur-ik">
-              <th class="col-employe" scope="row">Déplacements des admins (IK)</th>
-              <td :colspan="jours.length + 2"></td>
+              <th class="col-employe" scope="row">Pharmacienne (planning, IK)</th>
+              <td :colspan="colonnes.length + 2"></td>
             </tr>
             <tr v-for="admin in donnees.admins" :key="'admin-' + admin.id">
               <th class="col-employe" scope="row">
-                <div class="fw-semibold text-nowrap">{{ admin.nom }}</div>
-                <div class="small text-muted text-nowrap">{{ admin.est_moi ? 'Mes déplacements (IK)' : 'Lecture seule' }}</div>
+                <div class="fw-semibold text-nowrap"><span class="pastille-couleur" :style="{ background: admin.couleur }"></span>{{ admin.nom }}</div>
+                <div class="small text-muted text-nowrap">{{ admin.est_moi ? 'Mon planning et mes IK' : 'Lecture seule' }}</div>
               </th>
-              <td
-                v-for="jour in jours"
-                :key="jour.iso"
-                :class="['case', jour.classes, { 'lecture-seule': !admin.est_moi }]"
-                v-infobulle="titreCaseAdmin(admin, jour)"
-                :role="admin.est_moi ? 'button' : null"
-                :tabindex="admin.est_moi ? 0 : null"
-                :data-admin="admin.id"
-                :data-jour="jour.iso"
-                @click="admin.est_moi && ouvrirAdmin(admin, jour.iso)"
-                @keydown.enter="admin.est_moi && ouvrirAdmin(admin, jour.iso)"
-              >
-                <div v-if="kmDuJour(admin, jour.iso)" class="km-jour">{{ formatNombre(kmDuJour(admin, jour.iso)) }} km</div>
-              </td>
+              <template v-for="col in colonnes" :key="col.cle">
+                <td v-if="col.semaine" class="col-semaine" data-total-semaine>{{ totalSemaine(admin, col) }}</td>
+                <td
+                  v-else
+                  :class="['case', col.classes, { 'lecture-seule': !admin.est_moi }]"
+                  v-infobulle="titreCaseAdmin(admin, col)"
+                  :role="admin.est_moi ? 'button' : null"
+                  :tabindex="admin.est_moi ? 0 : null"
+                  :data-admin="admin.id"
+                  :data-jour="col.iso"
+                  @click="admin.est_moi && ouvrirAdmin(admin, col.iso)"
+                  @keydown.enter="admin.est_moi && ouvrirAdmin(admin, col.iso)"
+                >
+                  <div :class="['planning-jour', { exception: admin.planning[col.iso]?.exception }]" data-planning>
+                    <span v-for="demi in col.demis" :key="demi" class="demi" :style="styleDemi(admin, col, demi)"></span>
+                  </div>
+                  <div v-if="kmDuJour(admin, col.iso)" class="km-jour">{{ formatNombre(kmDuJour(admin, col.iso)) }} km</div>
+                </td>
+              </template>
               <td class="col-total col-hpm"></td>
               <td class="col-total col-km" v-infobulle="titreKm(admin)">
                 {{ admin.total_km ? formatNombre(admin.total_km) : '' }}
               </td>
+            </tr>
+            <tr v-if="!chargement && personnes.length" class="ligne-presents">
+              <th class="col-employe" scope="row" v-infobulle="['Personnes prévues à la fermeture de 12h30 et de 19h30', 'Les absents ne sont pas comptés', 'Sur fond rouge : sous le seuil défini dans Paramètres']">Présents</th>
+              <template v-for="col in colonnes" :key="col.cle">
+                <td v-if="col.semaine" class="col-semaine"></td>
+                <td v-else :class="['compte', col.classes]" :data-presents="col.iso">
+                  <div v-if="!col.ferme" class="comptes-jour">
+                    <span v-for="demi in col.demis" :key="demi" :class="['compte-demi', { 'sous-seuil': sousSeuil(col.iso, demi) }]" v-infobulle="titrePresents(col.iso, demi)">{{ presentsFermeture(personnes, col.iso, demi) }}</span>
+                  </div>
+                </td>
+              </template>
+              <td class="col-total col-hpm"></td>
+              <td class="col-total col-km"></td>
             </tr>
           </tbody>
         </table>
@@ -109,17 +139,17 @@
 
     <div class="d-flex flex-wrap gap-3 mt-3 small align-items-center">
       <span class="text-muted">Légende :</span>
-      <span v-for="m in referentiel.motifsActifs" :key="m.id">
-        <span class="pastille-motif" :style="{ background: m.couleur }">{{ m.code }}</span> {{ m.libelle }}
-      </span>
-      <span><span class="legende dimanche"></span> Dimanche</span>
+      <span><span class="legende absent"></span> Absence (code du motif : {{ referentiel.motifsActifs.map((m) => m.code).join(', ') }})</span>
+      <span><span class="legende planning"></span> Présence prévue (matin | après-midi), à la couleur de chacun</span>
+      <span><span class="legende planning exception"></span> Horaire exceptionnel</span>
       <span><span class="legende ferie"></span> Férié</span>
       <span><span class="legende fermeture"></span> Fermeture</span>
       <span><span class="legende hors-contrat"></span> Hors contrat</span>
       <span><span class="badge regularisation">±h</span> Régularisation (Employés → Heures +/-)</span>
+      <span class="text-muted">Colonne « Total » : heures prévues dans la semaine (absences non déduites).</span>
       <span class="text-muted">H +/- : solde cumulé à la fin du mois.</span>
-      <span class="text-muted">Dernières lignes : déplacements des admins (IK), hors État préparatoire.</span>
-      <span class="text-muted">Cliquez sur une case pour saisir des heures en plus / en moins ou un déplacement.</span>
+      <span class="text-muted">Dernières lignes : planning et déplacements des admins (IK, hors État préparatoire), puis le nombre de présents.</span>
+      <span class="text-muted">Cliquez sur une case pour saisir des heures en plus / en moins, un déplacement ou un horaire exceptionnel.</span>
     </div>
 
     <JourModal
@@ -148,7 +178,8 @@ import { useMoisUrl } from '../../composables/useMoisUrl'
 import { useSaisieJour } from '../../composables/useSaisieJour'
 import api, { messageErreur } from '../../services/api'
 import { useReferentielStore } from '../../stores/referentiel'
-import { JOURS_COURTS, absenceDuJour, aujourdhuiIso, ferie, formatFr, formatMinutes, formatNombre, jourSemaine, joursDuMois, titreRegularisation } from '../../utils/dates'
+import { JOURS_COURTS, absenceDuJour, ajouterJours, aujourdhuiIso, ferie, formatFr, formatMinutes, formatNombre, jourSemaine, joursDuMois, titreRegularisation } from '../../utils/dates'
+import { COULEUR_ABSENCE, PLAGES, demiJourneesDuJour, fondDemiJournee, formatDuree, formatHeure, lignesHoraires, numeroSemaine, presentsFermeture, sousSeuilFermeture } from '../../utils/planning'
 
 const referentiel = useReferentielStore()
 const mois = useMoisUrl()
@@ -175,6 +206,9 @@ watch(mois, () => {
   charger()
 }, { immediate: true })
 referentiel.chargerMotifs()
+
+const seuils = ref({ seuil_semaine: null, seuil_samedi: null })
+api.get('/parametres/presence').then(({ data }) => { seuils.value = data }).catch(() => {})
 
 const conteneur = ref(null)
 
@@ -204,12 +238,14 @@ const jours = computed(() => {
     const libelleFerie = ferie(iso)
     const fermeture = fermetures.get(iso)
     return {
+      cle: iso,
       iso,
       numero: Number(iso.slice(8)),
       initiale: JOURS_COURTS[jourSemaine(iso)].slice(0, 2),
       lignes: [formatFr(iso), libelleFerie, fermeture].filter(Boolean),
+      demis: demiJourneesDuJour(iso),
+      ferme: !!libelleFerie || !!fermeture,
       classes: {
-        dimanche: jourSemaine(iso) === 6,
         ferie: !!libelleFerie,
         fermeture: !!fermeture,
         aujourdhui: iso === aujourdhui
@@ -217,6 +253,41 @@ const jours = computed(() => {
     }
   })
 })
+
+// La colonne du dimanche est remplacée par le total de la semaine ; une semaine qui déborde sur le mois suivant
+// a son total après le dernier jour du mois.
+const colonnes = computed(() => {
+  const resultat = []
+  const semaine = (iso) => {
+    const lundi = ajouterJours(iso, -jourSemaine(iso))
+    return { cle: `semaine-${lundi}`, semaine: true, lundi, numero: numeroSemaine(lundi) }
+  }
+  for (const jour of jours.value) {
+    resultat.push(jourSemaine(jour.iso) === 6 ? semaine(jour.iso) : jour)
+  }
+  const dernier = jours.value[jours.value.length - 1]
+  if (dernier && jourSemaine(dernier.iso) !== 6) resultat.push(semaine(dernier.iso))
+  return resultat
+})
+
+const personnes = computed(() => [...donnees.value.employes, ...(donnees.value.admins || [])])
+
+const totalSemaine = (personne, col) => formatDuree(personne.totaux_semaines?.[col.lundi] || 0)
+
+const sousSeuil = (iso, demi) => sousSeuilFermeture(presentsFermeture(personnes.value, iso, demi), iso, seuils.value)
+
+const titrePresents = (iso, demi) => {
+  const lignes = [`${presentsFermeture(personnes.value, iso, demi)} présent(s) à la fermeture de ${formatHeure(PLAGES[demi][1])}`]
+  if (sousSeuil(iso, demi)) lignes.push('Sous le seuil défini dans Paramètres')
+  return lignes
+}
+
+// Jours fériés et de fermeture : la présence prévue reste visible, mais grisée.
+const styleDemi = (personne, col, demi) => {
+  const couleur = col.ferme ? COULEUR_ABSENCE : personne.couleur
+  const fond = fondDemiJournee(personne.planning?.[col.iso]?.[demi], demi, couleur)
+  return fond ? { background: fond } : null
+}
 
 const absence = (employe, iso) => absenceDuJour(employe.absences, iso)
 
@@ -249,15 +320,11 @@ const titreKm = (employe) => {
 const horsContrat = (employe, iso) =>
   !employe.contrats.some((c) => c.date_debut <= iso && (!c.date_fin || c.date_fin >= iso))
 
-const styleCase = (employe, iso) => {
-  const a = absence(employe, iso)
-  return a ? { background: a.motif_couleur, color: '#fff' } : null
-}
-
 const titreCase = (employe, jour) => {
   const a = absence(employe, jour.iso)
   const lignes = [`${employe.prenom} ${employe.nom}`, ...jour.lignes]
   if (a) lignes.push(`${a.motif_libelle}${a.date_reprise ? ` (reprise le ${formatFr(a.date_reprise)})` : ' (en cours)'}`)
+  else lignes.push(...lignesHoraires(employe.planning?.[jour.iso]))
   if (employe.heures[jour.iso]) lignes.push(`Heures : ${formatMinutes(employe.heures[jour.iso])}`)
   const deplacements = deplacementsDuJour(employe, jour.iso)
   if (deplacements.length) {
@@ -283,7 +350,10 @@ const apresSaisieAdmin = async () => {
 }
 const titreCaseAdmin = (admin, jour) => {
   const deplacements = deplacementsDuJour(admin, jour.iso)
-  return [admin.nom, ...jour.lignes, ...deplacements.map((d) => `• ${d.motif} — ${formatNombre(d.km)} km`)]
+  return [
+    admin.nom, ...jour.lignes, ...lignesHoraires(admin.planning?.[jour.iso]),
+    ...deplacements.map((d) => `• ${d.motif} — ${formatNombre(d.km)} km`)
+  ]
 }
 </script>
 
@@ -330,30 +400,100 @@ const titreCaseAdmin = (admin, jour) => {
   box-shadow: 2px 0 3px -2px rgba(0, 0, 0, 0.25);
 }
 
-thead .col-employe {
+.tableau-mois thead .col-employe {
   z-index: 3;
 }
 
 .col-jour,
 .case {
-  min-width: 34px;
+  min-width: 58px;
   text-align: center;
   padding: 2px !important;
 }
 
 .case {
   cursor: pointer;
-  height: 46px;
+  height: 52px;
+  vertical-align: top;
+}
+
+/* Bande de présence : une demi-case pour le matin, une pour l'après-midi (le samedi : le matin seul). */
+.planning-jour {
+  display: flex;
+  gap: 2px;
+  height: 12px;
+  margin-bottom: 2px;
+}
+
+.planning-jour .demi {
+  flex: 1;
+  background: #fff;
+  border: 1px solid #ced4da;
+  border-radius: 2px;
+}
+
+.planning-jour.exception .demi {
+  border: 1px dashed #212529;
+}
+
+.planning-jour .barre-absence,
+.legende.absent {
+  background: repeating-linear-gradient(-45deg, #e9ecef 0 3px, #ced4da 3px 6px);
+  border-color: #adb5bd;
+}
+
+.col-semaine {
+  min-width: 52px;
+  text-align: center;
+  font-weight: 600;
+  white-space: nowrap;
+  vertical-align: middle;
+  background: #f1f3f5;
+}
+
+thead .col-semaine {
+  background: #e9ecef;
+}
+
+.ligne-presents th,
+.ligne-presents td {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+  background: #f8f9fa;
+  border-top: 2px solid #adb5bd;
+  font-weight: 600;
+}
+
+.ligne-presents .col-employe,
+.ligne-presents .col-km,
+.ligne-presents .col-hpm {
+  z-index: 2;
+}
+
+.comptes-jour {
+  display: flex;
+  justify-content: flex-end;
+  gap: 2px;
+}
+
+/* Toujours une demi-largeur : le chiffre unique du samedi occupe la moitié droite. */
+.compte-demi {
+  flex: 0 0 calc(50% - 1px);
+  text-align: right;
+  padding: 0 3px;
+  border-radius: 2px;
+}
+
+.compte-demi.sous-seuil {
+  background: var(--bs-danger);
+  color: #fff;
 }
 
 .case:hover,
 .case:focus {
   outline: 2px solid var(--pharma-vert);
   outline-offset: -2px;
-}
-
-.dimanche {
-  background: var(--case-dimanche);
 }
 
 .ferie {
@@ -377,6 +517,7 @@ thead .aujourdhui {
 .code-absence {
   font-weight: 700;
   font-size: 0.7rem;
+  color: #6c757d;
 }
 
 .heures {
@@ -423,8 +564,8 @@ thead .aujourdhui {
   box-shadow: -2px 0 3px -2px rgba(0, 0, 0, 0.25);
 }
 
-thead .col-km,
-thead .col-hpm {
+.tableau-mois thead .col-km,
+.tableau-mois thead .col-hpm {
   z-index: 3;
 }
 
@@ -452,8 +593,17 @@ thead .col-hpm {
   border: 1px solid #ccc;
 }
 
-.legende.dimanche {
-  background: var(--case-dimanche);
+.legende.absent {
+  width: 28px;
+}
+
+.legende.planning {
+  width: 28px;
+  background: linear-gradient(to right, #fff 30%, #81c784 30%);
+}
+
+.legende.planning.exception {
+  border: 1px dashed #212529;
 }
 
 .legende.ferie {

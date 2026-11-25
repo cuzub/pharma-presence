@@ -36,6 +36,35 @@ Par défaut, chaque employé est **présent**. Vous ne saisissez que les excepti
   déplacement, quel que soit le mois. Les km du jour s'affichent sous les minutes, et le total
   des km par employé figure dans la colonne *Km*.
 
+## Planning de présence
+
+Le planning est une **prévision** : il ne crée aucune heure +/- et n'apparaît pas dans l'export
+pour le comptable.
+
+- **Horaires habituels** : *Employés* → bouton **calendrier** de l'employé (ou **Mon planning** en
+  haut de la page pour vos propres horaires). Saisissez pour chaque jour, du lundi au samedi, l'heure
+  d'arrivée et de départ du **matin** (entre 9h et 12h30) et de l'**après-midi** (entre 13h30 et
+  19h30 ; pas d'après-midi le samedi). La **semaine 1** s'applique aux semaines impaires du calendrier,
+  la **semaine 2** aux semaines paires ; le bouton *Semaine 1 → semaine 2* recopie les horaires.
+  Laissez une demi-journée vide si la personne ne travaille pas.
+- **Changement d'horaires** : choisissez *Nouveau planning…*, indiquez la date à partir de laquelle
+  il s'applique, puis enregistrez. Les semaines précédentes gardent l'ancien planning.
+- **Événement exceptionnel** : *Tableau* → clic sur la case du jour → *Horaires de présence* →
+  modifiez les heures (videz une demi-journée si la personne n'est pas là) → *Enregistrer* (le bouton
+  unique en bas de la fenêtre enregistre aussi les heures et les déplacements). La case est alors
+  entourée de pointillés ; *Revenir au planning habituel* annule
+  l'exception.
+- **Dans le Tableau du mois** : chaque jour est découpé en deux (matin | après-midi), remplis à la
+  **couleur** de la personne au prorata de sa présence (arrivée à 10h : la case reste blanche de 9h à
+  10h). Vous êtes en **cyan**. La couleur d'un employé se change dans *Employés* → *Gérer*. Un jour
+  d'absence affiche une **barre grise hachurée** à la place des horaires, avec le code du motif
+  dessous (*CP*, *MAL*…). La colonne du dimanche donne le **total d'heures
+  prévues de la semaine** (absences non déduites), et la dernière ligne, **Présents**, le nombre
+  de personnes prévues **à la fermeture de 12h30 et de 19h30** (deux chiffres par jour, un seul le
+  samedi ; absents non comptés). Un chiffre s'affiche **en blanc sur fond rouge** s'il est inférieur
+  au seuil réglé dans **Paramètres** → *Présents à la fermeture* (un seuil pour la semaine, midi et
+  soir, un pour le samedi ; vide = pas d'alerte).
+
 ## Régulariser les heures +/- (crédit ou débit)
 
 Menu **Employés** : la colonne *Solde H +/-* donne le compteur de chacun à ce jour. Le bouton

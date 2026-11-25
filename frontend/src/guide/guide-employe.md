@@ -8,6 +8,9 @@ solde d'heures.
 - **Mon mois** : vos absences sont saisies par la pharmacienne ; une erreur ? Signalez-la-lui.
   Les **régularisations** (heures payées, récupérations…) qu'elle enregistre apparaissent en violet
   à leur date. Le résumé donne le net du mois et votre **solde cumulé** d'heures +/-.
+- **Planning** : vos horaires prévus (matin et après-midi) s'affichent sous chaque date
+  (« Pas présent(e) » si vous ne travaillez pas ce jour-là ; rien les jours d'absence). Ils sont
+  saisis par la pharmacienne ; pour un changement, adressez-vous à elle.
 - **Heures en plus / en moins** : dans *Mon mois*, cliquez sur la date → saisissez les minutes
   (`15`, `-30`) → *Enregistrer*. Pour effacer, cliquez sur la gomme (elle vide le champ, à enregistrer).
   Mêmes règles de date que pour les déplacements ci-dessous.

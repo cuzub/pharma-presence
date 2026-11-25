@@ -4,7 +4,7 @@ from flask import Blueprint, jsonify
 from flask_jwt_extended import current_user
 
 from app.extensions import db
-from app.models import ParametresIK, ParametresMail
+from app.models import ParametresIK, ParametresMail, ParametresPresence
 from app.securite import admin_requis
 from app.utils import ApiError, donnees_json, parse_decimal, texte
 
@@ -79,3 +79,49 @@ def modifier_ik():
     parametres.updated_by_id = current_user.id
     db.session.commit()
     return jsonify(_reponse_ik()), 200
+
+
+_SEUIL_MAX = 99
+_LIBELLES_SEUIL = {'seuil_semaine': 'Seuil en semaine', 'seuil_samedi': 'Seuil du samedi'}
+
+
+def _seuil(data, cle):
+    """Entier de 0 à 99, ou None si vide (pas d'alerte)."""
+    valeur = data.get(cle)
+    if valeur is None or (isinstance(valeur, str) and not valeur.strip()):
+        return None
+    libelle = _LIBELLES_SEUIL[cle]
+    try:
+        if isinstance(valeur, bool):
+            raise ValueError
+        entier = int(str(valeur).strip())
+    except ValueError:
+        raise ApiError(f'{libelle} : nombre entier attendu') from None
+    if not 0 <= entier <= _SEUIL_MAX:
+        raise ApiError(f'{libelle} : entre 0 et {_SEUIL_MAX}')
+    return entier
+
+
+@parametres_bp.route('/presence', methods=['GET'])
+@admin_requis
+def lire_presence():
+    parametres = db.session.get(ParametresPresence, 1)
+    return jsonify(parametres.to_dict() if parametres else {'seuil_semaine': None, 'seuil_samedi': None}), 200
+
+
+@parametres_bp.route('/presence', methods=['PUT'])
+@admin_requis
+def modifier_presence():
+    data = donnees_json()
+    seuil_semaine = _seuil(data, 'seuil_semaine')
+    seuil_samedi = _seuil(data, 'seuil_samedi')
+
+    parametres = db.session.get(ParametresPresence, 1)
+    if parametres is None:
+        parametres = ParametresPresence(id=1)
+        db.session.add(parametres)
+    parametres.seuil_semaine = seuil_semaine
+    parametres.seuil_samedi = seuil_samedi
+    parametres.updated_by_id = current_user.id
+    db.session.commit()
+    return jsonify(parametres.to_dict()), 200

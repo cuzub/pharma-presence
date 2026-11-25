@@ -8,10 +8,12 @@ from sqlalchemy import text
 
 from app.extensions import db
 from app.models import (
-    Absence, Contrat, Deplacement, Employe, HeuresEnPlus, MotifAbsence, MotifDeplacement, RegularisationHeures, Utilisateur,
+    Absence, Contrat, Deplacement, Employe, HeuresEnPlus, MotifAbsence, MotifDeplacement, RegularisationHeures, TramePlanning,
+    Utilisateur,
 )
 
 _TABLES_DEMO = [
+    'trames_planning', 'exceptions_planning',
     'parametres_ik', 'journal_modifications', 'regularisations_heures', 'heures_en_plus', 'deplacements', 'motifs_deplacement',
     'absences', 'contrats', 'employes', 'jours_fermeture',
 ]
@@ -95,7 +97,7 @@ def _creer_demo():
     for index, (nom, prenom, heures, tendance) in enumerate(_EQUIPE_DEMO):
         utilisateur = Utilisateur(identifiant=prenom.lower().replace('é', 'e'), role=Utilisateur.ROLE_EMPLOYE)
         utilisateur.definir_mot_de_passe('employe-demo-1234', provisoire=False)
-        employe = Employe(nom=nom, prenom=prenom, utilisateur=utilisateur)
+        employe = Employe(nom=nom, prenom=prenom, utilisateur=utilisateur, couleur=Employe.PALETTE[index])
         db.session.add_all([utilisateur, employe, Contrat(employe=employe, heures_mensuelles=heures, date_debut=date(2024, 1, 1))])
         db.session.flush()
 
@@ -142,6 +144,7 @@ def _creer_demo():
 
     # Trajets de l'admin (IK), une dizaine sur deux ans.
     db.session.flush()
+    _planning_demo(admin, employes, debut_historique)
     jour = debut_historique
     while jour <= aujourdhui:
         if jour.weekday() != 6 and hasard.random() < 0.015:
@@ -151,3 +154,23 @@ def _creer_demo():
             ))
         jour += timedelta(days=1)
     db.session.commit()
+
+
+def _planning_demo(admin, employes, debut):
+    """Trames semaine 1 / semaine 2 fictives : journées complètes, mi-temps, samedis en alternance."""
+    journee = {'matin': ['09:00', '12:30'], 'apres_midi': ['14:30', '19:30']}
+    matin = {'matin': ['09:00', '12:30'], 'apres_midi': None}
+    apres_midi = {'matin': None, 'apres_midi': ['13:30', '19:30']}
+    repos = {'matin': None, 'apres_midi': None}
+    tard = {'matin': ['10:00', '12:30'], 'apres_midi': ['14:30', '19:30']}
+    trames = {
+        'Alice': ([journee, journee, repos, journee, journee, matin], [journee, journee, journee, journee, repos, repos]),
+        'Bruno': ([tard, journee, journee, repos, journee, repos], [journee, repos, journee, journee, journee, matin]),
+        'Chloé': ([journee, repos, journee, journee, repos, matin], [repos, journee, journee, repos, journee, repos]),
+        'David': ([apres_midi, repos, apres_midi, repos, apres_midi, repos], [repos, apres_midi, repos, apres_midi, repos, matin]),
+        'Emma': ([journee, journee, journee, repos, tard, repos], [journee, journee, repos, journee, journee, matin]),
+    }
+    for prenom, (semaine_1, semaine_2) in trames.items():
+        db.session.add(TramePlanning(employe_id=employes[prenom].id, date_debut=debut, horaires={'1': semaine_1, '2': semaine_2}))
+    elise = [journee, journee, journee, journee, journee, matin]
+    db.session.add(TramePlanning(utilisateur_id=admin.id, date_debut=debut, horaires={'1': elise, '2': elise}))

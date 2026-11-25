@@ -105,6 +105,23 @@
           </dl>
         </div>
       </div>
+
+      <div>
+        <div class="carte h-100">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <h2 class="h6 mb-0">Présents à la fermeture</h2>
+            <button type="button" class="btn btn-sm btn-outline-primary" aria-label="Modifier les seuils de présents" v-infobulle="'Modifier le nombre minimal de présents à la fermeture'" @click="ouvrir('presence')">
+              <i class="bi bi-pencil"></i>
+            </button>
+          </div>
+          <dl class="small mb-0">
+            <dt>Seuil en semaine (12h30 et 19h30)</dt>
+            <dd class="mb-2">{{ presence.seuil_semaine === '' ? 'Non renseigné' : presence.seuil_semaine }}</dd>
+            <dt>Seuil du samedi (12h30)</dt>
+            <dd class="mb-0">{{ presence.seuil_samedi === '' ? 'Non renseigné' : presence.seuil_samedi }}</dd>
+          </dl>
+        </div>
+      </div>
     </div>
 
     <Modal :ouvert="ouvert === 'absences'" titre="Motifs d'absence" taille="lg" @fermer="fermer">
@@ -239,7 +256,6 @@
           <textarea id="mail-texte" v-model="mail.texte" class="form-control form-control-sm" rows="4" maxlength="5000" placeholder="Bonjour, veuillez trouver ci-joint l'état préparatoire de {mois}."></textarea>
         </div>
         <button type="submit" class="btn btn-sm btn-primary">Enregistrer</button>
-        <span v-if="mailEnregistre" class="small text-success ms-2">Enregistré</span>
       </form>
     </Modal>
 
@@ -259,7 +275,25 @@
           <input id="ik-nom" v-model.trim="ik.nom_affiche" class="form-control form-control-sm" maxlength="100" placeholder="ex : Elise" />
         </div>
         <button type="submit" class="btn btn-sm btn-primary">Enregistrer</button>
-        <span v-if="ikEnregistre" class="small text-success ms-2">Enregistré</span>
+      </form>
+    </Modal>
+
+    <Modal :ouvert="ouvert === 'presence'" titre="Présents à la fermeture" @fermer="fermer">
+      <p class="form-text">
+        Dans la ligne « Présents » du Tableau du mois, le nombre de personnes prévues à la fermeture (12h30 et 19h30)
+        s'affiche sur fond rouge s'il est inférieur au seuil. Laissez vide pour ne pas avoir d'alerte.
+      </p>
+      <div v-if="erreur" class="alert alert-danger py-2 small">{{ erreur }}</div>
+      <form class="mb-0" @submit.prevent="enregistrerPresence">
+        <div class="mb-2">
+          <label for="presence-semaine" class="form-label small mb-1">Seuil en semaine (fermetures 12h30 et 19h30)</label>
+          <input id="presence-semaine" v-model.trim="presence.seuil_semaine" type="number" min="0" max="99" step="1" class="form-control form-control-sm" />
+        </div>
+        <div class="mb-2">
+          <label for="presence-samedi" class="form-label small mb-1">Seuil du samedi (fermeture 12h30)</label>
+          <input id="presence-samedi" v-model.trim="presence.seuil_samedi" type="number" min="0" max="99" step="1" class="form-control form-control-sm" />
+        </div>
+        <button type="submit" class="btn btn-sm btn-primary">Enregistrer</button>
       </form>
     </Modal>
   </div>
@@ -285,9 +319,8 @@ const nouveauMotif = reactive({ code: '', libelle: '', couleur: '#6c757d', bloqu
 const nouveauMotifDeplacement = reactive({ libelle: '', km: '' })
 const nouvelleFermeture = reactive({ date: '', libelle: '' })
 const mail = reactive({ destinataire: '', titre: '', texte: '' })
-const mailEnregistre = ref(false)
 const ik = reactive({ coefficient: '', nom_affiche: '' })
-const ikEnregistre = ref(false)
+const presence = reactive({ seuil_semaine: '', seuil_samedi: '' })
 const formatCoefficient = (c) => (c ? `${c} €/km` : '')
 
 const fermeturesAVenir = computed(() => {
@@ -321,8 +354,6 @@ const action = async (requete) => {
 
 const ouvrir = (nom) => {
   erreur.value = ''
-  mailEnregistre.value = false
-  ikEnregistre.value = false
   ouvert.value = nom
 }
 
@@ -331,13 +362,17 @@ const fermer = () => {
   ouvert.value = null
 }
 
-const enregistrerMotif = (m) => action(() => api.put(`/motifs/${m.id}`, m))
+const enregistrerEtFermer = async (requete) => {
+  if (await action(requete)) fermer()
+}
+
+const enregistrerMotif = (m) => enregistrerEtFermer(() => api.put(`/motifs/${m.id}`, m))
 
 const ajouterMotif = async () => {
   if (await action(() => api.post('/motifs', nouveauMotif))) Object.assign(nouveauMotif, { code: '', libelle: '', couleur: '#6c757d', bloque_saisie: true })
 }
 
-const enregistrerMotifDeplacement = (m) => action(() => api.put(`/deplacements/motifs/${m.id}`, m))
+const enregistrerMotifDeplacement = (m) => enregistrerEtFermer(() => api.put(`/deplacements/motifs/${m.id}`, m))
 
 const ajouterMotifDeplacement = async () => {
   if (await action(() => api.post('/deplacements/motifs', nouveauMotifDeplacement))) {
@@ -361,10 +396,9 @@ const chargerMail = async () => {
 
 const enregistrerMail = async () => {
   erreur.value = ''
-  mailEnregistre.value = false
   try {
     Object.assign(mail, (await api.put('/parametres/mail', { ...mail })).data)
-    mailEnregistre.value = true
+    fermer()
   } catch (error) {
     erreur.value = await messageErreur(error)
   }
@@ -385,11 +419,33 @@ const chargerIk = async () => {
 
 const enregistrerIk = async () => {
   erreur.value = ''
-  ikEnregistre.value = false
   try {
     appliquerIk((await api.put('/parametres/ik', { coefficient: ik.coefficient, nom_affiche: ik.nom_affiche })).data)
-    ikEnregistre.value = true
+    fermer()
     await useAuthStore().chargerSession()
+  } catch (error) {
+    erreur.value = await messageErreur(error)
+  }
+}
+
+const appliquerPresence = (data) => {
+  presence.seuil_semaine = data.seuil_semaine ?? ''
+  presence.seuil_samedi = data.seuil_samedi ?? ''
+}
+
+const chargerPresence = async () => {
+  try {
+    appliquerPresence((await api.get('/parametres/presence')).data)
+  } catch (error) {
+    erreur.value = await messageErreur(error)
+  }
+}
+
+const enregistrerPresence = async () => {
+  erreur.value = ''
+  try {
+    appliquerPresence((await api.put('/parametres/presence', { ...presence })).data)
+    fermer()
   } catch (error) {
     erreur.value = await messageErreur(error)
   }
@@ -399,6 +455,7 @@ onMounted(() => {
   charger()
   chargerMail()
   chargerIk()
+  chargerPresence()
 })
 </script>
 

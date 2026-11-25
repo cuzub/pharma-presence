@@ -41,11 +41,11 @@ test('arrivée d’un employé, heures +/-, déplacements déclaratifs, historiq
   const ligne = page.locator('tr', { hasText: nom })
   await ligne.locator(`td[data-jour="${mois}-02"]`).click()
   await page.fill('#jour-minutes', '90')
-  await page.locator('.modal-body form button[type=submit]').click()
+  await page.locator('.modal-body form[data-saisie-jour] button[type=submit]').click()
   await expect(ligne.locator(`td[data-jour="${mois}-02"]`)).toHaveText('+1h30')
   await ligne.locator(`td[data-jour="${mois}-05"]`).click()
   await page.fill('#jour-minutes', '-30')
-  await page.locator('.modal-body form button[type=submit]').click()
+  await page.locator('.modal-body form[data-saisie-jour] button[type=submit]').click()
   await expect(ligne.locator(`td[data-jour="${mois}-05"]`)).toHaveText('-30min')
   await expect(ligne.locator('td.col-total').first()).toHaveText('+1h')
 
@@ -102,7 +102,7 @@ test('arrivée d’un employé, heures +/-, déplacements déclaratifs, historiq
   // L'employé saisit ses heures +/- depuis le calendrier (clic sur la date).
   await page.locator(`[data-jour="${mois}-07"]`).click()
   await page.fill('#jour-minutes', '45')
-  await page.locator('.modal-body form button[type=submit]').click()
+  await page.locator('.modal-body form[data-saisie-jour] button[type=submit]').click()
   await expect(page.locator(`[data-jour="${mois}-07"] .badge`)).toHaveText('+45min')
 
   // Clic sur la date → motif du déplacement dans le même formulaire : les km sont remplis automatiquement.
@@ -212,7 +212,7 @@ test('absence bloquante : conflit signalé, suppression confirmée, saisie refus
   const ligne = page.locator('tr', { hasText: nom })
   await ligne.locator(`td[data-jour="${mois}-10"]`).click()
   await page.fill('#jour-minutes', '30')
-  await page.locator('.modal-body form button[type=submit]').click()
+  await page.locator('.modal-body form[data-saisie-jour] button[type=submit]').click()
   await expect(ligne.locator(`td[data-jour="${mois}-10"]`)).toHaveText('+30min')
 
   // L'absence se saisit depuis la vue Employés, via le bouton dédié.
@@ -240,7 +240,7 @@ test('absence bloquante : conflit signalé, suppression confirmée, saisie refus
   await expect(page.locator('[data-jour-bloque]')).toContainText('saisie impossible')
   await expect(page.locator('#jour-minutes')).toBeDisabled()
   await expect(page.locator('#jour-motif')).toBeDisabled()
-  await expect(page.locator('.modal-body form button[type=submit]')).toBeDisabled()
+  await expect(page.locator('.modal-body form[data-saisie-jour] button[type=submit]')).toBeDisabled()
   await page.keyboard.press('Escape')
   await expect(page.locator('.modal.d-block')).toHaveCount(0)
   await deconnecter(page)

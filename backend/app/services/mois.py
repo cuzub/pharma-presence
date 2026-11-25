@@ -6,6 +6,7 @@ from datetime import timedelta
 from sqlalchemy import or_
 
 from app.models import Absence, Deplacement, Employe, HeuresEnPlus, JourFermeture, RegularisationHeures, Utilisateur
+from app.services.planning import COULEUR_ADMIN, bornes_semaines, plannings, serialiser_jours, totaux_semaines
 from app.services.solde import soldes_jusqua
 from app.utils import format_date_fr
 
@@ -145,15 +146,29 @@ def lignes_admins(debut, fin, utilisateur_courant):
     } for a in admins]
 
 
+def _jour_sous_contrat(contrats):
+    """Le planning ne s'affiche et ne compte que les jours couverts par un contrat."""
+    return lambda jour: any(c.chevauche(jour, jour) for c in contrats)
+
+
 def serialiser_mois(debut, fin, lignes, admins=None):
     fermetures = JourFermeture.query.filter(JourFermeture.date.between(debut, fin)).order_by(JourFermeture.date).all()
+    admins = admins or []
+    debut_semaines, fin_semaines = bornes_semaines(debut, fin)
+    horaires = plannings(
+        debut_semaines, fin_semaines,
+        employe_ids=[ligne['employe'].id for ligne in lignes], utilisateur_ids=[a['id'] for a in admins],
+    )
     employes = []
     for ligne in lignes:
         employe = ligne['employe']
+        jours = horaires[('employe', employe.id)]
+        sous_contrat = _jour_sous_contrat(employe.contrats)
         data = {
             'id': employe.id,
             'nom': employe.nom,
             'prenom': employe.prenom,
+            'couleur': employe.couleur,
             'contrats': [c.to_dict() for c in ligne['contrats']],
             'absences': [a.to_dict() for a in ligne['absences']],
             'heures': {jour.isoformat(): valeur for jour, valeur in sorted(ligne['heures'].items())},
@@ -163,8 +178,17 @@ def serialiser_mois(debut, fin, lignes, admins=None):
             'total_km': ligne['total_km'],
             'mouvements': ligne['mouvements'],
             'deplacements': [d.to_dict() for d in ligne['deplacements']],
+            'planning': serialiser_jours({j: v for j, v in jours.items() if sous_contrat(j)}),
+            'totaux_semaines': totaux_semaines(jours, debut_semaines, fin_semaines, sous_contrat),
         }
         employes.append(data)
+    for admin in admins:
+        jours = horaires[('admin', admin['id'])]
+        admin.update({
+            'couleur': COULEUR_ADMIN,
+            'planning': serialiser_jours(jours),
+            'totaux_semaines': totaux_semaines(jours, debut_semaines, fin_semaines),
+        })
     return {
         'mois': debut.strftime('%Y-%m'),
         'libelle': libelle_mois(debut),
@@ -172,7 +196,7 @@ def serialiser_mois(debut, fin, lignes, admins=None):
         'fin': fin.isoformat(),
         'jours_fermeture': [j.to_dict() for j in fermetures],
         'employes': employes,
-        'admins': admins or [],
+        'admins': admins,
     }
 
 

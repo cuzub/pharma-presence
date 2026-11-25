@@ -83,9 +83,8 @@ L'outil **enregistre les faits, le comptable interprète**. Aucun calcul de paie
 ## Hors périmètre
 - Tout calcul de paie : classement des heures (complémentaires, supplémentaires 25 % / 50 %), nombre de jours de CP, montant des indemnités kilométriques.
 - Primes et acomptes (pour le moment).
-- Saisie des jours de présence.
 - Demandes de congés.
 - Version mobile.
-- Planning prévisionnel.
 
 IK des admins : voir [ik-admin.md](ik-admin.md).
+Planning de présence par demi-journée : voir [planning-presence.md](planning-presence.md).

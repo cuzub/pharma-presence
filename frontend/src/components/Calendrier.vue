@@ -23,6 +23,10 @@
         </div>
         <div v-if="jour.ferie" class="libelle-special">{{ jour.ferie }}</div>
         <div v-else-if="jour.fermeture" class="libelle-special"><i class="bi bi-shop"></i> {{ jour.fermeture }}</div>
+        <div v-if="jour.planning && !jour.absence" class="ligne-planning" :style="{ borderColor: couleur }" :title="jour.lignesPlanning.join(' — ')" data-planning>
+          <i class="bi bi-clock"></i>
+          <span class="text-truncate">{{ jour.textePlanning || 'Pas présent(e)' }}</span>
+        </div>
         <div
           v-for="r in jour.regularisations"
           :key="`r-${r.id}`"
@@ -55,7 +59,7 @@
             <i class="bi bi-pencil"></i>
           </button>
         </div>
-        <span v-if="jour.absence" class="pastille-motif mt-auto" :style="{ background: jour.absence.motif_couleur }">
+        <span v-if="jour.absence" class="pastille-motif mt-auto" :style="{ background: 'var(--case-absence)' }">
           {{ jour.absence.motif_libelle }}
         </span>
       </div>
@@ -66,6 +70,7 @@
 <script setup>
 import { computed } from 'vue'
 import { JOURS_COURTS, absenceDuJour, aujourdhuiIso, ferie, formatFr, formatMinutes, formatNombre, jourSemaine, joursDuMois, titreRegularisation } from '../utils/dates'
+import { DEMI_JOURNEES, lignesHoraires, texteHoraire } from '../utils/planning'
 
 const props = defineProps({
   mois: { type: String, required: true },
@@ -80,6 +85,9 @@ const props = defineProps({
   joursFermeture: { type: Array, default: () => [] },
   // Si fournis, les jours hors contrat sont hachurés.
   contrats: { type: Array, default: null },
+  // Horaires prévus par jour (lecture seule) et couleur de la personne.
+  planning: { type: Object, default: () => ({}) },
+  couleur: { type: String, default: '#6c757d' },
   lectureSeule: { type: Boolean, default: false }
 })
 const emit = defineEmits(['choisir-jour', 'modifier-deplacement'])
@@ -109,6 +117,7 @@ const jours = computed(() => {
     const fermeture = fermetures.get(iso) || null
     const minutes = props.heures[iso] || 0
     const regularisations = regularisationsParJour.get(iso) || []
+    const planning = props.planning[iso] || null
     const titre = [
       formatFr(iso), libelleFerie, fermeture, absence?.motif_libelle, formatMinutes(minutes) || null,
       ...regularisations.map(titreRegularisation)
@@ -121,6 +130,9 @@ const jours = computed(() => {
       absence,
       minutes,
       regularisations,
+      planning,
+      lignesPlanning: lignesHoraires(planning),
+      textePlanning: planning ? DEMI_JOURNEES.map((d) => texteHoraire(planning[d])).filter(Boolean).join(' · ') : '',
       deplacements: deplacementsParJour.get(iso) || [],
       ferie: libelleFerie,
       fermeture,
@@ -233,6 +245,17 @@ const jours = computed(() => {
   font-size: 0.72rem;
   background: var(--regularisation-fond);
   color: var(--regularisation);
+}
+
+.ligne-planning {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  padding: 1px 4px;
+  border-radius: 4px;
+  border-left: 4px solid;
+  font-size: 0.72rem;
+  background: #f8f9fa;
 }
 
 .crayon {

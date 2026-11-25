@@ -18,6 +18,14 @@
           <label for="f-identifiant" class="form-label">Identifiant de connexion</label>
           <input id="f-identifiant" v-model.trim="identite.identifiant" class="form-control" required pattern="[a-z0-9][a-z0-9._\-]{2,39}" />
         </div>
+        <div class="col-sm-6">
+          <label for="f-couleur" class="form-label">Couleur dans le planning</label>
+          <div class="d-flex align-items-center gap-2">
+            <input id="f-couleur" v-model="identite.couleur" type="color" class="form-control form-control-color" />
+            <button v-for="c in PALETTE" :key="c" type="button" class="btn p-0 pastille-choix" :style="{ background: c }" :aria-label="`Couleur ${c}`" :title="c" @click="identite.couleur = c"></button>
+          </div>
+          <div class="form-text">Le cyan est réservé à la pharmacienne.</div>
+        </div>
         <div class="col-12">
           <div class="form-label mb-1">Contrats</div>
           <div v-for="c in contratsEdites" :key="c.id" class="row g-3 align-items-end mb-1">
@@ -62,12 +70,14 @@ const emit = defineEmits(['fermer', 'modifie'])
 const fiche = ref(null)
 const erreur = ref('')
 const message = ref('')
-const identite = reactive({ nom: '', prenom: '', identifiant: '' })
+const identite = reactive({ nom: '', prenom: '', identifiant: '', couleur: '#e57373' })
 const contratsEdites = ref([])
+// Même palette que le serveur (Employe.PALETTE).
+const PALETTE = ['#e57373', '#81c784', '#ffb74d', '#ba68c8', '#f06292', '#aed581', '#ffd54f', '#a1887f', '#7986cb', '#dce775']
 
 const appliquer = (donnees) => {
   fiche.value = donnees
-  Object.assign(identite, { nom: donnees.nom, prenom: donnees.prenom, identifiant: donnees.identifiant })
+  Object.assign(identite, { nom: donnees.nom, prenom: donnees.prenom, identifiant: donnees.identifiant, couleur: donnees.couleur })
   contratsEdites.value = donnees.contrats.map((c) => ({ ...c, date_fin: c.date_fin || '' }))
 }
 
@@ -122,3 +132,11 @@ const supprimerContrat = (c) => {
 }
 </script>
 
+<style scoped>
+.pastille-choix {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 1px solid #adb5bd;
+}
+</style>

@@ -14,6 +14,21 @@ from app.utils import ApiError, donnees_json, parse_date, parse_decimal, texte
 employes_bp = Blueprint('employes', __name__, url_prefix='/api/employes')
 
 _IDENTIFIANT_RE = re.compile(r'^[a-z0-9][a-z0-9._-]{2,39}$')
+_COULEUR_RE = re.compile(r'^#[0-9a-f]{6}$')
+
+
+def _couleur(data):
+    couleur = (data.get('couleur') or '').strip().lower()
+    if not _COULEUR_RE.match(couleur):
+        raise ApiError('Couleur invalide (format #rrggbb attendu)')
+    return couleur
+
+
+def _couleur_libre():
+    """Première couleur de la palette non utilisée par un employé en poste (sinon, rotation)."""
+    utilisees = {e.couleur for e in Employe.query.all() if _est_en_poste(e, date.today())}
+    libres = [c for c in Employe.PALETTE if c not in utilisees]
+    return libres[0] if libres else Employe.PALETTE[Employe.query.count() % len(Employe.PALETTE)]
 
 
 def _identifiant(data):
@@ -75,7 +90,7 @@ def creer():
 
     utilisateur = Utilisateur(identifiant=identifiant, role=Utilisateur.ROLE_EMPLOYE, actif=True)
     utilisateur.definir_mot_de_passe(mot_de_passe, provisoire=True)
-    employe = Employe(nom=nom, prenom=prenom, utilisateur=utilisateur)
+    employe = Employe(nom=nom, prenom=prenom, utilisateur=utilisateur, couleur=_couleur(data) if data.get('couleur') else _couleur_libre())
     contrat = Contrat(employe=employe, heures_mensuelles=heures, date_debut=date_entree)
     _tracer(utilisateur, employe, contrat)
     db.session.add_all([utilisateur, employe, contrat])
@@ -96,6 +111,8 @@ def modifier(employe_id):
     data = donnees_json()
     employe.nom = texte(data, 'nom', longueur_max=100)
     employe.prenom = texte(data, 'prenom', longueur_max=100)
+    if 'couleur' in data:
+        employe.couleur = _couleur(data)
     if employe.utilisateur and 'identifiant' in data:
         identifiant = _identifiant(data)
         autre = Utilisateur.query.filter_by(identifiant=identifiant).first()

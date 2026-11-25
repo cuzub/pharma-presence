@@ -14,6 +14,15 @@ indemnités kilométriques). Voir [docs/intent/suivi-presence-pharmacie.md](docs
   des heures en plus / en moins (en minutes, par 5 : `15`, `-30`), une absence ou un déplacement.
 - Tableau du mois : colonnes Employé, H +/- et Km figées, km du jour sous les minutes. H +/- = solde
   cumulé à la fin du mois affiché (tout l'historique, régularisations comprises).
+- Planning de présence (prévisionnel) : horaires semaine 1 (ISO impaire) / semaine 2 (ISO paire)
+  par employé et pour la pharmacienne (Employés → calendrier, ou « Mon planning »), avec date de
+  début ; horaires exceptionnels à la journée depuis le Tableau du mois. Chaque jour est découpé en
+  matin (9h-12h30) et après-midi (13h30-19h30, pas le samedi), remplis au prorata à la couleur de la
+  personne (réglable dans la fiche employé ; cyan pour la pharmacienne). Absences en barre grise
+  hachurée avec le code du motif ; colonne
+  du dimanche = total d'heures prévues de la semaine (absences non déduites) ; ligne « Présents » =
+  personnes prévues à la fermeture de 12h30 et de 19h30 (samedi : 12h30), en blanc sur fond rouge
+  sous le seuil réglé dans Paramètres (semaine / samedi). Sans effet sur les heures +/- ni sur l'export.
 - Régularisations d'heures +/- (Employés → Heures +/-) : crédit ou débit daté avec commentaire facultatif
   (heures payées, récupération, solde de départ, correction), affiché en violet dans le tableau et le
   calendrier de l'employé, compté dans le solde et les statistiques, absent de l'export.
@@ -36,10 +45,10 @@ indemnités kilométriques). Voir [docs/intent/suivi-presence-pharmacie.md](docs
   propres déplacements (hors État préparatoire) ; export Excel annuel « Télécharger mes IK » (km et
   montant par mois, totaux) ; coefficient IK dans Paramètres.
 - Paramètres : motifs d'absence (avec l'option « Bloque heures et déplacements »), motifs de
-  déplacement (destination + km), jours de fermeture, coefficient IK.
+  déplacement (destination + km), jours de fermeture, coefficient IK, seuils de présents à la fermeture.
 
 **Employé**
-- « Mon mois » : calendrier (absences et régularisations en lecture seule) et résumé (net du mois,
+- « Mon mois » : calendrier (absences, régularisations et horaires du planning en lecture seule) et résumé (net du mois,
   solde cumulé) ; clic sur une date pour saisir
   ses heures +/- ou déclarer un déplacement, crayon pour le modifier ou le supprimer (mois en cours,
   et mois précédent jusqu'au 5 inclus).

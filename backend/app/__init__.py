@@ -17,6 +17,8 @@ _CONTRAINTES = {
     'ex_absences_chevauchement': 'Cette absence chevauche une autre absence du même employé',
     'utilisateurs_identifiant_key': 'Cet identifiant est déjà utilisé',
     'uq_heures_employe_jour': 'Des heures sont déjà saisies pour ce jour',
+    'uq_trames_planning_employe_debut': 'Un planning commence déjà à cette date',
+    'uq_trames_planning_utilisateur_debut': 'Un planning commence déjà à cette date',
 }
 
 
@@ -74,13 +76,14 @@ def create_app(config_name=None):
     from app.routes.journal import journal_bp
     from app.routes.mois import mois_bp
     from app.routes.parametres import parametres_bp
+    from app.routes.planning import planning_bp
     from app.routes.regularisations import regularisations_bp
     from app.routes.saisie import saisie_bp
     from app.routes.statistiques import statistiques_bp
 
     for blueprint in (
         auth_bp, employes_bp, absences_bp, deplacements_bp, saisie_bp, mois_bp, journal_bp, statistiques_bp,
-        regularisations_bp, parametres_bp,
+        regularisations_bp, parametres_bp, planning_bp,
     ):
         app.register_blueprint(blueprint)
     _enregistrer_erreurs(app)

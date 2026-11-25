@@ -19,6 +19,8 @@
             :deplacement-modifiable="(d) => saisieModifiableParEmploye(d.date)"
             :jours-fermeture="joursFermeture"
             :contrats="employe.contrats"
+            :planning="employe.planning"
+            :couleur="employe.couleur"
             @choisir-jour="ouvrirJour"
             @modifier-deplacement="ouvrirJour"
           />

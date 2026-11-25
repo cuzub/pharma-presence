@@ -80,10 +80,15 @@ class Utilisateur(Horodatage, db.Model):
 class Employe(Horodatage, db.Model):
     __tablename__ = 'employes'
 
+    # Couleurs proposées aux nouveaux employés (le cyan est réservé aux admins).
+    PALETTE = ['#e57373', '#81c784', '#ffb74d', '#ba68c8', '#f06292', '#aed581', '#ffd54f', '#a1887f', '#7986cb', '#dce775']
+
     id = db.Column(db.Integer, primary_key=True)
     utilisateur_id = db.Column(db.Integer, db.ForeignKey('utilisateurs.id'), nullable=True, unique=True)
     nom = db.Column(db.String(100), nullable=False)
     prenom = db.Column(db.String(100), nullable=False)
+    # Couleur des présences dans le planning (#rrggbb).
+    couleur = db.Column(db.String(7), nullable=False, default=PALETTE[0], server_default=PALETTE[0])
 
     utilisateur = db.relationship('Utilisateur', back_populates='employe', foreign_keys=[utilisateur_id])
     contrats = db.relationship(
@@ -128,6 +133,7 @@ class Employe(Horodatage, db.Model):
             'id': self.id,
             'nom': self.nom,
             'prenom': self.prenom,
+            'couleur': self.couleur,
             'identifiant': self.utilisateur.identifiant if self.utilisateur else None,
             'actif': bool(self.utilisateur and self.utilisateur.actif),
             'date_entree': _iso(self.date_entree),
@@ -340,6 +346,64 @@ class Deplacement(Horodatage, db.Model):
         }
 
 
+class TramePlanning(Horodatage, db.Model):
+    """Horaires habituels (semaine 1 = semaine ISO impaire, semaine 2 = paire), applicables à partir de date_debut.
+
+    horaires = {'1': [jour lundi…samedi], '2': [...]}, chaque jour = {'matin': ['HH:MM', 'HH:MM'] | None, 'apres_midi': ...}.
+    """
+
+    __tablename__ = 'trames_planning'
+
+    id = db.Column(db.Integer, primary_key=True)
+    # Exactement un des deux titulaires : un employé, ou un admin (sans fiche Employe).
+    employe_id = db.Column(db.Integer, db.ForeignKey('employes.id', ondelete='CASCADE'), nullable=True, index=True)
+    utilisateur_id = db.Column(db.Integer, db.ForeignKey('utilisateurs.id', ondelete='CASCADE'), nullable=True, index=True)
+    date_debut = db.Column(db.Date, nullable=False)
+    horaires = db.Column(db.JSON, nullable=False)
+
+    __table_args__ = (
+        db.CheckConstraint('(employe_id IS NULL) <> (utilisateur_id IS NULL)', name='ck_trames_planning_titulaire'),
+        db.UniqueConstraint('employe_id', 'date_debut', name='uq_trames_planning_employe_debut'),
+        db.UniqueConstraint('utilisateur_id', 'date_debut', name='uq_trames_planning_utilisateur_debut'),
+    )
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'employe_id': self.employe_id,
+            'utilisateur_id': self.utilisateur_id,
+            'date_debut': _iso(self.date_debut),
+            'horaires': self.horaires,
+        }
+
+
+class ExceptionPlanning(Horodatage, db.Model):
+    """Horaires d'un jour précis, qui remplacent la trame ce jour-là (None partout = pas présent)."""
+
+    __tablename__ = 'exceptions_planning'
+
+    id = db.Column(db.Integer, primary_key=True)
+    employe_id = db.Column(db.Integer, db.ForeignKey('employes.id', ondelete='CASCADE'), nullable=True, index=True)
+    utilisateur_id = db.Column(db.Integer, db.ForeignKey('utilisateurs.id', ondelete='CASCADE'), nullable=True, index=True)
+    jour = db.Column(db.Date, nullable=False)
+    horaires = db.Column(db.JSON, nullable=False)
+
+    __table_args__ = (
+        db.CheckConstraint('(employe_id IS NULL) <> (utilisateur_id IS NULL)', name='ck_exceptions_planning_titulaire'),
+        db.UniqueConstraint('employe_id', 'jour', name='uq_exceptions_planning_employe_jour'),
+        db.UniqueConstraint('utilisateur_id', 'jour', name='uq_exceptions_planning_utilisateur_jour'),
+    )
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'employe_id': self.employe_id,
+            'utilisateur_id': self.utilisateur_id,
+            'jour': _iso(self.jour),
+            'horaires': self.horaires,
+        }
+
+
 class JourFermeture(Horodatage, db.Model):
     __tablename__ = 'jours_fermeture'
 
@@ -429,3 +493,18 @@ class ParametresIK(Horodatage, db.Model):
 
     def to_dict(self):
         return {'coefficient': float(self.coefficient) if self.coefficient is not None else None}
+
+
+class ParametresPresence(Horodatage, db.Model):
+    """Nombre minimal de présents à la fermeture (semaine / samedi). Table à une seule ligne (id = 1)."""
+
+    __tablename__ = 'parametres_presence'
+
+    id = db.Column(db.Integer, primary_key=True)
+    seuil_semaine = db.Column(db.Integer, nullable=True)
+    seuil_samedi = db.Column(db.Integer, nullable=True)
+
+    __table_args__ = (db.CheckConstraint('id = 1', name='ck_parametres_presence_singleton'),)
+
+    def to_dict(self):
+        return {'seuil_semaine': self.seuil_semaine, 'seuil_samedi': self.seuil_samedi}

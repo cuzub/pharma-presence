@@ -2,9 +2,14 @@
   <div>
     <div class="page-titre">
       <h1 class="h4 mb-0">Employés</h1>
-      <button type="button" class="btn btn-primary" @click="ouvrirCreation">
-        <i class="bi bi-person-plus"></i> Nouvel employé
-      </button>
+      <div class="d-flex gap-2">
+        <button type="button" class="btn btn-outline-primary" v-infobulle="'Mes horaires semaine 1 / semaine 2 (couleur cyan dans le Tableau du mois)'" @click="ouvrirMonPlanning">
+          <i class="bi bi-calendar-week"></i> Mon planning
+        </button>
+        <button type="button" class="btn btn-primary" @click="ouvrirCreation">
+          <i class="bi bi-person-plus"></i> Nouvel employé
+        </button>
+      </div>
     </div>
 
     <ul class="nav nav-tabs mb-3">
@@ -36,7 +41,7 @@
             <td colspan="9" class="text-center text-muted py-4">Aucun employé.</td>
           </tr>
           <tr v-for="e in employes" :key="e.id">
-            <td class="fw-semibold">{{ e.nom }}</td>
+            <td class="fw-semibold"><span class="pastille-couleur" :style="{ background: e.couleur }"></span>{{ e.nom }}</td>
             <td>{{ e.prenom }}</td>
             <td><code>{{ e.identifiant }}</code></td>
             <td class="text-end">{{ formatNombre(e.heures_mensuelles) }} h/mois</td>
@@ -49,7 +54,10 @@
               {{ formatMinutes(e.solde_minutes) || '0' }}
             </td>
             <td class="text-end text-nowrap">
-              <button type="button" class="btn btn-sm btn-secondary" aria-label="Heures +/-" v-infobulle="'Créditer ou débiter des heures +/-'" @click="heuresEmploye = e">
+              <button type="button" class="btn btn-sm btn-secondary" aria-label="Planning" v-infobulle="'Horaires de présence semaine 1 / semaine 2'" @click="planningTitulaire = { employe_id: e.id, nom: `${e.prenom} ${e.nom}` }">
+                <i class="bi bi-calendar-week"></i>
+              </button>
+              <button type="button" class="btn btn-sm btn-secondary ms-1" aria-label="Heures +/-" v-infobulle="'Créditer ou débiter des heures +/-'" @click="heuresEmploye = e">
                 <i class="bi bi-clock-history"></i>
               </button>
               <button type="button" class="btn btn-sm btn-secondary ms-1" aria-label="Absences" v-infobulle="'Saisir, modifier ou supprimer les absences (vacances, maladie…)'" @click="absenceEmploye = e">
@@ -138,6 +146,7 @@
     <HeuresEmployeModal :employe="heuresEmploye" @fermer="heuresEmploye = null" @modifie="charger" />
     <AbsenceModal :ouvert="!!absenceEmploye" :employe="absenceEmploye" @fermer="absenceEmploye = null" @enregistre="charger" />
     <ActionEmployeModal :action="action" @fermer="action = null" @modifie="surAction" />
+    <PlanningTrameModal :titulaire="planningTitulaire" @fermer="planningTitulaire = null" />
   </div>
 </template>
 
@@ -148,7 +157,9 @@ import AbsenceModal from '../../components/AbsenceModal.vue'
 import FicheEmploye from '../../components/FicheEmploye.vue'
 import HeuresEmployeModal from '../../components/HeuresEmployeModal.vue'
 import Modal from '../../components/Modal.vue'
+import PlanningTrameModal from '../../components/PlanningTrameModal.vue'
 import api, { messageErreur } from '../../services/api'
+import { useAuthStore } from '../../stores/auth'
 import { useReferentielStore } from '../../stores/referentiel'
 import { aujourdhuiIso, formatFr, formatMinutes, formatNombre } from '../../utils/dates'
 import { LONGUEUR_MIN_MDP, genererMotDePasse } from '../../utils/motDePasse'
@@ -165,6 +176,11 @@ const erreur = ref('')
 const ficheId = ref(null)
 const heuresEmploye = ref(null)
 const absenceEmploye = ref(null)
+const planningTitulaire = ref(null)
+const auth = useAuthStore()
+const ouvrirMonPlanning = () => {
+  planningTitulaire.value = { nom: auth.nomAffiche }
+}
 const action = ref(null)
 const succes = ref('')
 const creationOuverte = ref(false)
