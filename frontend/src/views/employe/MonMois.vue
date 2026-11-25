@@ -9,7 +9,7 @@
 
     <div v-if="employe" class="row g-3">
       <div class="col-xl-9">
-        <div class="carte">
+        <div class="carte" data-visite="calendrier">
           <Calendrier
             :mois="mois"
             :absences="employe.absences"
@@ -29,6 +29,9 @@
           <i class="bi bi-clock"></i> Pour saisir vos heures +/- ou un déplacement professionnel, cliquez sur la date.
           Possible pour le mois en cours, et pour le mois précédent jusqu'au {{ JOUR_LIMITE_MOIS_PRECEDENT }} inclus.
           Les absences sont saisies par Elise : si quelque chose vous semble inexact, parlez-lui en.
+          <button type="button" class="btn btn-link btn-sm p-0 align-baseline" data-lancer-visite @click="visite.demarrer(false)">
+            <i class="bi bi-compass"></i> Faire la visite guidée
+          </button>
         </p>
       </div>
       <div class="col-xl-3 d-flex flex-column gap-3">
@@ -55,9 +58,11 @@ import JourModal from '../../components/JourModal.vue'
 import MoisNavigateur from '../../components/MoisNavigateur.vue'
 import ResumeMois from '../../components/ResumeMois.vue'
 import { useMoisUrl } from '../../composables/useMoisUrl'
+import { useVisiteGuidee } from '../../composables/useVisiteGuidee'
 import api, { messageErreur } from '../../services/api'
 import { JOUR_LIMITE_MOIS_PRECEDENT, saisieModifiableParEmploye } from '../../utils/dates'
 
+const visite = useVisiteGuidee()
 const mois = useMoisUrl()
 const donnees = ref(null)
 const erreur = ref('')

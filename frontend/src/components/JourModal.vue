@@ -19,6 +19,11 @@
     <form data-saisie-jour @submit.prevent="enregistrer">
       <template v-if="!ligneAdmin">
         <h6 v-if="vueEmploye" class="small fw-semibold mb-2">Heures +/-</h6>
+        <div class="d-flex flex-wrap gap-1 mb-2" role="group" aria-label="Raccourcis heures">
+          <button v-for="r in RACCOURCIS_HEURES" :key="r.minutes" type="button" :class="['btn btn-sm btn-raccourci', r.minutes > 0 ? 'minutes-plus' : 'minutes-moins']" :disabled="bloque" data-raccourci-heures :title="r.minutes > 0 ? 'Ajouter au champ' : 'Retirer du champ'" @click="ajouterMinutes(r.minutes)">
+            {{ r.libelle }}
+          </button>
+        </div>
         <div class="d-flex flex-wrap align-items-end gap-2">
           <div :class="{ 'champ-heures': vueEmploye }">
             <label v-if="!vueEmploye" for="jour-minutes" class="form-label small text-muted mb-1">
@@ -163,6 +168,14 @@ const props = defineProps({
 const emit = defineEmits(['fermer', 'modifie'])
 
 const minutes = ref('')
+const RACCOURCIS_HEURES = [
+  { minutes: 15, libelle: '+15 min' },
+  { minutes: 30, libelle: '+30 min' },
+  { minutes: 45, libelle: '+45 min' },
+  { minutes: 60, libelle: '+1 h' },
+  { minutes: -15, libelle: '−15 min' },
+  { minutes: -30, libelle: '−30 min' }
+]
 const erreur = ref('')
 const enCours = ref(false)
 const champHeures = ref(null)
@@ -307,6 +320,13 @@ const viderHeures = () => {
   minutes.value = ''
 }
 
+// Les raccourcis s'additionnent à la valeur saisie (+15 deux fois = 30 min), dans la limite de 12 h par jour.
+const ajouterMinutes = (delta) => {
+  const actuel = Number(minutes.value) || 0
+  const total = Math.max(-720, Math.min(720, actuel + delta))
+  minutes.value = total === 0 ? '' : total
+}
+
 // --- Horaires du jour (exception au planning) --------------------------------
 const entreePlanning = computed(() => props.employe?.planning?.[props.jour] || null)
 const lignesPlanning = computed(() => lignesHoraires(entreePlanning.value))
@@ -345,6 +365,22 @@ const revenirAuPlanning = () => executer(() => api.delete('/planning/exceptions'
 
 .champ-heures {
   width: 14rem;
+}
+
+.btn-raccourci {
+  border: 1px solid currentColor;
+  font-weight: 600;
+  background: #fff;
+}
+
+.btn-raccourci.minutes-plus:hover:not(:disabled) {
+  background: #2e7d32;
+  color: #fff;
+}
+
+.btn-raccourci.minutes-moins:hover:not(:disabled) {
+  background: #b45309;
+  color: #fff;
 }
 
 .champ-km {

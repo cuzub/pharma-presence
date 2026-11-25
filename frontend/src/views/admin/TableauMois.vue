@@ -362,6 +362,26 @@ const titreCaseAdmin = (admin, jour) => {
   max-height: calc(100vh - 220px);
 }
 
+/* Barre visible qui réserve sa place : une barre superposée (macOS) masquerait la ligne « Présents » collée en bas. */
+.tableau-conteneur::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+.tableau-conteneur::-webkit-scrollbar-track {
+  background: #f1f3f5;
+}
+
+.tableau-conteneur::-webkit-scrollbar-thumb {
+  background: #adb5bd;
+  border-radius: 6px;
+  border: 2px solid #f1f3f5;
+}
+
+.tableau-conteneur::-webkit-scrollbar-thumb:hover {
+  background: #868e96;
+}
+
 /* Le tableau occupe toute la largeur de la carte ; il défile horizontalement s'il est plus large. */
 .tableau-conteneur {
   width: 100%;

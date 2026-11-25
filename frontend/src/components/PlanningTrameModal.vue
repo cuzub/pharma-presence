@@ -147,20 +147,25 @@ const executer = async (action, succes) => {
     await action()
     message.value = succes
     emit('modifie')
+    return true
   } catch (error) {
     erreur.value = await messageErreur(error)
+    return false
   } finally {
     enCours.value = false
   }
 }
 
-const enregistrer = () => executer(async () => {
-  const corps = { date_debut: dateDebut.value, horaires: versApi() }
-  const { data } = trameId.value
-    ? await api.put(`/planning/trames/${trameId.value}`, corps)
-    : await api.post('/planning/trames', { ...corps, ...parametres() })
-  await charger(data.id)
-}, 'Planning enregistré.')
+const enregistrer = async () => {
+  const reussi = await executer(async () => {
+    const corps = { date_debut: dateDebut.value, horaires: versApi() }
+    const { data } = trameId.value
+      ? await api.put(`/planning/trames/${trameId.value}`, corps)
+      : await api.post('/planning/trames', { ...corps, ...parametres() })
+    await charger(data.id)
+  }, 'Planning enregistré.')
+  if (reussi) emit('fermer')
+}
 
 const supprimer = () => {
   if (!confirm('Supprimer ce planning ? Les semaines concernées reprendront le planning précédent (ou aucun).')) return

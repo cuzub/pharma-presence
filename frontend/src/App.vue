@@ -4,12 +4,14 @@
     <main class="container-fluid py-3 px-3 px-lg-4">
       <RouterView />
     </main>
+    <VisiteGuidee v-if="barreVisible" />
   </div>
 </template>
 
 <script setup>
 import { computed } from 'vue'
 import AppHeader from './components/AppHeader.vue'
+import VisiteGuidee from './components/VisiteGuidee.vue'
 import { useAuthStore } from './stores/auth'
 import { useBarreLaterale } from './composables/useBarreLaterale'
 

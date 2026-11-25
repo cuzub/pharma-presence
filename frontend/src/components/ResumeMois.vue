@@ -1,5 +1,5 @@
 <template>
-  <div class="carte">
+  <div class="carte" data-visite="resume">
     <h2 class="h6 text-uppercase text-muted">Résumé du mois</h2>
     <dl class="mb-0 resume">
       <dt>Contrat</dt>

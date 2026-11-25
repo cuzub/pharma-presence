@@ -21,10 +21,16 @@
     </div>
     <ul class="nav flex-column app-sidebar-liens">
       <li v-for="lien in liens" :key="lien.to" class="nav-item">
-        <RouterLink class="nav-link" :to="lien.to" active-class="active" :exact-active-class="lien.to === '/' ? 'active' : ''" :title="lien.libelle">
+        <RouterLink class="nav-link" :to="lien.to" active-class="active" :exact-active-class="lien.to === '/' ? 'active' : ''" :title="lien.libelle" :data-visite="`nav-${lien.to}`">
           <i :class="['bi', lien.icone]"></i>
           <span class="app-sidebar-texte">{{ lien.libelle }}</span>
         </RouterLink>
+      </li>
+      <li class="nav-item">
+        <button type="button" class="nav-link w-100 text-start" title="Visite guidée" data-visite="visite" @click="lancerVisite">
+          <i class="bi bi-compass"></i>
+          <span class="app-sidebar-texte">Visite guidée</span>
+        </button>
       </li>
     </ul>
     <div class="app-sidebar-pied">
@@ -46,11 +52,19 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import { useReferentielStore } from '../stores/referentiel'
 import { useBarreLaterale } from '../composables/useBarreLaterale'
+import { useVisiteGuidee } from '../composables/useVisiteGuidee'
 
 const auth = useAuthStore()
 const referentiel = useReferentielStore()
 const router = useRouter()
 const { reduite, basculer } = useBarreLaterale()
+const visite = useVisiteGuidee()
+
+// L'employé est ramené sur « Mon mois », où se trouvent les éléments présentés.
+const lancerVisite = async () => {
+  if (!auth.estAdmin && router.currentRoute.value.path !== '/mon-mois') await router.push('/mon-mois')
+  visite.demarrer(auth.estAdmin)
+}
 
 const liens = computed(() => auth.estAdmin
   ? [
