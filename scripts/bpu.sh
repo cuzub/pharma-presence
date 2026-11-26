@@ -2,7 +2,7 @@
 # Build, push et update du Raspberry Pi en une commande :
 #   1. scripts/publier-images.sh : construit et publie les images sur Docker Hub, crée le tag git vX.Y.Z
 #   2. scripts/deployer-rpi.sh   : déploie ce tag sur le Raspberry Pi
-# Si l'arbre git contient des modifications, elles sont commitées avant la publication.
+# Si l'arbre git contient des modifications, elles sont commitées avant la publication, puis la branche est poussée.
 #
 # Usage :
 #   ./scripts/bpu.sh                      # version automatique (patch + 1)
@@ -30,6 +30,7 @@ if [ -n "$(git status --porcelain)" ]; then
   git add -A
   git commit -m "$MESSAGE"
 fi
+git push
 
 ./scripts/publier-images.sh "$@"
 ./scripts/deployer-rpi.sh "$@"
