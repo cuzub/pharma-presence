@@ -52,11 +52,13 @@ pour le comptable.
   19h30 ; pas d'après-midi le samedi). La **semaine 1** s'applique aux semaines impaires du calendrier,
   la **semaine 2** aux semaines paires ; le bouton *Semaine 1 → semaine 2* recopie les horaires.
   Laissez une demi-journée vide si la personne ne travaille pas.
-- **Premiers horaires** : ils s'appliquent à partir du 1er janvier de l'année en cours. Pour un employé
-  entré en cours d'année, la date d'application est demandée (sa date d'entrée est proposée).
-- **Changement d'horaires** : à l'enregistrement, choisissez *Corriger* le planning existant (simple
-  correction, sans nouvelle période) ou *Nouveau planning à partir du…* (date du jour proposée).
-  L'ancien planning reste valable jusqu'à la veille de cette date.
+- **Premiers horaires** : par défaut, ils s'appliquent à partir du 1er janvier de l'année en cours (pour un
+  employé entré en cours d'année, sa date d'entrée est proposée). Le champ *Applicable à partir du* est
+  toujours visible et modifiable.
+- **Changement d'horaires** : modifiez les horaires, choisissez la date dans *Applicable à partir du*, puis
+  *Enregistrer* : c'est appliqué tout de suite, sans autre question. Si un planning commence déjà à cette
+  date, il est remplacé ; sinon un nouveau planning commence à cette date et l'ancien reste valable
+  jusqu'à la veille. Le menu *Planning* permet de rouvrir un planning plus ancien.
 - **Événement exceptionnel** : *Tableau* → clic sur la case du jour → *Horaires de présence* →
   modifiez les heures (videz une demi-journée si la personne n'est pas là) → *Enregistrer* (le bouton
   unique en bas de la fenêtre enregistre aussi les heures et les déplacements). La case est alors

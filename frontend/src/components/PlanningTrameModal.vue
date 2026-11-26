@@ -10,7 +10,7 @@
           <option v-for="t in trames" :key="t.id" :value="t.id">À partir du {{ formatFr(t.date_debut) }}</option>
         </select>
       </div>
-      <div v-else-if="demanderDate">
+      <div>
         <label for="pt-debut" class="form-label small text-muted mb-1">Applicable à partir du</label>
         <input id="pt-debut" v-model="dateDebut" type="date" class="form-control form-control-sm" required />
       </div>
@@ -22,24 +22,9 @@
       Semaine 1 = semaines impaires, semaine 2 = semaines paires (numéro de semaine du calendrier).
       Matin de {{ PLAGES.matin[0] }} à {{ PLAGES.matin[1] }}, après-midi de {{ PLAGES.apres_midi[0] }} à {{ PLAGES.apres_midi[1] }} ;
       le samedi, le matin seulement.
-      <template v-if="!trames.length && !demanderDate">Ces horaires s'appliqueront à partir du {{ formatFr(dateDebut) }}.</template>
     </p>
 
-    <fieldset v-if="choixOuvert" class="border rounded p-3 mb-3" data-choix-application>
-      <legend class="float-none w-auto fs-6 px-2 mb-0">Ces horaires s'appliquent…</legend>
-      <div class="form-check">
-        <input id="pt-mode-corriger" v-model="mode" class="form-check-input" type="radio" value="corriger" />
-        <label for="pt-mode-corriger" class="form-check-label">Corriger le planning « à partir du {{ formatFr(trameCourante?.date_debut) }} » (sans nouvelle période)</label>
-      </div>
-      <div class="form-check">
-        <input id="pt-mode-nouveau" v-model="mode" class="form-check-input" type="radio" value="nouveau" />
-        <label for="pt-mode-nouveau" class="form-check-label">Nouveau planning à partir du</label>
-        <input id="pt-nouvelle-date" v-model="dateDebut" type="date" class="form-control form-control-sm d-inline-block w-auto ms-2" :disabled="mode !== 'nouveau'" :required="mode === 'nouveau'" aria-label="Date d'application du nouveau planning" />
-      </div>
-      <div class="form-text">L'ancien planning reste valable jusqu'à la veille de cette date.</div>
-    </fieldset>
-
-    <form id="form-trame" class="row g-3" @submit.prevent="valider">
+    <form id="form-trame" class="row g-3" @submit.prevent="enregistrer">
       <div v-for="semaine in ['1', '2']" :key="semaine" class="col-lg-6" :data-semaine="semaine">
         <h6 class="mb-2">Semaine {{ semaine }} <span class="text-muted small">({{ semaine === '1' ? 'impaire' : 'paire' }}) — {{ formatDuree(totalSemaine(semaine)) }}</span></h6>
         <table class="table table-sm align-middle mb-0">
@@ -71,16 +56,15 @@
     </form>
 
     <template #footer>
-      <button v-if="trameId && !choixOuvert" type="button" class="btn btn-outline-danger me-auto" @click="supprimer">Supprimer ce planning</button>
-      <button v-if="choixOuvert" type="button" class="btn btn-outline-secondary" @click="choixOuvert = false">Retour</button>
-      <button v-else type="button" class="btn btn-outline-secondary" @click="$emit('fermer')">Fermer</button>
+      <button v-if="trameId" type="button" class="btn btn-outline-danger me-auto" @click="supprimer">Supprimer ce planning</button>
+      <button type="button" class="btn btn-outline-secondary" @click="$emit('fermer')">Fermer</button>
       <button type="submit" form="form-trame" class="btn btn-primary" :disabled="enCours">Enregistrer</button>
     </template>
   </Modal>
 </template>
 
 <script setup>
-import { computed, ref, watch } from 'vue'
+import { ref, watch } from 'vue'
 import api, { messageErreur } from '../services/api'
 import { JOURS_COURTS, aujourdhuiIso, formatFr } from '../utils/dates'
 import { DEMI_JOURNEES, LIBELLES_DEMI_JOURNEE, PLAGES, SAMEDI, formatDuree, minutesDe } from '../utils/planning'
@@ -93,9 +77,6 @@ const emit = defineEmits(['fermer', 'modifie'])
 const trames = ref([])
 const trameId = ref(null)
 const dateDebut = ref('')
-const demanderDate = ref(false)
-const choixOuvert = ref(false)
-const mode = ref('corriger')
 const edition = ref({ 1: [], 2: [] })
 const erreur = ref('')
 const message = ref('')
@@ -122,9 +103,7 @@ const totalSemaine = (semaine) => edition.value[semaine].reduce((total, jour, i)
     return debut && fin && fin > debut ? somme + minutesDe(fin) - minutesDe(debut) : somme
   }, 0), 0)
 
-const trameCourante = computed(() => trames.value.find((t) => t.id === trameId.value))
-
-// Sans planning : début d'année, sauf pour un employé entré depuis (on demande alors la date, proposée à son entrée).
+// Sans planning : début d'année, sauf pour un employé entré depuis (date proposée à son entrée).
 const debutAnnee = () => `${aujourdhuiIso().slice(0, 4)}-01-01`
 const dateEntreeTardive = () => {
   const entree = props.titulaire?.date_entree
@@ -132,13 +111,11 @@ const dateEntreeTardive = () => {
 }
 
 const choisir = () => {
-  choixOuvert.value = false
-  const trame = trameCourante.value
+  const trame = trames.value.find((t) => t.id === trameId.value)
   if (trame) {
     dateDebut.value = trame.date_debut
     edition.value = versEdition(trame.horaires)
   } else {
-    demanderDate.value = !!dateEntreeTardive()
     dateDebut.value = dateEntreeTardive() || debutAnnee()
   }
 }
@@ -187,23 +164,13 @@ const executer = async (action, succes) => {
   }
 }
 
-// Avec un planning existant, on demande d'abord s'il s'agit d'une correction ou d'un changement à partir d'une date.
-const valider = () => {
-  if (trameId.value && !choixOuvert.value) {
-    mode.value = 'corriger'
-    dateDebut.value = aujourdhuiIso()
-    choixOuvert.value = true
-    return
-  }
-  enregistrer()
-}
-
+// Une période existe déjà à cette date : on la remplace ; sinon une nouvelle période commence à cette date.
 const enregistrer = async () => {
-  const corriger = !!trameId.value && mode.value === 'corriger'
   const reussi = await executer(async () => {
     const horaires = versApi()
-    const { data } = corriger
-      ? await api.put(`/planning/trames/${trameId.value}`, { date_debut: trameCourante.value.date_debut, horaires })
+    const existante = trames.value.find((t) => t.date_debut === dateDebut.value)
+    const { data } = existante
+      ? await api.put(`/planning/trames/${existante.id}`, { date_debut: dateDebut.value, horaires })
       : await api.post('/planning/trames', { date_debut: dateDebut.value, horaires, ...parametres() })
     await charger(data.id)
   }, 'Planning enregistré.')
