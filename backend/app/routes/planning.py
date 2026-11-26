@@ -47,6 +47,14 @@ def _date_debut_libre(titulaire, date_debut, sauf_id=None):
         raise ApiError('Un planning commence déjà à cette date', 409)
 
 
+def _supprimer_periodes_suivantes(titulaire, date_debut, sauf_id=None):
+    """Les horaires enregistrés s'appliquent à tout le planning à venir : les périodes plus récentes sont remplacées."""
+    requete = TramePlanning.query.filter_by(**titulaire).filter(TramePlanning.date_debut > date_debut)
+    if sauf_id is not None:
+        requete = requete.filter(TramePlanning.id != sauf_id)
+    requete.delete(synchronize_session=False)
+
+
 @planning_bp.route('/trames', methods=['GET'])
 @admin_requis
 def lister_trames():
@@ -67,6 +75,7 @@ def creer_trame():
         **titulaire, date_debut=date_debut, horaires=valider_horaires_trame(data.get('horaires')),
         updated_by_id=current_user.id,
     )
+    _supprimer_periodes_suivantes(titulaire, date_debut)
     db.session.add(trame)
     db.session.commit()
     return jsonify(trame.to_dict()), 201
@@ -78,9 +87,12 @@ def modifier_trame(trame_id):
     trame = _trame(trame_id)
     data = donnees_json()
     date_debut = parse_date(data.get('date_debut'), 'date_debut')
-    _date_debut_libre({'employe_id': trame.employe_id, 'utilisateur_id': trame.utilisateur_id}, date_debut, trame.id)
+    titulaire = {'employe_id': trame.employe_id, 'utilisateur_id': trame.utilisateur_id}
+    _date_debut_libre(titulaire, date_debut, trame.id)
+    horaires = valider_horaires_trame(data.get('horaires'))
+    _supprimer_periodes_suivantes(titulaire, date_debut, trame.id)
     trame.date_debut = date_debut
-    trame.horaires = valider_horaires_trame(data.get('horaires'))
+    trame.horaires = horaires
     trame.updated_by_id = current_user.id
     db.session.commit()
     return jsonify(trame.to_dict()), 200

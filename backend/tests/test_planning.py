@@ -61,6 +61,23 @@ def test_nouvelle_trame_a_partir_d_une_date(admin, alice):
     assert _creer_trame(admin, _horaires([MATIN] * 6), date_debut='2025-02-12', employe_id=fiche['id']).status_code == 409
 
 
+def test_enregistrer_remplace_les_periodes_suivantes(admin, alice):
+    fiche, _ = alice
+    premiere = _creer_trame(admin, _horaires([JOURNEE] * 5 + [REPOS]), employe_id=fiche['id']).get_json()
+    _creer_trame(admin, _horaires([MATIN] * 6), date_debut='2025-02-12', employe_id=fiche['id'])
+    # Modifier la première période : la période plus récente ne doit plus masquer les nouveaux horaires.
+    assert admin.put(f"/api/planning/trames/{premiere['id']}", {
+        'date_debut': premiere['date_debut'], 'horaires': _horaires([JOURNEE] * 5 + [MATIN]),
+    }).status_code == 200
+    assert [t['date_debut'] for t in admin.get(f"/api/planning/trames?employe_id={fiche['id']}").get_json()['trames']] == ['2025-01-01']
+    assert _ligne(admin, '2025-02', fiche['id'])['planning']['2025-02-22'] == {**MATIN, 'exception': False}
+    # Une nouvelle période remplace aussi celles qui la suivent.
+    _creer_trame(admin, _horaires([MATIN] * 6), date_debut='2025-03-01', employe_id=fiche['id'])
+    _creer_trame(admin, _horaires([JOURNEE] * 5 + [MATIN]), date_debut='2025-02-01', employe_id=fiche['id'])
+    dates = [t['date_debut'] for t in admin.get(f"/api/planning/trames?employe_id={fiche['id']}").get_json()['trames']]
+    assert dates == ['2025-02-01', '2025-01-01']
+
+
 def test_exception_remplace_la_trame_ce_jour_la(admin, alice):
     fiche, _ = alice
     _creer_trame(admin, _horaires([JOURNEE] * 5 + [MATIN]), employe_id=fiche['id'])

@@ -15,7 +15,7 @@ Validée le 2026-11-24.
   - semaine 1 = semaine ISO impaire, semaine 2 = semaine ISO paire ;
   - du lundi au samedi, un horaire matin et un horaire après-midi, éventuellement vides ;
   - une date de début : la nouvelle trame s'applique à partir de cette date, les semaines passées gardent l'ancienne.
-- **Saisie d'une trame** *(modifié le 2026-11-26)* : la fenêtre *Planning* (employés et pharmacienne) affiche toujours un champ « Applicable à partir du » ; « Enregistrer » applique directement, sans étape intermédiaire. Si une trame commence déjà à cette date, elle est remplacée ; sinon une nouvelle trame commence à cette date. Plus de choix « Corriger / Nouveau planning ».
+- **Saisie d'une trame** *(modifié le 2026-11-26)* : la fenêtre *Planning* (employés et pharmacienne) affiche toujours un champ « Applicable à partir du » ; « Enregistrer » applique directement, sans étape intermédiaire. Si une trame commence déjà à cette date, elle est remplacée ; sinon une nouvelle trame commence à cette date. Dans les deux cas, les trames plus récentes sont supprimées : les nouveaux horaires s'appliquent à tout le planning à venir. Plus de choix « Corriger / Nouveau planning ».
 - **Exception** à la journée : elle remplace la trame ce jour-là (événement exceptionnel).
 - **Plages fixes :**
   - matin 9h → 12h30 ;

@@ -58,7 +58,8 @@ pour le comptable.
 - **Changement d'horaires** : modifiez les horaires, choisissez la date dans *Applicable à partir du*, puis
   *Enregistrer* : c'est appliqué tout de suite, sans autre question. Si un planning commence déjà à cette
   date, il est remplacé ; sinon un nouveau planning commence à cette date et l'ancien reste valable
-  jusqu'à la veille. Le menu *Planning* permet de rouvrir un planning plus ancien.
+  jusqu'à la veille. Les plannings plus récents que cette date sont supprimés : les nouveaux horaires
+  s'appliquent à tout le planning à venir. Le menu *Planning* permet de rouvrir un planning plus ancien.
 - **Événement exceptionnel** : *Tableau* → clic sur la case du jour → *Horaires de présence* →
   modifiez les heures (videz une demi-journée si la personne n'est pas là) → *Enregistrer* (le bouton
   unique en bas de la fenêtre enregistre aussi les heures et les déplacements). La case est alors
