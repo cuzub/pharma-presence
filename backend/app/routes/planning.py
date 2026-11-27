@@ -1,4 +1,4 @@
-"""Planning de présence : trames semaine 1 / semaine 2 et exceptions à la journée. Saisie réservée aux admins.
+"""Planning de présence : une trame semaine 1 / semaine 2 par personne et exceptions à la journée. Saisie réservée aux admins.
 
 Un admin gère le planning de tous les employés et le sien (pas celui d'un autre admin).
 """
@@ -26,82 +26,36 @@ def _titulaire(employe_id, utilisateur_id):
     return {'employe_id': None, 'utilisateur_id': current_user.id}
 
 
-def _verifier_proprietaire(objet):
-    if objet.utilisateur_id is not None and objet.utilisateur_id != current_user.id:
-        raise ApiError('Vous ne pouvez modifier que votre propre planning', 403, 'acces_refuse')
-
-
-def _trame(trame_id):
-    trame = db.session.get(TramePlanning, trame_id)
-    if trame is None:
-        raise ApiError('Planning introuvable', 404)
-    _verifier_proprietaire(trame)
-    return trame
-
-
-def _date_debut_libre(titulaire, date_debut, sauf_id=None):
-    requete = TramePlanning.query.filter_by(date_debut=date_debut, **titulaire)
-    if sauf_id is not None:
-        requete = requete.filter(TramePlanning.id != sauf_id)
-    if requete.first():
-        raise ApiError('Un planning commence déjà à cette date', 409)
-
-
-def _supprimer_periodes_suivantes(titulaire, date_debut, sauf_id=None):
-    """Les horaires enregistrés s'appliquent à tout le planning à venir : les périodes plus récentes sont remplacées."""
-    requete = TramePlanning.query.filter_by(**titulaire).filter(TramePlanning.date_debut > date_debut)
-    if sauf_id is not None:
-        requete = requete.filter(TramePlanning.id != sauf_id)
-    requete.delete(synchronize_session=False)
-
-
-@planning_bp.route('/trames', methods=['GET'])
+@planning_bp.route('/trame', methods=['GET'])
 @admin_requis
-def lister_trames():
-    employe_id = request.args.get('employe_id', type=int)
-    titulaire = _titulaire(employe_id, None)
-    trames = TramePlanning.query.filter_by(**titulaire).order_by(TramePlanning.date_debut.desc()).all()
-    return jsonify({'plages': PLAGES, 'trames': [t.to_dict() for t in trames]}), 200
+def lire_trame():
+    titulaire = _titulaire(request.args.get('employe_id', type=int), None)
+    trame = TramePlanning.query.filter_by(**titulaire).first()
+    return jsonify({'plages': PLAGES, 'trame': trame.to_dict() if trame else None}), 200
 
 
-@planning_bp.route('/trames', methods=['POST'])
+@planning_bp.route('/trame', methods=['PUT'])
 @admin_requis
-def creer_trame():
+def enregistrer_trame():
+    """Crée ou remplace l'unique planning (semaine 1 / semaine 2) du titulaire, valable pour toutes les dates."""
     data = donnees_json()
     titulaire = _titulaire(data.get('employe_id'), data.get('utilisateur_id'))
-    date_debut = parse_date(data.get('date_debut'), 'date_debut')
-    _date_debut_libre(titulaire, date_debut)
-    trame = TramePlanning(
-        **titulaire, date_debut=date_debut, horaires=valider_horaires_trame(data.get('horaires')),
-        updated_by_id=current_user.id,
-    )
-    _supprimer_periodes_suivantes(titulaire, date_debut)
-    db.session.add(trame)
-    db.session.commit()
-    return jsonify(trame.to_dict()), 201
-
-
-@planning_bp.route('/trames/<int:trame_id>', methods=['PUT'])
-@admin_requis
-def modifier_trame(trame_id):
-    trame = _trame(trame_id)
-    data = donnees_json()
-    date_debut = parse_date(data.get('date_debut'), 'date_debut')
-    titulaire = {'employe_id': trame.employe_id, 'utilisateur_id': trame.utilisateur_id}
-    _date_debut_libre(titulaire, date_debut, trame.id)
     horaires = valider_horaires_trame(data.get('horaires'))
-    _supprimer_periodes_suivantes(titulaire, date_debut, trame.id)
-    trame.date_debut = date_debut
+    trame = TramePlanning.query.filter_by(**titulaire).first()
+    if trame is None:
+        trame = TramePlanning(**titulaire)
+        db.session.add(trame)
     trame.horaires = horaires
     trame.updated_by_id = current_user.id
     db.session.commit()
     return jsonify(trame.to_dict()), 200
 
 
-@planning_bp.route('/trames/<int:trame_id>', methods=['DELETE'])
+@planning_bp.route('/trame', methods=['DELETE'])
 @admin_requis
-def supprimer_trame(trame_id):
-    db.session.delete(_trame(trame_id))
+def supprimer_trame():
+    titulaire = _titulaire(request.args.get('employe_id', type=int), None)
+    TramePlanning.query.filter_by(**titulaire).delete()
     db.session.commit()
     return '', 204
 

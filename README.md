@@ -15,8 +15,8 @@ indemnités kilométriques). Voir [docs/intent/suivi-presence-pharmacie.md](docs
 - Tableau du mois : colonnes Employé, H +/- et Km figées, km du jour sous les minutes. H +/- = solde
   cumulé à la fin du mois affiché (tout l'historique, régularisations comprises).
 - Planning de présence (prévisionnel) : horaires semaine 1 (ISO impaire) / semaine 2 (ISO paire)
-  par employé et pour la pharmacienne (Employés → calendrier, ou « Mon planning »), avec date de
-  début ; horaires exceptionnels à la journée depuis le Tableau du mois. Chaque jour est découpé en
+  par employé et pour la pharmacienne (Employés → calendrier, ou « Mon planning »), un seul planning
+  sans date, valable pour tous les mois ; horaires exceptionnels à la journée depuis le Tableau du mois. Chaque jour est découpé en
   matin (9h-12h30) et après-midi (13h30-19h30, pas le samedi), remplis au prorata à la couleur de la
   personne (réglable dans la fiche employé ; cyan pour la pharmacienne). Absences en barre grise
   hachurée avec le code du motif ; colonne

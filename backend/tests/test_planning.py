@@ -1,4 +1,4 @@
-"""Planning de présence : trames semaine 1 / semaine 2, exceptions à la journée, totaux, couleur, cloisonnement."""
+"""Planning de présence : trame semaine 1 / semaine 2 unique, exceptions à la journée, totaux, couleur, cloisonnement."""
 
 import pytest
 
@@ -16,8 +16,8 @@ def alice(creer_employe):
     return creer_employe('alice', nom='MARTIN')
 
 
-def _creer_trame(session, horaires, date_debut='2025-01-01', **titulaire):
-    return session.post('/api/planning/trames', {'date_debut': date_debut, 'horaires': horaires, **titulaire})
+def _creer_trame(session, horaires, **titulaire):
+    return session.put('/api/planning/trame', {'horaires': horaires, **titulaire})
 
 
 def _ligne(session, mois, employe_id):
@@ -29,7 +29,7 @@ def test_semaines_paires_et_impaires_et_total_hebdomadaire(admin, alice):
     # Semaine 1 (ISO impaire) : lundi seul ; semaine 2 (ISO paire) : lundi à samedi matin.
     semaine_1 = [JOURNEE] + [REPOS] * 5
     semaine_2 = [JOURNEE] * 5 + [MATIN]
-    assert _creer_trame(admin, _horaires(semaine_1, semaine_2), employe_id=fiche['id']).status_code == 201
+    assert _creer_trame(admin, _horaires(semaine_1, semaine_2), employe_id=fiche['id']).status_code == 200
 
     ligne = _ligne(admin, '2025-02', fiche['id'])
     # 3 février 2025 : semaine ISO 6 (paire) ; 10 février : semaine 7 (impaire).
@@ -51,31 +51,17 @@ def test_absence_non_deduite_du_total_de_la_semaine(admin, alice, motifs):
     assert _ligne(admin, '2025-02', fiche['id'])['totaux_semaines']['2025-02-03'] == 5 * 510 + 210
 
 
-def test_nouvelle_trame_a_partir_d_une_date(admin, alice):
+def test_enregistrer_remplace_le_planning_pour_toutes_les_dates(admin, alice):
     fiche, _ = alice
-    _creer_trame(admin, _horaires([JOURNEE] * 5 + [MATIN]), employe_id=fiche['id'])
-    _creer_trame(admin, _horaires([MATIN] * 6), date_debut='2025-02-12', employe_id=fiche['id'])
-    planning = _ligne(admin, '2025-02', fiche['id'])['planning']
-    assert planning['2025-02-11']['apres_midi'] == ['14:30', '19:30']
-    assert planning['2025-02-12']['apres_midi'] is None
-    assert _creer_trame(admin, _horaires([MATIN] * 6), date_debut='2025-02-12', employe_id=fiche['id']).status_code == 409
+    _creer_trame(admin, _horaires([JOURNEE] * 5 + [REPOS]), employe_id=fiche['id'])
+    _creer_trame(admin, _horaires([MATIN] * 6), employe_id=fiche['id'])
+    # Une seule trame par personne, appliquée aux mois passés comme aux mois à venir.
+    assert admin.get(f"/api/planning/trame?employe_id={fiche['id']}").get_json()['trame']['horaires']['1'] == [MATIN] * 6
+    for mois, jour in (('2025-01', '2025-01-04'), ('2025-02', '2025-02-22'), ('2025-06', '2025-06-28')):
+        assert _ligne(admin, mois, fiche['id'])['planning'][jour] == {**MATIN, 'exception': False}
 
-
-def test_enregistrer_remplace_les_periodes_suivantes(admin, alice):
-    fiche, _ = alice
-    premiere = _creer_trame(admin, _horaires([JOURNEE] * 5 + [REPOS]), employe_id=fiche['id']).get_json()
-    _creer_trame(admin, _horaires([MATIN] * 6), date_debut='2025-02-12', employe_id=fiche['id'])
-    # Modifier la première période : la période plus récente ne doit plus masquer les nouveaux horaires.
-    assert admin.put(f"/api/planning/trames/{premiere['id']}", {
-        'date_debut': premiere['date_debut'], 'horaires': _horaires([JOURNEE] * 5 + [MATIN]),
-    }).status_code == 200
-    assert [t['date_debut'] for t in admin.get(f"/api/planning/trames?employe_id={fiche['id']}").get_json()['trames']] == ['2025-01-01']
-    assert _ligne(admin, '2025-02', fiche['id'])['planning']['2025-02-22'] == {**MATIN, 'exception': False}
-    # Une nouvelle période remplace aussi celles qui la suivent.
-    _creer_trame(admin, _horaires([MATIN] * 6), date_debut='2025-03-01', employe_id=fiche['id'])
-    _creer_trame(admin, _horaires([JOURNEE] * 5 + [MATIN]), date_debut='2025-02-01', employe_id=fiche['id'])
-    dates = [t['date_debut'] for t in admin.get(f"/api/planning/trames?employe_id={fiche['id']}").get_json()['trames']]
-    assert dates == ['2025-02-01', '2025-01-01']
+    assert admin.delete(f"/api/planning/trame?employe_id={fiche['id']}").status_code == 204
+    assert admin.get(f"/api/planning/trame?employe_id={fiche['id']}").get_json()['trame'] is None
 
 
 def test_exception_remplace_la_trame_ce_jour_la(admin, alice):
@@ -122,7 +108,7 @@ def test_planning_de_l_admin_cyan_et_proprietaire(app, admin):
     from tests.conftest import ADMIN_MDP, Session
 
     moi = admin.get('/api/auth/me').get_json()['id']
-    assert _creer_trame(admin, _horaires([JOURNEE] * 5 + [MATIN])).status_code == 201
+    assert _creer_trame(admin, _horaires([JOURNEE] * 5 + [MATIN])).status_code == 200
     ligne = next(a for a in admin.get('/api/mois/2025-02').get_json()['admins'] if a['id'] == moi)
     assert ligne['couleur'] == '#00bcd4'
     assert ligne['planning']['2025-02-08'] == {**MATIN, 'exception': False}
@@ -133,8 +119,7 @@ def test_planning_de_l_admin_cyan_et_proprietaire(app, admin):
     db.session.commit()
     autre = Session(app)
     autre.login('associe', ADMIN_MDP)
-    trame_id = admin.get('/api/planning/trames').get_json()['trames'][0]['id']
-    assert autre.put(f'/api/planning/trames/{trame_id}', {'date_debut': '2025-01-01', 'horaires': _horaires([REPOS] * 6)}).status_code == 403
+    assert autre.put('/api/planning/trame', {'utilisateur_id': moi, 'horaires': _horaires([REPOS] * 6)}).status_code == 403
     assert autre.put('/api/planning/exceptions', {'utilisateur_id': moi, 'jour': '2025-02-04'}).status_code == 403
 
 
@@ -147,7 +132,7 @@ def test_employe_voit_son_planning_sans_pouvoir_le_modifier(admin, alice, creer_
     assert [e['id'] for e in donnees['employes']] == [fiche['id']]
     assert donnees['employes'][0]['planning']['2025-02-03']['matin'] == ['09:00', '12:30']
     assert donnees['admins'] == []
-    assert session.get(f'/api/planning/trames?employe_id={bruno["id"]}').status_code == 403
+    assert session.get(f'/api/planning/trame?employe_id={bruno["id"]}').status_code == 403
     assert _creer_trame(session, _horaires([REPOS] * 6), employe_id=fiche['id']).status_code == 403
     assert session.put('/api/planning/exceptions', {'employe_id': fiche['id'], 'jour': '2025-02-04'}).status_code == 403
 

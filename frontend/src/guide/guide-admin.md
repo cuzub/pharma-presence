@@ -50,16 +50,13 @@ pour le comptable.
   haut de la page pour vos propres horaires). Saisissez pour chaque jour, du lundi au samedi, l'heure
   d'arrivée et de départ du **matin** (entre 9h et 12h30) et de l'**après-midi** (entre 13h30 et
   19h30 ; pas d'après-midi le samedi). La **semaine 1** s'applique aux semaines impaires du calendrier,
-  la **semaine 2** aux semaines paires ; le bouton *Semaine 1 → semaine 2* recopie les horaires.
+  la **semaine 2** aux semaines paires ; le bouton *Semaine 1 → semaine 2* recopie les horaires et
+  *Inverser semaine 1 ↔ semaine 2* les échange. La flèche **↓** au bout d'une ligne recopie les horaires
+  du jour sur le jour suivant (le vendredi vers le samedi, seul le matin est recopié).
   Laissez une demi-journée vide si la personne ne travaille pas.
-- **Premiers horaires** : par défaut, ils s'appliquent à partir du 1er janvier de l'année en cours (pour un
-  employé entré en cours d'année, sa date d'entrée est proposée). Le champ *Applicable à partir du* est
-  toujours visible et modifiable.
-- **Changement d'horaires** : modifiez les horaires, choisissez la date dans *Applicable à partir du*, puis
-  *Enregistrer* : c'est appliqué tout de suite, sans autre question. Si un planning commence déjà à cette
-  date, il est remplacé ; sinon un nouveau planning commence à cette date et l'ancien reste valable
-  jusqu'à la veille. Les plannings plus récents que cette date sont supprimés : les nouveaux horaires
-  s'appliquent à tout le planning à venir. Le menu *Planning* permet de rouvrir un planning plus ancien.
+- **Un seul planning, sans date** : il s'applique toujours, aux mois passés comme aux mois à venir.
+  *Enregistrer* remplace le planning, sans autre question ; pour un jour particulier, utilisez
+  l'événement exceptionnel ci-dessous.
 - **Événement exceptionnel** : *Tableau* → clic sur la case du jour → *Horaires de présence* →
   modifiez les heures (videz une demi-journée si la personne n'est pas là) → *Enregistrer* (le bouton
   unique en bas de la fenêtre enregistre aussi les heures et les déplacements). La case est alors

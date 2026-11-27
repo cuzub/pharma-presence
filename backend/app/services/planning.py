@@ -1,4 +1,4 @@
-"""Planning de présence prévisionnel : trames semaine 1 / semaine 2, exceptions à la journée, totaux par semaine.
+"""Planning de présence prévisionnel : une trame semaine 1 / semaine 2 par personne, exceptions à la journée, totaux par semaine.
 
 Le planning est une prévision : il n'alimente ni les heures +/- ni l'export comptable.
 """
@@ -89,16 +89,6 @@ def bornes_semaines(debut, fin):
     return debut - timedelta(days=debut.weekday()), fin - timedelta(days=fin.weekday()) + timedelta(days=SAMEDI)
 
 
-def _trame_du_jour(trames, jour):
-    """`trames` triées par date de début croissante : la dernière commencée s'applique."""
-    courante = None
-    for trame in trames:
-        if trame.date_debut > jour:
-            break
-        courante = trame
-    return courante
-
-
 def _filtre_titulaire(modele, champ, ids):
     return modele.query.filter(getattr(modele, champ).in_(ids))
 
@@ -109,13 +99,13 @@ def plannings(debut, fin, employe_ids=(), utilisateur_ids=()):
     Renvoie {('employe', id) | ('admin', id): {date: {'matin', 'apres_midi', 'exception'}}} ; les jours sans présence
     ni exception sont omis.
     """
-    trames = defaultdict(list)
+    trames = {}
     exceptions = defaultdict(dict)
     for champ, ids, genre in (('employe_id', employe_ids, 'employe'), ('utilisateur_id', utilisateur_ids, 'admin')):
         if not ids:
             continue
-        for trame in _filtre_titulaire(TramePlanning, champ, ids).filter(TramePlanning.date_debut <= fin).order_by(TramePlanning.date_debut):
-            trames[(genre, getattr(trame, champ))].append(trame)
+        for trame in _filtre_titulaire(TramePlanning, champ, ids):
+            trames[(genre, getattr(trame, champ))] = trame
         requete = _filtre_titulaire(ExceptionPlanning, champ, ids).filter(ExceptionPlanning.jour.between(debut, fin))
         for exception in requete:
             exceptions[(genre, getattr(exception, champ))][exception.jour] = exception
@@ -124,18 +114,17 @@ def plannings(debut, fin, employe_ids=(), utilisateur_ids=()):
     resultat = {}
     for cle in cles:
         jours = {}
+        trame = trames.get(cle)
         jour = debut
         while jour <= fin:
             if jour.weekday() <= SAMEDI:
                 exception = exceptions[cle].get(jour)
                 if exception is not None:
                     jours[jour] = {**_normaliser(exception.horaires), 'exception': True}
-                else:
-                    trame = _trame_du_jour(trames[cle], jour)
-                    if trame is not None:
-                        horaires = _normaliser(trame.horaires[semaine_type(jour)][jour.weekday()])
-                        if any(horaires.values()):
-                            jours[jour] = {**horaires, 'exception': False}
+                elif trame is not None:
+                    horaires = _normaliser(trame.horaires[semaine_type(jour)][jour.weekday()])
+                    if any(horaires.values()):
+                        jours[jour] = {**horaires, 'exception': False}
             jour += timedelta(days=1)
         resultat[cle] = jours
     return resultat

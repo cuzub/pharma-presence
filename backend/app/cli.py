@@ -144,7 +144,7 @@ def _creer_demo():
 
     # Trajets de l'admin (IK), une dizaine sur deux ans.
     db.session.flush()
-    _planning_demo(admin, employes, debut_historique)
+    _planning_demo(admin, employes)
     jour = debut_historique
     while jour <= aujourdhui:
         if jour.weekday() != 6 and hasard.random() < 0.015:
@@ -156,7 +156,7 @@ def _creer_demo():
     db.session.commit()
 
 
-def _planning_demo(admin, employes, debut):
+def _planning_demo(admin, employes):
     """Trames semaine 1 / semaine 2 fictives : journées complètes, mi-temps, samedis en alternance."""
     journee = {'matin': ['09:00', '12:30'], 'apres_midi': ['14:30', '19:30']}
     matin = {'matin': ['09:00', '12:30'], 'apres_midi': None}
@@ -171,6 +171,6 @@ def _planning_demo(admin, employes, debut):
         'Emma': ([journee, journee, journee, repos, tard, repos], [journee, journee, repos, journee, journee, matin]),
     }
     for prenom, (semaine_1, semaine_2) in trames.items():
-        db.session.add(TramePlanning(employe_id=employes[prenom].id, date_debut=debut, horaires={'1': semaine_1, '2': semaine_2}))
+        db.session.add(TramePlanning(employe_id=employes[prenom].id, horaires={'1': semaine_1, '2': semaine_2}))
     elise = [journee, journee, journee, journee, journee, matin]
-    db.session.add(TramePlanning(utilisateur_id=admin.id, date_debut=debut, horaires={'1': elise, '2': elise}))
+    db.session.add(TramePlanning(utilisateur_id=admin.id, horaires={'1': elise, '2': elise}))

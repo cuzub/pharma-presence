@@ -54,7 +54,7 @@
               {{ formatMinutes(e.solde_minutes) || '0' }}
             </td>
             <td class="text-end text-nowrap">
-              <button type="button" class="btn btn-sm btn-secondary" aria-label="Planning" v-infobulle="'Horaires de présence semaine 1 / semaine 2'" @click="planningTitulaire = { employe_id: e.id, nom: `${e.prenom} ${e.nom}`, date_entree: e.date_entree }">
+              <button type="button" class="btn btn-sm btn-secondary" aria-label="Planning" v-infobulle="'Horaires de présence semaine 1 / semaine 2'" @click="planningTitulaire = { employe_id: e.id, nom: `${e.prenom} ${e.nom}` }">
                 <i class="bi bi-calendar-week"></i>
               </button>
               <button type="button" class="btn btn-sm btn-secondary ms-1" aria-label="Heures +/-" v-infobulle="'Créditer ou débiter des heures +/-'" @click="heuresEmploye = e">

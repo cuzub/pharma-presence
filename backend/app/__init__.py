@@ -17,8 +17,6 @@ _CONTRAINTES = {
     'ex_absences_chevauchement': 'Cette absence chevauche une autre absence du même employé',
     'utilisateurs_identifiant_key': 'Cet identifiant est déjà utilisé',
     'uq_heures_employe_jour': 'Des heures sont déjà saisies pour ce jour',
-    'uq_trames_planning_employe_debut': 'Un planning commence déjà à cette date',
-    'uq_trames_planning_utilisateur_debut': 'Un planning commence déjà à cette date',
 }
 
 

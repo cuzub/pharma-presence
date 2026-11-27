@@ -347,7 +347,7 @@ class Deplacement(Horodatage, db.Model):
 
 
 class TramePlanning(Horodatage, db.Model):
-    """Horaires habituels (semaine 1 = semaine ISO impaire, semaine 2 = paire), applicables à partir de date_debut.
+    """Horaires habituels de la personne, valables pour toutes les dates (semaine 1 = semaine ISO impaire, semaine 2 = paire).
 
     horaires = {'1': [jour lundi…samedi], '2': [...]}, chaque jour = {'matin': ['HH:MM', 'HH:MM'] | None, 'apres_midi': ...}.
     """
@@ -358,13 +358,12 @@ class TramePlanning(Horodatage, db.Model):
     # Exactement un des deux titulaires : un employé, ou un admin (sans fiche Employe).
     employe_id = db.Column(db.Integer, db.ForeignKey('employes.id', ondelete='CASCADE'), nullable=True, index=True)
     utilisateur_id = db.Column(db.Integer, db.ForeignKey('utilisateurs.id', ondelete='CASCADE'), nullable=True, index=True)
-    date_debut = db.Column(db.Date, nullable=False)
     horaires = db.Column(db.JSON, nullable=False)
 
     __table_args__ = (
         db.CheckConstraint('(employe_id IS NULL) <> (utilisateur_id IS NULL)', name='ck_trames_planning_titulaire'),
-        db.UniqueConstraint('employe_id', 'date_debut', name='uq_trames_planning_employe_debut'),
-        db.UniqueConstraint('utilisateur_id', 'date_debut', name='uq_trames_planning_utilisateur_debut'),
+        db.UniqueConstraint('employe_id', name='uq_trames_planning_employe'),
+        db.UniqueConstraint('utilisateur_id', name='uq_trames_planning_utilisateur'),
     )
 
     def to_dict(self):
@@ -372,7 +371,6 @@ class TramePlanning(Horodatage, db.Model):
             'id': self.id,
             'employe_id': self.employe_id,
             'utilisateur_id': self.utilisateur_id,
-            'date_debut': _iso(self.date_debut),
             'horaires': self.horaires,
         }
 
