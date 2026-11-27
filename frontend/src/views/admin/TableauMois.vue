@@ -59,10 +59,10 @@
                   @click="saisie.ouvrirJour(employe.id, col.iso)"
                   @keydown.enter="saisie.ouvrirJour(employe.id, col.iso)"
                 >
-                  <div v-if="!absence(employe, col.iso) && !horsContrat(employe, col.iso)" :class="['planning-jour', { exception: employe.planning[col.iso]?.exception }]" data-planning>
+                  <div v-if="!absence(employe, col.iso) && !horsContrat(employe, col.iso)" :class="['planning-jour', { exception: employe.planning[col.iso]?.exception, samedi: col.samedi }]" data-planning>
                     <span v-for="demi in col.demis" :key="demi" class="demi" :style="styleDemi(employe, col, demi)"></span>
                   </div>
-                  <div v-else-if="absence(employe, col.iso)" class="planning-jour" data-absence>
+                  <div v-else-if="absence(employe, col.iso)" :class="['planning-jour', { samedi: col.samedi }]" data-absence>
                     <span class="demi barre-absence"></span>
                   </div>
                   <div>
@@ -108,7 +108,7 @@
                   @click="admin.est_moi && ouvrirAdmin(admin, col.iso)"
                   @keydown.enter="admin.est_moi && ouvrirAdmin(admin, col.iso)"
                 >
-                  <div :class="['planning-jour', { exception: admin.planning[col.iso]?.exception }]" data-planning>
+                  <div :class="['planning-jour', { exception: admin.planning[col.iso]?.exception, samedi: col.samedi }]" data-planning>
                     <span v-for="demi in col.demis" :key="demi" class="demi" :style="styleDemi(admin, col, demi)"></span>
                   </div>
                   <div v-if="kmDuJour(admin, col.iso)" class="km-jour">{{ formatNombre(kmDuJour(admin, col.iso)) }} km</div>
@@ -124,7 +124,7 @@
               <template v-for="col in colonnes" :key="col.cle">
                 <td v-if="col.semaine" class="col-semaine"></td>
                 <td v-else :class="['compte', col.classes]" :data-presents="col.iso">
-                  <div v-if="!col.ferme" class="comptes-jour">
+                  <div v-if="!col.ferme" :class="['comptes-jour', { samedi: col.samedi }]">
                     <span v-for="demi in col.demis" :key="demi" :class="['compte-demi', { 'sous-seuil': sousSeuil(col.iso, demi) }]" v-infobulle="titrePresents(col.iso, demi)">{{ presentsFermeture(personnes, col.iso, demi) }}</span>
                   </div>
                 </td>
@@ -179,7 +179,7 @@ import { useSaisieJour } from '../../composables/useSaisieJour'
 import api, { messageErreur } from '../../services/api'
 import { useReferentielStore } from '../../stores/referentiel'
 import { JOURS_COURTS, absenceDuJour, ajouterJours, aujourdhuiIso, ferie, formatFr, formatMinutes, formatNombre, jourSemaine, joursDuMois, titreRegularisation } from '../../utils/dates'
-import { COULEUR_ABSENCE, PLAGES, demiJourneesDuJour, fondDemiJournee, formatDuree, formatHeure, lignesHoraires, numeroSemaine, presentsFermeture, sousSeuilFermeture } from '../../utils/planning'
+import { COULEUR_ABSENCE, PLAGES, SAMEDI, demiJourneesDuJour, fondDemiJournee, formatDuree, formatHeure, lignesHoraires, numeroSemaine, presentsFermeture, sousSeuilFermeture } from '../../utils/planning'
 
 const referentiel = useReferentielStore()
 const mois = useMoisUrl()
@@ -244,6 +244,7 @@ const jours = computed(() => {
       initiale: JOURS_COURTS[jourSemaine(iso)].slice(0, 2),
       lignes: [formatFr(iso), libelleFerie, fermeture].filter(Boolean),
       demis: demiJourneesDuJour(iso),
+      samedi: jourSemaine(iso) === SAMEDI,
       ferme: !!libelleFerie || !!fermeture,
       classes: {
         ferie: !!libelleFerie,
@@ -437,7 +438,7 @@ const titreCaseAdmin = (admin, jour) => {
   vertical-align: top;
 }
 
-/* Bande de présence : une demi-case pour le matin, une pour l'après-midi (le samedi : le matin seul). */
+/* Bande de présence : une demi-case pour le matin, une pour l'après-midi (le samedi : le matin seul, moitié gauche). */
 .planning-jour {
   display: flex;
   gap: 2px;
@@ -450,6 +451,10 @@ const titreCaseAdmin = (admin, jour) => {
   background: #fff;
   border: 1px solid #ced4da;
   border-radius: 2px;
+}
+
+.planning-jour.samedi .demi {
+  flex: 0 0 calc(50% - 1px);
 }
 
 .planning-jour.exception .demi {
@@ -497,7 +502,11 @@ thead .col-semaine {
   gap: 2px;
 }
 
-/* Toujours une demi-largeur : le chiffre unique du samedi occupe la moitié droite. */
+/* Toujours une demi-largeur : le chiffre unique du samedi occupe la moitié gauche (ouverture le matin seulement). */
+.comptes-jour.samedi {
+  justify-content: flex-start;
+}
+
 .compte-demi {
   flex: 0 0 calc(50% - 1px);
   text-align: right;
