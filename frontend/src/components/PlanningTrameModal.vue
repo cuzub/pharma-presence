@@ -37,7 +37,7 @@
                   <input v-model="jour[demi][0]" type="time" step="300" :min="PLAGES[demi][0]" :max="PLAGES[demi][1]" class="form-control form-control-sm" :aria-label="`Semaine ${semaine}, ${JOURS_COURTS[index]}, ${LIBELLES_DEMI_JOURNEE[demi]} : début`" />
                   <span class="small">–</span>
                   <input v-model="jour[demi][1]" type="time" step="300" :min="PLAGES[demi][0]" :max="PLAGES[demi][1]" class="form-control form-control-sm" :aria-label="`Semaine ${semaine}, ${JOURS_COURTS[index]}, ${LIBELLES_DEMI_JOURNEE[demi]} : fin`" />
-                  <button v-if="jour[demi].some(Boolean)" type="button" class="btn btn-link btn-sm p-0 text-secondary" title="Vider" :aria-label="`Vider ${JOURS_COURTS[index]} ${LIBELLES_DEMI_JOURNEE[demi]}`" @click="jour[demi] = ['', '']">
+                  <button type="button" class="btn btn-link btn-sm p-0 text-secondary" title="Vider" :disabled="!jour[demi].some(Boolean)" :aria-label="`Vider ${JOURS_COURTS[index]} ${LIBELLES_DEMI_JOURNEE[demi]}`" @click="jour[demi] = ['', '']">
                     <i class="bi bi-x-lg"></i>
                   </button>
                 </div>
